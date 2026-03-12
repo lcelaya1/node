@@ -79,6 +79,7 @@ const CollectionsContext = createContext<CollectionsContextType | null>(null);
 
 export function CollectionsProvider({ children }: { children: ReactNode }) {
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("canopi_collections");
@@ -89,11 +90,13 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
         // ignore parse errors
       }
     }
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
+    if (!loaded) return;
     localStorage.setItem("canopi_collections", JSON.stringify(collections));
-  }, [collections]);
+  }, [collections, loaded]);
 
   const addCollection = (collection: Omit<Collection, "id" | "createdAt">) => {
     const newCollection: Collection = {
