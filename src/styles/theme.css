@@ -238,6 +238,10 @@
     filter: url(#node-goo);
     inset: 0;
     position: absolute;
+    /* Force a GPU compositing layer so the SVG filter runs on the GPU,
+       not the software rasteriser — critical for smooth mobile rendering */
+    transform: translateZ(0);
+    will-change: filter;
     z-index: 1;
   }
 
@@ -246,9 +250,15 @@
     border-radius: 999px;
     height: 74px;
     left: calc(50% - 37px);
+    /* Hidden before GSAP initialises — prevents a flash of the centred
+       blobs on the first paint (React renders before useEffect runs) */
+    opacity: 0;
     position: absolute;
     top: calc(50% - 37px);
+    /* Own compositing layer per blob so transforms are GPU-accelerated */
+    transform: translateZ(0);
     width: 74px;
+    will-change: transform;
   }
 
   .node-splash__text-l,
