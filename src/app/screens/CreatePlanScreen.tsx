@@ -325,7 +325,7 @@ export default function CreatePlanScreen() {
 
       <div className="pt-[24px]">
         <input
-          className="w-full border-none bg-transparent font-['Milling_Trial:Triplex_1mm',sans-serif] text-[30px] leading-[1] text-[#071c07] outline-none placeholder:text-[#7f897f]"
+          className="w-full border-none bg-transparent font-['Milling_Trial:Triplex_1mm',sans-serif] text-[28px] leading-[1] text-[#071c07] outline-none placeholder:text-[#7f897f]"
           onChange={(event) =>
             setFormData((current) => ({
               ...current,
@@ -338,7 +338,7 @@ export default function CreatePlanScreen() {
         />
       </div>
 
-      <div className="relative mt-[32px] h-[520px] w-full max-w-[355px] self-center">
+      <div className="relative mt-[24px] h-[520px] w-full max-w-[355px] self-center">
         {bubbles.map((bubble) => {
           const isPicture = bubble.key === "picture";
           const isDescription = bubble.key === "description";
@@ -463,7 +463,7 @@ export default function CreatePlanScreen() {
 
               <textarea
                 autoFocus
-                className="mt-[18px] min-h-[520px] w-full resize-none border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[22px] text-[#071c07] outline-none placeholder:text-[#8f8f8f]"
+                className="mt-[18px] min-h-[520px] w-full resize-none border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[24px] text-[#071c07] outline-none placeholder:text-[#8f8f8f]"
                 onChange={(event) => handleDescriptionChange(event.target.value)}
                 placeholder="Start writing..."
                 value={formData.description}
@@ -511,7 +511,7 @@ export default function CreatePlanScreen() {
                 </label>
                 <div className="mt-[6px] rounded-[12px] bg-white px-[12px] py-[12px] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_10px_20px_rgba(0,0,0,0.04)]">
                   <input
-                    className="w-full border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#071c07] outline-none"
+                    className="w-full border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[22px] text-[#071c07] outline-none"
                     onChange={(event) =>
                       setScheduleDraft((current) => ({
                         ...current,
@@ -531,7 +531,7 @@ export default function CreatePlanScreen() {
                 </label>
                 <div className="mt-[6px] rounded-[12px] bg-white px-[12px] py-[12px] shadow-[0_1px_0_rgba(255,255,255,0.9)_inset,0_10px_20px_rgba(0,0,0,0.04)]">
                   <input
-                    className="w-full border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#071c07] outline-none"
+                    className="w-full border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[22px] text-[#071c07] outline-none"
                     onChange={(event) =>
                       setScheduleDraft((current) => ({
                         ...current,
@@ -578,7 +578,7 @@ export default function CreatePlanScreen() {
 
               <input
                 autoFocus
-                className="mt-[18px] w-full border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[22px] text-[#071c07] outline-none placeholder:text-[#8f8f8f]"
+                className="mt-[18px] w-full border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[24px] text-[#071c07] outline-none placeholder:text-[#8f8f8f]"
                 onChange={(event) => setLocationQuery(event.target.value)}
                 placeholder="Search Locations..."
                 type="text"
@@ -625,7 +625,7 @@ export default function CreatePlanScreen() {
             </p>
             <textarea
               autoFocus
-              className="mt-[10px] min-h-[112px] w-full resize-none rounded-[18px] border-none bg-white px-[16px] py-[14px] font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#071c07] outline-none placeholder:text-[#9b9b9b]"
+              className="mt-[10px] min-h-[112px] w-full resize-none rounded-[18px] border-none bg-white px-[16px] py-[14px] font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[24px] text-[#071c07] outline-none placeholder:text-[#9b9b9b]"
               onChange={(event) => setDraftValue(event.target.value)}
               placeholder={activeFieldMeta.placeholder}
               rows={activeField === "description" ? 5 : 3}
