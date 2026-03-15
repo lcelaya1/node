@@ -3,7 +3,6 @@ import SplashScreen from "./screens/SplashScreen";
 import NoPlansScreen from "./screens/NoPlansScreen";
 import JoinPlanScreen from "./screens/JoinPlanScreen";
 import CreatePlanScreen from "./screens/CreatePlanScreen";
-import AddSpecsScreen from "./screens/AddSpecsScreen";
 import PlansHomeScreen from "./screens/PlansHomeScreen";
 
 export const router = createBrowserRouter([
@@ -25,7 +24,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/add-specs",
-    Component: AddSpecsScreen,
+    Component: CreatePlanScreen,
   },
   {
     path: "/plans-home",

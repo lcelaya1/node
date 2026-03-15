@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Milling Trial';
-  src: url('https://fonts.cdnfonts.com/s/98765/MillingTrial-Triplex1mm.woff') format('woff');
+  src: url('../assets/fonts/MillingTrial-Triplex1mm.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: 'Milling Trial';
-  src: url('https://fonts.cdnfonts.com/s/98765/MillingTrial-Duplex1mm.woff') format('woff');
+  src: url('../assets/fonts/MillingTrial-Duplex1mm.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;

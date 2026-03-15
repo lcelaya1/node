@@ -67,7 +67,7 @@ export function InputModal({ open, onClose, type, step, onSave }: InputModalProp
         <div className="bg-[#f3f3f3] rounded-tl-[32px] rounded-tr-[32px] pb-[40px] pt-[32px]">
           <div className="px-[53px]">
             <div className="content-stretch flex flex-col gap-[6px] items-start w-full max-w-[287px]" data-name="Info Content">
-              <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[18px] not-italic text-[12px] text-black">
+              <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[20px] not-italic text-[14px] text-black">
                 {currentConfig.label}
               </p>
               <div className="bg-white content-stretch flex flex-col items-start p-[12px] rounded-[13px] w-full" data-name="Info Content">
@@ -76,7 +76,7 @@ export function InputModal({ open, onClose, type, step, onSave }: InputModalProp
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder={currentConfig.placeholder}
-                  className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[18px] text-[12px] w-full outline-none bg-transparent placeholder:text-[#bbb] text-black"
+                  className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[20px] text-[14px] w-full outline-none bg-transparent placeholder:text-[#bbb] text-black"
                   autoFocus
                 />
               </div>

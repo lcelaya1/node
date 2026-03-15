@@ -127,7 +127,7 @@ export default function AddSpecsScreen() {
         <h1 className="font-['Milling_Trial:Triplex_1mm',sans-serif] leading-[30px] text-[#071c07] text-[24px]">
           Add your Specs
         </h1>
-        <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[18px] mt-[8px] text-[#9b9b9b] text-[12px]">
+        <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[20px] mt-[8px] text-[#9b9b9b] text-[14px]">
           Choose what others will see about your plan.
           <br />
           The more you add, the more persuasive.

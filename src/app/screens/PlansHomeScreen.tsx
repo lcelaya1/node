@@ -1,151 +1,154 @@
-import { useNavigate } from "react-router";
-import imgImage1 from "../../assets/d92dc11944c0835af8728de9c8586c5a5d0d5a38.png";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import { Plus } from "lucide-react";
+import { DualActionButtons } from "../components/DualActionButtons";
+import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 
-type MembersBackgroundImageAndTextProps = {
-  text: string;
-};
-
-function MembersBackgroundImageAndText({ text }: MembersBackgroundImageAndTextProps) {
-  return (
-    <div className="content-stretch flex flex-[1_0_0] gap-[8px] items-center min-h-px min-w-px relative">
-      <div className="h-[24px] relative shrink-0 w-[54.75px]">
-        <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 54.75 24">
-          <g id="Frame 2">
-            <circle cx="12" cy="12" fill="var(--fill-0, #D9D9D9)" id="Ellipse 1" r="11.6406" stroke="var(--stroke-0, #F7F7F7)" strokeWidth="0.71875" />
-            <circle cx="27.375" cy="12" fill="var(--fill-0, #D9D9D9)" id="Ellipse 2" r="11.6406" stroke="var(--stroke-0, #F7F7F7)" strokeWidth="0.71875" />
-            <circle cx="42.75" cy="12" fill="var(--fill-0, #D9D9D9)" id="Ellipse 3" r="11.6406" stroke="var(--stroke-0, #F7F7F7)" strokeWidth="0.71875" />
-          </g>
-        </svg>
-      </div>
-      <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#b0b0b0] text-[10px] whitespace-nowrap">
-        <p className="leading-[20px]">{text}</p>
-      </div>
-    </div>
-  );
-}
-
-type TextBackgroundImageAndTextProps = {
-  title: string;
-  location: string;
+type PlanCardProps = {
   description: string;
+  imageSrc?: string;
+  isHighlighted?: boolean;
+  location: string;
+  title: string;
 };
 
-function TextBackgroundImageAndText({ title, location, description }: TextBackgroundImageAndTextProps) {
+function PlanCard({ description, imageSrc, isHighlighted = false, location, title }: PlanCardProps) {
+  const cardHeight = imageSrc ? "min-h-[246px]" : "min-h-[103px]";
+
   return (
-    <div className="content-stretch flex flex-col gap-[4px] items-center justify-center leading-[0] not-italic relative rounded-[100px] shrink-0 w-full">
-      <div className="content-stretch flex flex-col gap-[2px] items-start relative shrink-0">
-        <div className="flex flex-col font-['Milling_Trial:Triplex_1mm',sans-serif] justify-center relative shrink-0 text-[#fc312e] text-[14px] w-[207px]" style={{ fontFeatureSettings: "'ss16'" }}>
-          <p className="leading-[normal]">{title}</p>
+    <article
+      className={`w-full max-w-[288px] rounded-[22px] px-[24px] py-[18px] transition-shadow ${cardHeight}`}
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.62) 100%)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255, 255, 255, 0.58)",
+        boxShadow: isHighlighted
+          ? "0 1px 0 rgba(255,255,255,0.82) inset, 0 -1px 1px rgba(0,0,0,0.04) inset, 0 16px 32px -8px rgba(0,0,0,0.14), 0 4px 12px rgba(255,255,255,0.76)"
+          : "0 1px 0 rgba(255,255,255,0.82) inset, 0 -1px 1px rgba(0,0,0,0.04) inset, 0 8px 20px -4px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
+      }}
+    >
+      <div className="flex min-h-full flex-col">
+        <div className="w-full">
+          <p
+            className="overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Triplex_1mm',sans-serif] text-[16px] leading-[18px] text-[#fc312e]"
+            style={{ fontFeatureSettings: "'ss16'" }}
+          >
+            {title}
+          </p>
+          <p
+            className="mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[15px] text-[#404040]"
+            style={{ fontFeatureSettings: "'ss16'" }}
+          >
+            {location}
+          </p>
+          <p
+            className="mt-[4px] overflow-hidden font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[15px] text-[#bbbbbb]"
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 1,
+            }}
+          >
+            {description}
+          </p>
         </div>
-        <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center relative shrink-0 text-[#404040] text-[12px] w-[207px]" style={{ fontFeatureSettings: "'ss16'" }}>
-          <p className="leading-[normal]">{location}</p>
-        </div>
+
+        {imageSrc ? (
+          <div className="mt-[12px] h-[137px] w-[211px] overflow-hidden rounded-[24px]">
+            <img alt={title} className="h-full w-full object-cover" src={imageSrc} />
+          </div>
+        ) : (
+          <div className="mt-auto" />
+        )}
       </div>
-      <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center min-w-full relative shrink-0 text-[#bbb] text-[12px] w-[min-content]" style={{ fontFeatureSettings: "'ss16'" }}>
-        <p className="leading-[normal]">{description}</p>
-      </div>
-    </div>
+    </article>
   );
 }
 
-function FillBackgroundImage() {
-  return (
-    <div className="absolute inset-0 rounded-[296px]">
-      <div aria-hidden="true" className="absolute inset-0 pointer-events-none rounded-[296px]">
-        <div className="absolute bg-[#333] inset-0 mix-blend-color-dodge rounded-[296px]" />
-        <div className="absolute inset-0 rounded-[296px]" style={{ backgroundImage: "linear-gradient(90deg, rgb(247, 247, 247) 0%, rgb(247, 247, 247) 100%), linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.5) 100%)" }} />
-      </div>
-    </div>
-  );
+function formatPlanForCard(plan: SavedPlan) {
+  return {
+    description: plan.description || "Description",
+    imageSrc: plan.picturePreview || undefined,
+    location: plan.where || plan.when || "Add a location",
+    title: plan.title || "Untitled Plan",
+  };
 }
 
 export default function PlansHomeScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
+
+  useEffect(() => {
+    setSavedPlans(loadSavedPlans());
+  }, []);
+
+  const highlightedPlanId = (location.state as { planId?: string } | null)?.planId;
 
   return (
-    <div className="bg-[#ebebeb] h-full overflow-y-auto" data-name="02 Auth / 01 Log in">
-      <div className="px-[20px] pb-[8px] pt-[66px]">
-        <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] leading-[30px] not-italic text-[#071c07] text-[24px] w-full">Next Up</p>
-        <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[normal] mt-[6px] not-italic text-[#071c07] text-[16px] w-full">Your Upcoming Plans</p>
+    <div className="h-full overflow-y-auto bg-[#ededed]" data-name="02 Auth / 01 Log in">
+      <div className="mx-auto flex min-h-full w-full max-w-[390px] flex-col">
+        <div className="px-[16px] pt-[16px]">
+          <h1 className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[30px] text-[#071c07]">
+            Next Up
+          </h1>
+          <p className="mt-[6px] font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[20px] text-[#071c07]">
+            Your Upcoming Plans
+          </p>
+        </div>
+
+        {savedPlans.length ? (
+          <div className="flex flex-col gap-[16px] px-[16px] pb-[120px] pt-[24px]">
+            {savedPlans.map((plan) => {
+              const card = formatPlanForCard(plan);
+
+              return (
+                <PlanCard
+                  key={plan.id}
+                  description={card.description}
+                  imageSrc={card.imageSrc}
+                  isHighlighted={plan.id === highlightedPlanId}
+                  location={card.location}
+                  title={card.title}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex min-h-[70vh] flex-col items-center justify-center px-[25px] pb-[24px]">
+            <div className="flex w-full max-w-[292px] flex-col items-center gap-[28px] text-center">
+              <div className="flex flex-col items-center gap-[8px]">
+                <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[30px] text-[#071c07]">
+                  No plans ahead!
+                </p>
+                <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#9a9a9a]">
+                  Let us handle it, we will match you with 3 plans that we know you will enjoy.
+                </p>
+              </div>
+
+              <DualActionButtons
+                primary={{ label: "Join Plan", onClick: () => navigate("/join-plan") }}
+                secondary={{ label: "Create Plan", onClick: () => navigate("/add-specs") }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col gap-[24px] px-[20px] pb-[8px]">
-      <div className="p-[24px] rounded-[32px]" 
-        style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.5)',
-          boxShadow: '0px 1px 0px 0px rgba(255, 255, 255, 0.8) inset, 0px -1px 1px 0px rgba(0, 0, 0, 0.05) inset, 0px 8px 20px -4px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        }}
-      >
-        <div className="flex flex-col gap-[4px]">
-          <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[normal] text-[#fc312e]">
-            Caffe Break
-          </p>
-          <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[normal] text-[#404040]">
-            Nomad Coffee, El Born Barcelona
-          </p>
-          <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[normal] text-[#bbb]">
-            Description
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-[8px] mt-[80px]">
-          <div className="h-[32px] relative w-[73px]">
-            <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 73 32">
-              <g>
-                <circle cx="16" cy="16" fill="#D9D9D9" r="15.5" stroke="#F7F7F7" strokeWidth="1" />
-                <circle cx="36.5" cy="16" fill="#D9D9D9" r="15.5" stroke="#F7F7F7" strokeWidth="1" />
-                <circle cx="57" cy="16" fill="#D9D9D9" r="15.5" stroke="#F7F7F7" strokeWidth="1" />
-              </g>
-            </svg>
-          </div>
-          <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[normal] text-[#b0b0b0]">
-            3 People Going.
-          </p>
-        </div>
-      </div>
-
-      <div className="p-[24px] rounded-[32px]" 
-        style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.5)',
-          boxShadow: '0px 1px 0px 0px rgba(255, 255, 255, 0.8) inset, 0px -1px 1px 0px rgba(0, 0, 0, 0.05) inset, 0px 8px 20px -4px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        }}
-      >
-        <div className="flex flex-col gap-[4px]">
-          <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[normal] text-[#fc312e]">
-            Caffe Break
-          </p>
-          <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[normal] text-[#404040]">
-            Nomad Coffee, El Born Barcelona
-          </p>
-          <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[normal] text-[#bbb]">
-            Description
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-[8px] mt-[16px]">
-          <div className="h-[32px] relative w-[73px]">
-            <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 73 32">
-              <g>
-                <circle cx="16" cy="16" fill="#D9D9D9" r="15.5" stroke="#F7F7F7" strokeWidth="1" />
-                <circle cx="36.5" cy="16" fill="#D9D9D9" r="15.5" stroke="#F7F7F7" strokeWidth="1" />
-                <circle cx="57" cy="16" fill="#D9D9D9" r="15.5" stroke="#F7F7F7" strokeWidth="1" />
-              </g>
-            </svg>
-          </div>
-          <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[normal] text-[#b0b0b0]">
-            3 People Going.
-          </p>
-        </div>
-        
-        <div className="mt-[16px] w-full h-[280px] rounded-[24px] overflow-hidden">
-          <img alt="Coffee shop" className="w-full h-full object-cover" src={imgImage1} />
-        </div>
-      </div>
-      </div>
+      {savedPlans.length ? (
+        <button
+          className="fixed bottom-[28px] left-1/2 z-20 ml-[115px] flex h-[64px] w-[64px] items-center justify-center rounded-full text-white shadow-[0_10px_24px_rgba(255,59,48,0.36)]"
+          onClick={() => navigate("/add-specs")}
+          style={{
+            background: "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)",
+          }}
+          type="button"
+        >
+          <Plus size={28} strokeWidth={2.4} />
+        </button>
+      ) : null}
     </div>
   );
 }
