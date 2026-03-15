@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 
-const SPLASH_DURATION_MS = 2200;
+const SPLASH_DURATION_MS = 30000;
 
 export default function SplashScreen() {
   const navigate = useNavigate();
