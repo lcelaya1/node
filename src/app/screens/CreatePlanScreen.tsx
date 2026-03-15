@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Check, X } from "lucide-react";
 import { DualActionButtons } from "../components/DualActionButtons";
 import { LiquidGlassButton } from "../components/LiquidGlassButton";
 import { deletePlan, loadSavedPlan, savePlan, type SavedPlan } from "../lib/plans";
@@ -37,6 +37,7 @@ export default function CreatePlanScreen() {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [isWhereConfirmed, setIsWhereConfirmed] = useState(false);
   const [formData, setFormData] = useState({
     description: "",
     title: "",
@@ -48,12 +49,16 @@ export default function CreatePlanScreen() {
   const [pictureName, setPictureName] = useState("");
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const submitLabel = editingPlanId ? "Save Plan" : "Create Plan";
+  const descriptionLength = formData.description.trim().length;
   const canSavePlan = Boolean(
     formData.title.trim() &&
       formData.when.trim() &&
-      formData.where.trim() &&
-      formData.description.trim(),
+      isWhereConfirmed &&
+      descriptionLength >= 100,
   );
+  const descriptionReady = descriptionLength >= 100;
+  const whenReady = Boolean(scheduleDraft.date && scheduleDraft.time);
+  const whereReady = isWhereConfirmed;
 
   const openEditor = (field: FieldKey) => {
     if (field === "description") {
@@ -160,6 +165,7 @@ export default function CreatePlanScreen() {
       where: value,
     }));
     setLocationQuery(value);
+    setIsWhereConfirmed(true);
     closeWhereModal();
   };
 
@@ -278,6 +284,7 @@ export default function CreatePlanScreen() {
         time: plan.whenTime ?? "",
       });
       setLocationQuery(plan.where ?? "");
+      setIsWhereConfirmed(Boolean(plan.where?.trim()));
       setPicturePreview(plan.picturePreview ?? "");
       setPictureName(plan.picturePreview ? "Selected image" : "");
     });
@@ -457,7 +464,7 @@ export default function CreatePlanScreen() {
       {descriptionModalOpen ? (
         <>
           <div className="absolute inset-0 z-40 bg-[#16181f]/82" onClick={closeDescriptionModal} />
-          <div className="absolute inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
+          <div className="absolute inset-x-0 bottom-0 z-50 mx-auto h-[550px] max-h-[calc(100%-78px)] w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
             <div className="px-[16px] pt-[20px]">
               <div className="mx-auto h-[5px] w-[44px] rounded-full bg-[#6f7991]" />
               <div className="mt-[16px] flex items-start justify-between">
@@ -465,17 +472,21 @@ export default function CreatePlanScreen() {
                   Explain a bit
                 </h2>
                 <button
-                  className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] bg-white text-[#6f7991]"
+                  className={`flex h-[36px] w-[36px] items-center justify-center rounded-[12px] ${descriptionReady ? "bg-[#fc312e] text-white" : "bg-white text-[#6f7991]"}`}
                   onClick={closeDescriptionModal}
                   type="button"
                 >
-                  <X size={20} strokeWidth={1.8} />
+                  <Check size={20} strokeWidth={2} />
                 </button>
               </div>
 
+              <p className="mt-[6px] font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#8f8f8f]">
+                Please write at least 100 characters.
+              </p>
+
               <textarea
                 autoFocus
-                className="mt-[18px] min-h-[520px] w-full resize-none border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[24px] text-[#071c07] outline-none placeholder:text-[#8f8f8f]"
+                className="mt-[14px] min-h-[420px] w-full resize-none border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[24px] text-[#071c07] outline-none placeholder:text-[#8f8f8f]"
                 onChange={(event) => handleDescriptionChange(event.target.value)}
                 placeholder="Start writing..."
                 value={formData.description}
@@ -488,18 +499,18 @@ export default function CreatePlanScreen() {
       {whenModalOpen ? (
         <>
           <div className="absolute inset-0 z-40 bg-[#16181f]/52" onClick={closeWhenModal} />
-          <div className="absolute inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[36px] bg-[#f7f7f7] px-[16px] pb-[20px] pt-[18px]">
+          <div className="absolute inset-x-0 bottom-0 z-50 mx-auto h-[550px] max-h-[calc(100%-78px)] w-full max-w-[390px] overflow-hidden rounded-t-[36px] bg-[#f7f7f7] px-[16px] pb-[20px] pt-[18px]">
             <div className="mx-auto h-[5px] w-[44px] rounded-full bg-[#6f7991]" />
             <div className="mt-[16px] flex items-start justify-between">
               <h2 className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[34px] text-[#071c07]">
                 When?
               </h2>
               <button
-                className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] bg-white text-[#6f7991]"
+                className={`flex h-[36px] w-[36px] items-center justify-center rounded-[12px] ${whenReady ? "bg-[#fc312e] text-white" : "bg-white text-[#6f7991]"}`}
                 onClick={closeWhenModal}
                 type="button"
               >
-                <X size={20} strokeWidth={1.8} />
+                <Check size={20} strokeWidth={2} />
               </button>
             </div>
 
@@ -551,7 +562,7 @@ export default function CreatePlanScreen() {
       {whereModalOpen ? (
         <>
           <div className="absolute inset-0 z-40 bg-[#16181f]/82" onClick={closeWhereModal} />
-          <div className="absolute inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
+          <div className="absolute inset-x-0 bottom-0 z-50 mx-auto h-[550px] max-h-[calc(100%-78px)] w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
             <div className="px-[16px] pt-[20px]">
               <div className="mx-auto h-[5px] w-[44px] rounded-full bg-[#6f7991]" />
               <div className="mt-[16px] flex items-start justify-between">
@@ -559,11 +570,11 @@ export default function CreatePlanScreen() {
                   Where?
                 </h2>
                 <button
-                  className="flex h-[36px] w-[36px] items-center justify-center rounded-[12px] bg-white text-[#6f7991]"
+                  className={`flex h-[36px] w-[36px] items-center justify-center rounded-[12px] ${whereReady ? "bg-[#fc312e] text-white" : "bg-white text-[#6f7991]"}`}
                   onClick={closeWhereModal}
                   type="button"
                 >
-                  <X size={20} strokeWidth={1.8} />
+                  <Check size={20} strokeWidth={2} />
                 </button>
               </div>
 
@@ -577,6 +588,7 @@ export default function CreatePlanScreen() {
                     ...current,
                     where: value,
                   }));
+                  setIsWhereConfirmed(false);
                 }}
                 placeholder="Search Locations..."
                 type="text"
