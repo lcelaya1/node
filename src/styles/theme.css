@@ -2,7 +2,6 @@
 
 :root {
   --font-size: 16px;
-  --splash-animation-duration: 30s;
   --background: #ffffff;
   --app-surface: #ededed;
   --foreground: oklch(0.145 0 0);
@@ -248,17 +247,17 @@
   }
 
   .node-splash__circle--left {
-    animation: splash-left var(--splash-animation-duration) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: splash-left 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     left: 0;
   }
 
   .node-splash__circle--right {
-    animation: splash-right var(--splash-animation-duration) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: splash-right 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     right: 0;
   }
 
   .node-splash__bridge {
-    animation: splash-bridge var(--splash-animation-duration) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: splash-bridge 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     border-radius: 999px;
     height: 30px;
     left: 33px;
@@ -268,7 +267,7 @@
 
   .node-splash__pill {
     align-items: center;
-    animation: splash-pill var(--splash-animation-duration) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: splash-pill 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     border-radius: 28px;
     display: flex;
     height: 60px;
@@ -290,7 +289,7 @@
   }
 
   .node-splash__circle-word {
-    animation: splash-circle-word var(--splash-animation-duration) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: splash-circle-word 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     position: relative;
     z-index: 2;
   }
@@ -300,7 +299,7 @@
   }
 
   .node-splash__word--full {
-    animation: splash-word-full var(--splash-animation-duration) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: splash-word-full 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     opacity: 0;
   }
 }
