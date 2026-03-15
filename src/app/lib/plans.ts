@@ -4,6 +4,8 @@ export type SavedPlan = {
   id: string;
   picturePreview: string;
   title: string;
+  whenDate?: string;
+  whenTime?: string;
   when: string;
   where: string;
 };
@@ -56,6 +58,27 @@ export async function loadSavedPlans(): Promise<SavedPlan[]> {
   });
 }
 
+export async function loadSavedPlan(planId: string): Promise<SavedPlan | null> {
+  const database = await openPlansDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE_NAME, "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(planId);
+
+    request.onsuccess = () => {
+      resolve((request.result as SavedPlan | undefined) ?? null);
+    };
+
+    request.onerror = () => {
+      reject(request.error ?? new Error("Could not load saved plan."));
+    };
+
+    transaction.oncomplete = () => database.close();
+    transaction.onerror = () => reject(transaction.error ?? new Error("Could not load saved plan."));
+  });
+}
+
 export async function savePlan(plan: SavedPlan): Promise<SavedPlan[]> {
   const database = await openPlansDatabase();
 
@@ -75,5 +98,22 @@ export async function savePlan(plan: SavedPlan): Promise<SavedPlan[]> {
     };
 
     transaction.onerror = () => reject(transaction.error ?? new Error("Could not save plan."));
+  });
+}
+
+export async function deletePlan(planId: string): Promise<void> {
+  const database = await openPlansDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE_NAME, "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+    store.delete(planId);
+
+    transaction.oncomplete = () => {
+      database.close();
+      resolve();
+    };
+
+    transaction.onerror = () => reject(transaction.error ?? new Error("Could not delete plan."));
   });
 }

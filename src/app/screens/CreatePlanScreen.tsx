@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { ArrowLeft, X } from "lucide-react";
 import { DualActionButtons } from "../components/DualActionButtons";
 import { LiquidGlassButton } from "../components/LiquidGlassButton";
-import { savePlan, type SavedPlan } from "../lib/plans";
+import { deletePlan, loadSavedPlan, savePlan, type SavedPlan } from "../lib/plans";
 
 type FieldKey = "title" | "when" | "where" | "description";
 type BubbleConfig = {
@@ -23,6 +23,7 @@ const bubbles: BubbleConfig[] = [
 
 export default function CreatePlanScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeField, setActiveField] = useState<FieldKey | null>(null);
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
@@ -45,6 +46,8 @@ export default function CreatePlanScreen() {
   const [draftValue, setDraftValue] = useState("");
   const [picturePreview, setPicturePreview] = useState("");
   const [pictureName, setPictureName] = useState("");
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  const submitLabel = editingPlanId ? "Save Plan" : "Create Plan";
   const canSavePlan = Boolean(
     formData.title.trim() &&
       formData.when.trim() &&
@@ -110,15 +113,26 @@ export default function CreatePlanScreen() {
     const normalizedPlan: SavedPlan = {
       createdAt: new Date().toISOString(),
       description: formData.description.trim(),
-      id: crypto.randomUUID(),
+      id: editingPlanId ?? crypto.randomUUID(),
       picturePreview,
       title: formData.title.trim() || "Untitled Plan",
+      whenDate: scheduleDraft.date,
+      whenTime: scheduleDraft.time,
       when: formData.when.trim(),
       where: formData.where.trim(),
     };
 
     await savePlan(normalizedPlan);
     navigate("/home", { state: { planId: normalizedPlan.id } });
+  };
+
+  const handleDeletePlan = async () => {
+    if (!editingPlanId) {
+      return;
+    }
+
+    await deletePlan(editingPlanId);
+    navigate("/home", { replace: true });
   };
 
   const formatWhenSummary = (date: string, time: string) => {
@@ -243,6 +257,36 @@ export default function CreatePlanScreen() {
     }));
   }, [scheduleDraft.date, scheduleDraft.time]);
 
+  useEffect(() => {
+    const planId = (location.state as { planId?: string } | null)?.planId;
+    if (!planId) return;
+
+    let isMounted = true;
+
+    loadSavedPlan(planId).then((plan) => {
+      if (!isMounted || !plan) return;
+
+      setEditingPlanId(plan.id);
+      setFormData({
+        description: plan.description ?? "",
+        title: plan.title ?? "",
+        when: plan.when ?? "",
+        where: plan.where ?? "",
+      });
+      setScheduleDraft({
+        date: plan.whenDate ?? "",
+        time: plan.whenTime ?? "",
+      });
+      setLocationQuery(plan.where ?? "");
+      setPicturePreview(plan.picturePreview ?? "");
+      setPictureName(plan.picturePreview ? "Selected image" : "");
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [location.state]);
+
   const activeFieldMeta = activeField
     ? {
         description: {
@@ -266,13 +310,25 @@ export default function CreatePlanScreen() {
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-[#ededed] px-[26px]">
-      <button
-        onClick={() => navigate("/home")}
-        className="mt-[20px] flex items-center gap-2 text-[#071c07]"
-        type="button"
-      >
-        <ArrowLeft size={24} />
-      </button>
+      <div className="mt-[20px] flex items-center justify-between">
+        <button
+          onClick={() => navigate("/home")}
+          className="flex items-center gap-2 text-[#071c07]"
+          type="button"
+        >
+          <ArrowLeft size={24} />
+        </button>
+
+        {editingPlanId ? (
+          <button
+            className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#fc312e]"
+            onClick={handleDeletePlan}
+            type="button"
+          >
+            Delete
+          </button>
+        ) : null}
+      </div>
 
       <div className="pt-[24px]">
         <input
@@ -372,7 +428,7 @@ export default function CreatePlanScreen() {
           onClick={handleSubmit}
           variant="red"
         >
-          Save Plan
+          {submitLabel}
         </LiquidGlassButton>
       </div>
 

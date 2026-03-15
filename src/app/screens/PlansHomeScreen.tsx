@@ -9,15 +9,17 @@ type PlanCardProps = {
   imageSrc?: string;
   isHighlighted?: boolean;
   location: string;
+  onClick?: () => void;
   title: string;
 };
 
-function PlanCard({ description, imageSrc, isHighlighted = false, location, title }: PlanCardProps) {
-  const cardHeight = imageSrc ? "min-h-[280px]" : "min-h-[162px]";
+function PlanCard({ description, imageSrc, isHighlighted = false, location, onClick, title }: PlanCardProps) {
+  const cardHeight = imageSrc ? "min-h-[280px]" : "";
 
   return (
-    <article
-      className={`w-full rounded-[28px] px-[20px] py-[18px] transition-shadow ${cardHeight}`}
+    <button
+      className={`w-full rounded-[16px] px-[20px] py-[18px] text-left transition-shadow ${cardHeight}`}
+      onClick={onClick}
       style={{
         background:
           "linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.62) 100%)",
@@ -56,14 +58,12 @@ function PlanCard({ description, imageSrc, isHighlighted = false, location, titl
         </div>
 
         {imageSrc ? (
-          <div className="mt-[14px] h-[180px] w-full overflow-hidden rounded-[26px]">
+          <div className="mt-[14px] h-[180px] w-full overflow-hidden rounded-[16px]">
             <img alt={title} className="h-full w-full object-cover" src={imageSrc} />
           </div>
-        ) : (
-          <div className="mt-auto" />
-        )}
+        ) : null}
       </div>
-    </article>
+    </button>
   );
 }
 
@@ -120,6 +120,7 @@ export default function PlansHomeScreen() {
                   imageSrc={card.imageSrc}
                   isHighlighted={plan.id === highlightedPlanId}
                   location={card.location}
+                  onClick={() => navigate("/add-specs", { state: { planId: plan.id } })}
                   title={card.title}
                 />
               );
