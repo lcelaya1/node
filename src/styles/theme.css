@@ -224,83 +224,70 @@
   }
 
   .node-splash {
-    height: 78px;
+    height: 110px;
+    overflow: visible;
     position: relative;
-    width: 132px;
+    width: 260px;
   }
 
-  .node-splash__circle,
-  .node-splash__bridge,
-  .node-splash__pill {
-    background: #ff3733;
+  .node-splash__filter {
     position: absolute;
   }
 
-  .node-splash__circle {
-    align-items: center;
+  .node-splash__goo {
+    filter: url(#node-goo);
+    inset: 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .node-splash__blob {
+    background: #fc312e;
     border-radius: 999px;
-    display: flex;
     height: 74px;
-    justify-content: center;
-    top: 2px;
+    left: calc(50% - 37px);
+    position: absolute;
+    top: calc(50% - 37px);
     width: 74px;
   }
 
-  .node-splash__circle--left {
-    animation: splash-left 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    left: 0;
-  }
-
-  .node-splash__circle--right {
-    animation: splash-right 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    right: 0;
-  }
-
-  .node-splash__bridge {
-    animation: splash-bridge 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    border-radius: 999px;
-    height: 30px;
-    left: 33px;
-    top: 24px;
-    width: 66px;
-  }
-
-  .node-splash__pill {
+  .node-splash__text-l,
+  .node-splash__text-r {
     align-items: center;
-    animation: splash-pill 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    border-radius: 28px;
-    display: flex;
-    height: 60px;
-    justify-content: center;
-    left: 4px;
-    opacity: 0;
-    top: 9px;
-    width: 124px;
-  }
-
-  .node-splash__circle-word,
-  .node-splash__word {
     color: #fff;
+    display: flex;
     font-family: "Milling Trial", sans-serif;
     font-size: 26px;
     font-weight: 600;
+    height: 74px;
+    justify-content: center;
     letter-spacing: -0.02em;
     line-height: 1;
-  }
-
-  .node-splash__circle-word {
-    animation: splash-circle-word 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    position: relative;
+    left: calc(50% - 37px);
+    position: absolute;
+    top: calc(50% - 37px);
+    width: 74px;
     z-index: 2;
   }
 
-  .node-splash__word {
-    position: absolute;
-  }
-
-  .node-splash__word--full {
-    animation: splash-word-full 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  .node-splash__text-node {
+    align-items: center;
+    color: #fff;
+    display: flex;
+    font-family: "Milling Trial", sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    height: 74px;
+    justify-content: center;
+    left: 0;
+    letter-spacing: -0.02em;
+    line-height: 1;
     opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: calc(50% - 37px);
+    z-index: 2;
   }
 }
 
@@ -317,106 +304,4 @@
   }
 }
 
-@keyframes splash-left {
-  0%,
-  42% {
-    border-radius: 999px;
-    left: 0;
-    transform: scale(1);
-  }
-
-  70%,
-  100% {
-    border-radius: 28px;
-    left: 2px;
-    transform: scaleX(0.78);
-  }
-}
-
-@keyframes splash-right {
-  0%,
-  42% {
-    border-radius: 999px;
-    right: 0;
-    transform: scale(1);
-  }
-
-  70%,
-  100% {
-    border-radius: 28px;
-    right: 2px;
-    transform: scaleX(0.78);
-  }
-}
-
-@keyframes splash-bridge {
-  0%,
-  35% {
-    border-radius: 999px;
-    left: 33px;
-    opacity: 0.98;
-    top: 24px;
-    transform: scaleX(1);
-    width: 66px;
-  }
-
-  72%,
-  100% {
-    border-radius: 28px;
-    left: 4px;
-    opacity: 1;
-    top: 9px;
-    transform: scaleX(1);
-    width: 124px;
-  }
-}
-
-@keyframes splash-pill {
-  0%,
-  58% {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-
-  78% {
-    opacity: 1;
-    transform: scale(1.03);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes splash-circle-word {
-  0%,
-  52% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  68%,
-  100% {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-}
-
-@keyframes splash-word-full {
-  0%,
-  64% {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-
-  82% {
-    opacity: 1;
-    transform: scale(1.04);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+/* Splash animation is driven by GSAP in SplashScreen.tsx */
