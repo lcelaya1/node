@@ -13,11 +13,11 @@ type PlanCardProps = {
 };
 
 function PlanCard({ description, imageSrc, isHighlighted = false, location, title }: PlanCardProps) {
-  const cardHeight = imageSrc ? "min-h-[246px]" : "min-h-[103px]";
+  const cardHeight = imageSrc ? "min-h-[280px]" : "min-h-[162px]";
 
   return (
     <article
-      className={`w-full max-w-[288px] rounded-[22px] px-[24px] py-[18px] transition-shadow ${cardHeight}`}
+      className={`w-full rounded-[28px] px-[20px] py-[18px] transition-shadow ${cardHeight}`}
       style={{
         background:
           "linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.62) 100%)",
@@ -32,19 +32,19 @@ function PlanCard({ description, imageSrc, isHighlighted = false, location, titl
       <div className="flex min-h-full flex-col">
         <div className="w-full">
           <p
-            className="overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Triplex_1mm',sans-serif] text-[16px] leading-[18px] text-[#fc312e]"
+            className="overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Triplex_1mm',sans-serif] text-[18px] leading-[22px] text-[#fc312e]"
             style={{ fontFeatureSettings: "'ss16'" }}
           >
             {title}
           </p>
           <p
-            className="mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[15px] text-[#404040]"
+            className="mt-[4px] overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[18px] text-[#404040]"
             style={{ fontFeatureSettings: "'ss16'" }}
           >
             {location}
           </p>
           <p
-            className="mt-[4px] overflow-hidden font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[15px] text-[#bbbbbb]"
+            className="mt-[2px] overflow-hidden font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[18px] text-[#bbbbbb]"
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",
@@ -56,7 +56,7 @@ function PlanCard({ description, imageSrc, isHighlighted = false, location, titl
         </div>
 
         {imageSrc ? (
-          <div className="mt-[12px] h-[137px] w-[211px] overflow-hidden rounded-[24px]">
+          <div className="mt-[14px] h-[180px] w-full overflow-hidden rounded-[26px]">
             <img alt={title} className="h-full w-full object-cover" src={imageSrc} />
           </div>
         ) : (
@@ -82,7 +82,16 @@ export default function PlansHomeScreen() {
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
 
   useEffect(() => {
-    setSavedPlans(loadSavedPlans());
+    let isMounted = true;
+
+    loadSavedPlans().then((plans) => {
+      if (!isMounted) return;
+      setSavedPlans(plans);
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const highlightedPlanId = (location.state as { planId?: string } | null)?.planId;
@@ -100,7 +109,7 @@ export default function PlansHomeScreen() {
         </div>
 
         {savedPlans.length ? (
-          <div className="flex flex-col gap-[16px] px-[16px] pb-[120px] pt-[24px]">
+          <div className="flex flex-col gap-[18px] px-[16px] pb-[120px] pt-[24px]">
             {savedPlans.map((plan) => {
               const card = formatPlanForCard(plan);
 

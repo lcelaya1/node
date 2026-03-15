@@ -8,13 +8,22 @@ export default function NoPlansScreen() {
   const location = useLocation();
 
   useEffect(() => {
-    const savedPlans = loadSavedPlans();
-    if (savedPlans.length) {
-      navigate("/plans-home", {
-        replace: true,
-        state: location.state,
-      });
-    }
+    let isMounted = true;
+
+    loadSavedPlans().then((savedPlans) => {
+      if (!isMounted) return;
+
+      if (savedPlans.length) {
+        navigate("/plans-home", {
+          replace: true,
+          state: location.state,
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, [location.state, navigate]);
 
   return (

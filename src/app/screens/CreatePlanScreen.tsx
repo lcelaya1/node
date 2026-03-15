@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Mic, X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { DualActionButtons } from "../components/DualActionButtons";
 import { LiquidGlassButton } from "../components/LiquidGlassButton";
 import { savePlan, type SavedPlan } from "../lib/plans";
@@ -24,12 +24,10 @@ const bubbles: BubbleConfig[] = [
 export default function CreatePlanScreen() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
   const [activeField, setActiveField] = useState<FieldKey | null>(null);
   const [descriptionModalOpen, setDescriptionModalOpen] = useState(false);
   const [whenModalOpen, setWhenModalOpen] = useState(false);
   const [whereModalOpen, setWhereModalOpen] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [scheduleDraft, setScheduleDraft] = useState({
     date: "",
     time: "",
@@ -47,6 +45,12 @@ export default function CreatePlanScreen() {
   const [draftValue, setDraftValue] = useState("");
   const [picturePreview, setPicturePreview] = useState("");
   const [pictureName, setPictureName] = useState("");
+  const canSavePlan = Boolean(
+    formData.title.trim() &&
+      formData.when.trim() &&
+      formData.where.trim() &&
+      formData.description.trim(),
+  );
 
   const openEditor = (field: FieldKey) => {
     if (field === "description") {
@@ -76,11 +80,6 @@ export default function CreatePlanScreen() {
 
   const closeDescriptionModal = () => {
     setDescriptionModalOpen(false);
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setIsRecording(false);
   };
 
   const closeWhenModal = () => {
@@ -103,7 +102,11 @@ export default function CreatePlanScreen() {
     closeEditor();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!canSavePlan) {
+      return;
+    }
+
     const normalizedPlan: SavedPlan = {
       createdAt: new Date().toISOString(),
       description: formData.description.trim(),
@@ -114,26 +117,20 @@ export default function CreatePlanScreen() {
       where: formData.where.trim(),
     };
 
-    savePlan(normalizedPlan);
+    await savePlan(normalizedPlan);
     navigate("/home", { state: { planId: normalizedPlan.id } });
   };
 
-  const saveWhen = () => {
-    const dateLabel = scheduleDraft.date
-      ? new Date(`${scheduleDraft.date}T12:00:00`).toLocaleDateString("en-GB", {
+  const formatWhenSummary = (date: string, time: string) => {
+    const dateLabel = date
+      ? new Date(`${date}T12:00:00`).toLocaleDateString("en-GB", {
           weekday: "long",
           day: "numeric",
           month: "long",
         })
       : "";
 
-    const summary = [dateLabel, scheduleDraft.time].filter(Boolean).join("\n");
-
-    setFormData((current) => ({
-      ...current,
-      when: summary || "",
-    }));
-    closeWhenModal();
+    return [dateLabel, time].filter(Boolean).join("\n");
   };
 
   const handleDescriptionChange = (value: string) => {
@@ -151,59 +148,6 @@ export default function CreatePlanScreen() {
     setLocationQuery(value);
     closeWhereModal();
   };
-
-  const toggleRecording = () => {
-    const SpeechRecognition =
-      (window as typeof window & { SpeechRecognition?: any; webkitSpeechRecognition?: any })
-        .SpeechRecognition ||
-      (window as typeof window & { SpeechRecognition?: any; webkitSpeechRecognition?: any })
-        .webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      return;
-    }
-
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-      setIsRecording(false);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
-    recognition.interimResults = true;
-    recognition.continuous = true;
-
-    recognition.onstart = () => {
-      setIsRecording(true);
-    };
-
-    recognition.onend = () => {
-      recognitionRef.current = null;
-      setIsRecording(false);
-    };
-
-    recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results)
-        .map((result: any) => result[0]?.transcript ?? "")
-        .join(" ")
-        .trim();
-
-      handleDescriptionChange(transcript);
-    };
-
-    recognition.start();
-    recognitionRef.current = recognition;
-  };
-
-  useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!whereModalOpen) return;
@@ -291,6 +235,13 @@ export default function CreatePlanScreen() {
       window.clearTimeout(timeoutId);
     };
   }, [locationQuery, whereModalOpen]);
+
+  useEffect(() => {
+    setFormData((current) => ({
+      ...current,
+      when: formatWhenSummary(scheduleDraft.date, scheduleDraft.time),
+    }));
+  }, [scheduleDraft.date, scheduleDraft.time]);
 
   const activeFieldMeta = activeField
     ? {
@@ -415,7 +366,12 @@ export default function CreatePlanScreen() {
       </div>
 
       <div className="mt-auto pt-[20px] pb-[12px]">
-        <LiquidGlassButton className="h-[54px] w-full text-[16px]" onClick={handleSubmit} variant="red">
+        <LiquidGlassButton
+          className="h-[54px] w-full text-[16px]"
+          disabled={!canSavePlan}
+          onClick={handleSubmit}
+          variant="red"
+        >
           Save Plan
         </LiquidGlassButton>
       </div>
@@ -469,19 +425,6 @@ export default function CreatePlanScreen() {
                 value={formData.description}
               />
             </div>
-
-            <button
-              className="absolute bottom-[28px] right-[16px] flex h-[63px] w-[64px] items-center justify-center rounded-full text-white shadow-[0_8px_20px_rgba(255,59,48,0.32)]"
-              onClick={toggleRecording}
-              style={{
-                background: isRecording
-                  ? "linear-gradient(180deg, rgba(255,92,79,1) 0%, rgba(222,38,32,1) 100%)"
-                  : "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)",
-              }}
-              type="button"
-            >
-              <Mic size={24} strokeWidth={2} />
-            </button>
           </div>
         </>
       ) : null}
@@ -489,7 +432,7 @@ export default function CreatePlanScreen() {
       {whenModalOpen ? (
         <>
           <div className="absolute inset-0 z-40 bg-[#16181f]/52" onClick={closeWhenModal} />
-          <div className="absolute inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[36px] bg-[#f7f7f7] px-[16px] pb-[20px] pt-[18px]">
+          <div className="absolute inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[36px] bg-[#f7f7f7] px-[16px] pb-[20px] pt-[18px]">
             <div className="mx-auto h-[5px] w-[44px] rounded-full bg-[#6f7991]" />
             <div className="mt-[16px] flex items-start justify-between">
               <h2 className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[34px] text-[#071c07]">
@@ -545,14 +488,6 @@ export default function CreatePlanScreen() {
                 </div>
               </div>
             </div>
-
-            <DualActionButtons
-              className="mt-[28px]"
-              primary={{ label: "Done", onClick: saveWhen }}
-              primaryWidthClassName="w-full"
-              secondary={{ label: "", onClick: closeWhenModal }}
-              secondaryWidthClassName="hidden"
-            />
           </div>
         </>
       ) : null}
@@ -579,7 +514,14 @@ export default function CreatePlanScreen() {
               <input
                 autoFocus
                 className="mt-[18px] w-full border-none bg-transparent font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[24px] text-[#071c07] outline-none placeholder:text-[#8f8f8f]"
-                onChange={(event) => setLocationQuery(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setLocationQuery(value);
+                  setFormData((current) => ({
+                    ...current,
+                    where: value,
+                  }));
+                }}
                 placeholder="Search Locations..."
                 type="text"
                 value={locationQuery}
