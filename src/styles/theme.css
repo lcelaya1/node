@@ -3,6 +3,7 @@
 :root {
   --font-size: 16px;
   --background: #ffffff;
+  --app-surface: #ededed;
   --foreground: oklch(0.145 0 0);
   --card: #ffffff;
   --card-foreground: oklch(0.145 0 0);
@@ -132,6 +133,7 @@
 
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
     margin: 0;
   }
 
@@ -190,15 +192,16 @@
 @layer components {
   .app-shell {
     align-items: center;
-    background: #dcdcdc;
+    background: var(--app-surface);
     display: flex;
     justify-content: center;
     min-height: 100vh;
+    min-height: 100dvh;
     padding: 0;
   }
 
   .app-device {
-    background: #ededed;
+    background: var(--app-surface);
     height: min(852px, 100dvh);
     max-height: 100dvh;
     overflow: hidden;
@@ -207,6 +210,7 @@
   }
 
   .app-content {
+    background: var(--app-surface);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -214,7 +218,7 @@
     min-height: 0;
     overflow: hidden;
     padding-bottom: 44px;
-    padding-top: 16px;
+    padding-top: max(16px, env(safe-area-inset-top));
     position: relative;
     width: 100%;
   }
@@ -307,7 +311,7 @@
     }
 
     .app-device {
-      height: 100vh;
+      height: 100dvh;
       width: 100vw;
     }
   }
