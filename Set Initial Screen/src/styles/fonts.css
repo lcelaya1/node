@@ -1,0 +1,23 @@
+@font-face {
+  font-family: 'Milling Trial';
+  src: url('https://fonts.cdnfonts.com/s/98765/MillingTrial-Triplex1mm.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Milling Trial';
+  src: url('https://fonts.cdnfonts.com/s/98765/MillingTrial-Duplex1mm.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: url('https://fonts.cdnfonts.com/s/59298/SFPRODISPLAYSEMIBOLDITALIC.woff') format('woff');
+  font-weight: 590;
+  font-style: normal;
+  font-display: swap;
+}
