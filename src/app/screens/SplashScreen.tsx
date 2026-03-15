@@ -17,7 +17,13 @@ export default function SplashScreen() {
   }, [navigate]);
 
   return (
-    <div className="bg-[#ededed] flex h-full items-center justify-center overflow-hidden">
+    <div
+      className="flex h-full items-center justify-center overflow-hidden bg-[#ededed]"
+      style={{
+        height: "calc(100% + env(safe-area-inset-bottom))",
+        marginBottom: "calc(env(safe-area-inset-bottom) * -1)",
+      }}
+    >
       <div className="node-splash" aria-label="Node splash screen">
         <Lottie
           animationData={animationData}

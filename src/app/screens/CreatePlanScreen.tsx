@@ -314,7 +314,7 @@ export default function CreatePlanScreen() {
     : null;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[#ededed] px-[26px]">
+    <div className="relative flex h-full flex-col overflow-hidden bg-[#ededed] px-[26px]">
       <button
         onClick={() => navigate("/home")}
         className="mt-[20px] flex items-center gap-2 text-[#071c07]"
@@ -323,9 +323,9 @@ export default function CreatePlanScreen() {
         <ArrowLeft size={24} />
       </button>
 
-      <div className="pt-[34px]">
+      <div className="pt-[24px]">
         <input
-          className="w-full border-none bg-transparent font-['Milling_Trial:Triplex_1mm',sans-serif] text-[34px] leading-[1] text-[#071c07] outline-none placeholder:text-[#7f897f]"
+          className="w-full border-none bg-transparent font-['Milling_Trial:Triplex_1mm',sans-serif] text-[30px] leading-[1] text-[#071c07] outline-none placeholder:text-[#7f897f]"
           onChange={(event) =>
             setFormData((current) => ({
               ...current,
@@ -338,7 +338,7 @@ export default function CreatePlanScreen() {
         />
       </div>
 
-      <div className="relative mt-[48px] h-[555px] w-full max-w-[355px] self-center">
+      <div className="relative mt-[32px] h-[520px] w-full max-w-[355px] self-center">
         {bubbles.map((bubble) => {
           const isPicture = bubble.key === "picture";
           const isDescription = bubble.key === "description";
@@ -414,7 +414,7 @@ export default function CreatePlanScreen() {
         })}
       </div>
 
-      <div className="mt-auto pb-[12px]">
+      <div className="mt-auto pt-[20px] pb-[12px]">
         <LiquidGlassButton className="h-[54px] w-full text-[16px]" onClick={handleSubmit} variant="red">
           Save Plan
         </LiquidGlassButton>
@@ -444,8 +444,8 @@ export default function CreatePlanScreen() {
 
       {descriptionModalOpen ? (
         <>
-          <div className="fixed inset-0 z-40 bg-[#16181f]/82" onClick={closeDescriptionModal} />
-          <div className="fixed inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
+          <div className="absolute inset-0 z-40 bg-[#16181f]/82" onClick={closeDescriptionModal} />
+          <div className="absolute inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
             <div className="px-[16px] pt-[20px]">
               <div className="mx-auto h-[5px] w-[44px] rounded-full bg-[#6f7991]" />
               <div className="mt-[16px] flex items-start justify-between">
@@ -488,8 +488,8 @@ export default function CreatePlanScreen() {
 
       {whenModalOpen ? (
         <>
-          <div className="fixed inset-0 z-40 bg-[#16181f]/52" onClick={closeWhenModal} />
-          <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[36px] bg-[#f7f7f7] px-[16px] pb-[20px] pt-[18px]">
+          <div className="absolute inset-0 z-40 bg-[#16181f]/52" onClick={closeWhenModal} />
+          <div className="absolute inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[36px] bg-[#f7f7f7] px-[16px] pb-[20px] pt-[18px]">
             <div className="mx-auto h-[5px] w-[44px] rounded-full bg-[#6f7991]" />
             <div className="mt-[16px] flex items-start justify-between">
               <h2 className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[34px] text-[#071c07]">
@@ -559,8 +559,8 @@ export default function CreatePlanScreen() {
 
       {whereModalOpen ? (
         <>
-          <div className="fixed inset-0 z-40 bg-[#16181f]/82" onClick={closeWhereModal} />
-          <div className="fixed inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
+          <div className="absolute inset-0 z-40 bg-[#16181f]/82" onClick={closeWhereModal} />
+          <div className="absolute inset-x-0 bottom-0 top-[78px] z-50 mx-auto w-full max-w-[390px] overflow-hidden rounded-t-[32px] bg-[#f7f7f7]">
             <div className="px-[16px] pt-[20px]">
               <div className="mx-auto h-[5px] w-[44px] rounded-full bg-[#6f7991]" />
               <div className="mt-[16px] flex items-start justify-between">
@@ -618,8 +618,8 @@ export default function CreatePlanScreen() {
 
       {activeField && activeFieldMeta ? (
         <>
-          <div className="fixed inset-0 z-40 bg-black/20" onClick={closeEditor} />
-          <div className="fixed inset-x-[20px] bottom-[24px] z-50 rounded-[28px] bg-[#f3f3f3] p-[20px] shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+          <div className="absolute inset-0 z-40 bg-black/20" onClick={closeEditor} />
+          <div className="absolute inset-x-[20px] bottom-[24px] z-50 rounded-[28px] bg-[#f3f3f3] p-[20px] shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
             <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#071c07]">
               {activeFieldMeta.label}
             </p>
