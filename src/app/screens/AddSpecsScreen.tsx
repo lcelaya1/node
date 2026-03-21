@@ -17,7 +17,10 @@ type PlanData = {
 function getTomorrow(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  return d.toISOString().split("T")[0];
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export default function AddSpecsScreen() {
@@ -120,7 +123,11 @@ export default function AddSpecsScreen() {
                       type="date"
                       value={planData.date}
                       min={getTomorrow()}
-                      onChange={(e) => handleChange("date", e.target.value)}
+                      onChange={(e) => {
+                        if (e.target.value >= getTomorrow()) {
+                          handleChange("date", e.target.value);
+                        }
+                      }}
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                   </div>
