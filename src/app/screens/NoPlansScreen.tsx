@@ -7,6 +7,16 @@ export default function NoPlansScreen() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleCreatePlan = () => {
+    navigate("/add-specs");
+
+    window.setTimeout(() => {
+      if (window.location.pathname !== "/add-specs") {
+        window.location.assign("/add-specs");
+      }
+    }, 50);
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -14,7 +24,7 @@ export default function NoPlansScreen() {
       if (!isMounted) return;
 
       if (savedPlans.length) {
-        navigate("/plans-home", {
+        navigate("/", {
           replace: true,
           state: location.state,
         });
@@ -37,7 +47,7 @@ export default function NoPlansScreen() {
 
           <DualActionButtons
             primary={{ label: "Join Plan", onClick: () => navigate("/join-plan") }}
-            secondary={{ label: "Create Plan", onClick: () => navigate("/add-specs") }}
+            secondary={{ label: "Create Plan", onClick: handleCreatePlan }}
           />
         </div>
       </div>

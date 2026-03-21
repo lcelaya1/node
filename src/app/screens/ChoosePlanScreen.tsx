@@ -133,7 +133,7 @@ export default function ChoosePlanScreen() {
           date={plan.date}
           location={plan.location}
           showButton
-          onJoin={() => navigate("/plans-home")}
+          onJoin={() => navigate("/")}
         />
       </div>
 

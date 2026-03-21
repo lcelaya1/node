@@ -35,6 +35,7 @@ export default function AddSpecsScreen() {
   const [whereModalOpen, setWhereModalOpen] = useState(false);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
+  const [isSaving, setIsSaving] = useState(false);
   const [planData, setPlanData] = useState<PlanData>({
     title: "",
     date: "",
@@ -67,28 +68,35 @@ export default function AddSpecsScreen() {
   };
 
   const handleSave = async () => {
-    const id = planId ?? crypto.randomUUID();
-    const when = [planData.date, planData.hour].filter(Boolean).join(" · ");
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const id = planId ?? crypto.randomUUID();
+      const when = [planData.date, planData.hour].filter(Boolean).join(" · ");
 
-    await savePlan({
-      id,
-      createdAt: new Date().toISOString(),
-      title: planData.title,
-      description: planData.description,
-      where: planData.location,
-      when,
-      whenDate: planData.date,
-      whenTime: planData.hour,
-      picturePreview: coverImage ?? "",
-    });
+      await savePlan({
+        id,
+        createdAt: new Date().toISOString(),
+        title: planData.title,
+        description: planData.description,
+        where: planData.location,
+        when,
+        whenDate: planData.date,
+        whenTime: planData.hour,
+        picturePreview: coverImage ?? "",
+      });
 
-    navigate("/plans-home", { state: { planId: id } });
+      navigate("/", { state: { planId: id } });
+    } catch (err) {
+      console.error("Failed to save plan:", err);
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = async () => {
     if (!planId) return;
     await deletePlan(planId);
-    navigate("/plans-home");
+    navigate("/");
   };
 
   if (isLoading) {
@@ -251,9 +259,13 @@ export default function AddSpecsScreen() {
             <button
               type="button"
               onClick={handleSave}
-              className="mt-[24px] w-full h-[45px] rounded-[999px] shrink-0 flex items-center justify-center"
+              disabled={isSaving}
+              className="mt-[24px] w-full h-[45px] rounded-[999px] shrink-0 flex items-center justify-center gap-[8px] disabled:opacity-70"
               style={{ background: "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)" }}
             >
+              {isSaving && (
+                <div className="w-[18px] h-[18px] rounded-full border-2 border-white/40 border-t-white animate-spin" />
+              )}
               <span className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[21px] text-[#fefefe] text-center whitespace-nowrap">
                 {isEditing ? "Update plan" : "Create plan"}
               </span>

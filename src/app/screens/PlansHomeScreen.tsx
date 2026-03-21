@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Plus } from "lucide-react";
-import { DualActionButtons } from "../components/DualActionButtons";
+import NoPlansScreen from "./NoPlansScreen";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 
 type PlanCardProps = {
@@ -96,6 +96,10 @@ export default function PlansHomeScreen() {
 
   const highlightedPlanId = (location.state as { planId?: string } | null)?.planId;
 
+  if (!savedPlans.length) {
+    return <NoPlansScreen />;
+  }
+
   return (
     <div className="h-full overflow-y-auto bg-[#ededed]" data-name="02 Auth / 01 Log in">
       <div className="mx-auto flex min-h-full w-full max-w-[390px] flex-col">
@@ -108,57 +112,35 @@ export default function PlansHomeScreen() {
           </p>
         </div>
 
-        {savedPlans.length ? (
-          <div className="flex flex-col gap-[18px] px-[16px] pb-[32px] pt-[24px]">
-            {savedPlans.map((plan) => {
-              const card = formatPlanForCard(plan);
+        <div className="flex flex-col gap-[18px] px-[16px] pb-[32px] pt-[24px]">
+          {savedPlans.map((plan) => {
+            const card = formatPlanForCard(plan);
 
-              return (
-                <PlanCard
-                  key={plan.id}
-                  description={card.description}
-                  imageSrc={card.imageSrc}
-                  isHighlighted={plan.id === highlightedPlanId}
-                  location={card.location}
-                  onClick={() => navigate("/add-specs", { state: { planId: plan.id } })}
-                  title={card.title}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex min-h-[70vh] flex-col items-center justify-center px-[25px] pb-[32px]">
-            <div className="flex w-full max-w-[292px] flex-col items-center gap-[28px] text-center">
-              <div className="flex flex-col items-center gap-[8px]">
-                <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[30px] text-[#071c07]">
-                  No plans ahead!
-                </p>
-                <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#9a9a9a]">
-                  Let us handle it, we will match you with 3 plans that we know you will enjoy.
-                </p>
-              </div>
-
-              <DualActionButtons
-                primary={{ label: "Join Plan", onClick: () => navigate("/join-plan") }}
-                secondary={{ label: "Create Plan", onClick: () => navigate("/add-specs") }}
+            return (
+              <PlanCard
+                key={plan.id}
+                description={card.description}
+                imageSrc={card.imageSrc}
+                isHighlighted={plan.id === highlightedPlanId}
+                location={card.location}
+                onClick={() => navigate("/add-specs", { state: { planId: plan.id } })}
+                title={card.title}
               />
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
 
-      {savedPlans.length ? (
-        <button
-          className="fixed bottom-[28px] left-1/2 z-20 ml-[115px] flex h-[64px] w-[64px] items-center justify-center rounded-full text-white shadow-[0_10px_24px_rgba(255,59,48,0.36)]"
-          onClick={() => navigate("/add-specs")}
-          style={{
-            background: "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)",
-          }}
-          type="button"
-        >
-          <Plus size={28} strokeWidth={2.4} />
-        </button>
-      ) : null}
+      <button
+        className="fixed bottom-[28px] left-1/2 z-20 ml-[115px] flex h-[64px] w-[64px] items-center justify-center rounded-full text-white shadow-[0_10px_24px_rgba(255,59,48,0.36)]"
+        onClick={() => navigate("/add-specs")}
+        style={{
+          background: "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)",
+        }}
+        type="button"
+      >
+        <Plus size={28} strokeWidth={2.4} />
+      </button>
     </div>
   );
 }
