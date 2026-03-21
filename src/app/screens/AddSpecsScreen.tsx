@@ -1,10 +1,12 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import { Trash2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { IconButton } from "../components/IconButton";
 import { SpeechBubbleChip } from "../components/SpeechBubbleChip";
 import { WhereModal } from "../components/WhereModal";
 import { ExplainModal } from "../components/ExplainModal";
+import { deletePlan, loadSavedPlan, savePlan } from "../lib/plans";
 
 type PlanData = {
   title: string;
@@ -25,6 +27,10 @@ function getTomorrow(): string {
 
 export default function AddSpecsScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const planId = (location.state as { planId?: string } | null)?.planId ?? null;
+  const isEditing = planId !== null;
+
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [whereModalOpen, setWhereModalOpen] = useState(false);
@@ -37,8 +43,49 @@ export default function AddSpecsScreen() {
     description: "",
   });
 
+  // Load existing plan when editing
+  useEffect(() => {
+    if (!planId) return;
+    loadSavedPlan(planId).then((plan) => {
+      if (!plan) return;
+      setPlanData({
+        title: plan.title ?? "",
+        date: plan.whenDate ?? "",
+        hour: plan.whenTime ?? "",
+        location: plan.where ?? "",
+        description: plan.description ?? "",
+      });
+      if (plan.picturePreview) setCoverImage(plan.picturePreview);
+    });
+  }, [planId]);
+
   const handleChange = (field: keyof PlanData, value: string) => {
     setPlanData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    const id = planId ?? crypto.randomUUID();
+    const when = [planData.date, planData.hour].filter(Boolean).join(" · ");
+
+    await savePlan({
+      id,
+      createdAt: new Date().toISOString(),
+      title: planData.title,
+      description: planData.description,
+      where: planData.location,
+      when,
+      whenDate: planData.date,
+      whenTime: planData.hour,
+      picturePreview: coverImage ?? "",
+    });
+
+    navigate("/plans-home", { state: { planId: id } });
+  };
+
+  const handleDelete = async () => {
+    if (!planId) return;
+    await deletePlan(planId);
+    navigate("/plans-home");
   };
 
   return (
@@ -72,7 +119,17 @@ export default function AddSpecsScreen() {
             }}
           />
 
-          <div className="absolute top-[56px] right-[20px]" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute top-[56px] right-[20px] flex items-center gap-[8px]" onClick={(e) => e.stopPropagation()}>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="flex items-center justify-center size-[36px] rounded-full bg-white/80 backdrop-blur text-[#fc312e]"
+                aria-label="Delete plan"
+              >
+                <Trash2 size={16} strokeWidth={2} />
+              </button>
+            )}
             <IconButton
               icon="Close"
               hierarchy="Primary Light"
@@ -179,13 +236,13 @@ export default function AddSpecsScreen() {
               </div>
             </div>
 
-            {/* Create plan button */}
+            {/* Save button */}
             <Button
               variant="secondary"
-              onClick={() => navigate("/plans-home")}
+              onClick={handleSave}
               className="w-full mt-[24px]"
             >
-              Create plan
+              {isEditing ? "Update plan" : "Create plan"}
             </Button>
           </div>
         </div>
