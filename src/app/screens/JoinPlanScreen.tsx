@@ -237,7 +237,7 @@ export default function JoinPlanScreen() {
         {/* Search button */}
         <button
           type="button"
-          onClick={() => navigate("/plans-home")}
+          onClick={() => navigate("/choose-plan")}
           className="w-full h-[45px] rounded-[999px] flex items-center justify-center gap-[6px] mt-auto shrink-0"
           style={{ background: "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)" }}
         >
