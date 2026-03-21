@@ -27,7 +27,7 @@ export default function NoPlansScreen() {
   }, [location.state, navigate]);
 
   return (
-    <div className="bg-[#ededed] flex h-full flex-col items-center overflow-hidden px-[25px] pb-[8px]" data-name="02 Auth / 01 Log in">
+    <div className="bg-[#ededed] flex h-full flex-col items-center overflow-hidden px-[25px] pb-[32px]" data-name="02 Auth / 01 Log in">
       <div className="flex flex-1 items-center justify-center">
         <div className="flex flex-col items-center gap-[28px] not-italic text-center w-full">
           <div className="flex flex-col items-center gap-[8px] w-[292px]" data-name="Info Content">

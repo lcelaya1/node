@@ -109,7 +109,7 @@ export default function PlansHomeScreen() {
         </div>
 
         {savedPlans.length ? (
-          <div className="flex flex-col gap-[18px] px-[16px] pb-[120px] pt-[24px]">
+          <div className="flex flex-col gap-[18px] px-[16px] pb-[32px] pt-[24px]">
             {savedPlans.map((plan) => {
               const card = formatPlanForCard(plan);
 
@@ -127,7 +127,7 @@ export default function PlansHomeScreen() {
             })}
           </div>
         ) : (
-          <div className="flex min-h-[70vh] flex-col items-center justify-center px-[25px] pb-[24px]">
+          <div className="flex min-h-[70vh] flex-col items-center justify-center px-[25px] pb-[32px]">
             <div className="flex w-full max-w-[292px] flex-col items-center gap-[28px] text-center">
               <div className="flex flex-col items-center gap-[8px]">
                 <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[30px] text-[#071c07]">

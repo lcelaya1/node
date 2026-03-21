@@ -6,7 +6,7 @@ export default function JoinPlanScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[#ededed] px-[25px] pb-[8px]">
+    <div className="flex h-full flex-col overflow-hidden bg-[#ededed] px-[25px] pb-[32px]">
       <button
         className="mt-[20px] flex items-center gap-2 text-[#071c07]"
         onClick={() => navigate("/home")}

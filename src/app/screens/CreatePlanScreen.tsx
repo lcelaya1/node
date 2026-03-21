@@ -316,7 +316,7 @@ export default function CreatePlanScreen() {
     : null;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#ededed] px-[26px]">
+    <div className="relative flex h-full flex-col overflow-hidden bg-[#ededed] px-[26px] pb-[32px]">
       <div className="mt-[20px] flex items-center justify-between">
         <button
           onClick={() => navigate("/home")}
