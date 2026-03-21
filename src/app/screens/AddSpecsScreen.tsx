@@ -110,7 +110,7 @@ export default function AddSpecsScreen() {
   return (
     <>
       <div
-        className="bg-[#fefefe] flex flex-col overflow-hidden"
+        className="bg-[#fefefe] flex h-full min-h-full flex-col overflow-hidden"
         style={{
           marginTop: "calc(-1 * max(16px, env(safe-area-inset-top)))",
           marginBottom: "calc(-1 * env(safe-area-inset-bottom))",
