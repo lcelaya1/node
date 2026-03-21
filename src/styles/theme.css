@@ -124,7 +124,8 @@
   html,
   body,
   #root {
-    min-height: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   * {
@@ -133,7 +134,6 @@
 
   body {
     @apply bg-background text-foreground;
-    min-height: 100dvh;
     margin: 0;
   }
 
@@ -194,9 +194,9 @@
     align-items: center;
     background: var(--app-surface);
     display: flex;
+    height: 100%;
     justify-content: center;
-    min-height: 100vh;
-    min-height: 100dvh;
+    overflow: hidden;
     padding: 0;
   }
 
