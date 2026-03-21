@@ -1,5 +1,4 @@
 import { createBrowserRouter } from "react-router";
-import SplashScreen from "./screens/SplashScreen";
 import NoPlansScreen from "./screens/NoPlansScreen";
 import JoinPlanScreen from "./screens/JoinPlanScreen";
 import CreatePlanScreen from "./screens/CreatePlanScreen";
@@ -9,7 +8,7 @@ import PlansHomeScreen from "./screens/PlansHomeScreen";
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: SplashScreen,
+    Component: NoPlansScreen,
   },
   {
     path: "/home",
