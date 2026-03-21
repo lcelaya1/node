@@ -34,6 +34,7 @@ export default function AddSpecsScreen() {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [whereModalOpen, setWhereModalOpen] = useState(false);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing);
   const [planData, setPlanData] = useState<PlanData>({
     title: "",
     date: "",
@@ -45,16 +46,19 @@ export default function AddSpecsScreen() {
   // Load existing plan when editing
   useEffect(() => {
     if (!planId) return;
+    setIsLoading(true);
     loadSavedPlan(planId).then((plan) => {
-      if (!plan) return;
-      setPlanData({
-        title: plan.title ?? "",
-        date: plan.whenDate ?? "",
-        hour: plan.whenTime ?? "",
-        location: plan.where ?? "",
-        description: plan.description ?? "",
-      });
-      if (plan.picturePreview) setCoverImage(plan.picturePreview);
+      if (plan) {
+        setPlanData({
+          title: plan.title ?? "",
+          date: plan.whenDate ?? "",
+          hour: plan.whenTime ?? "",
+          location: plan.where ?? "",
+          description: plan.description ?? "",
+        });
+        if (plan.picturePreview) setCoverImage(plan.picturePreview);
+      }
+      setIsLoading(false);
     });
   }, [planId]);
 
@@ -86,6 +90,14 @@ export default function AddSpecsScreen() {
     await deletePlan(planId);
     navigate("/plans-home");
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full bg-[#fefefe]">
+        <div className="w-[32px] h-[32px] rounded-full border-2 border-[#e4e4e7] border-t-[#fc312e] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>
