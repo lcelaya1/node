@@ -69,8 +69,8 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
     <>
       <div className="fixed inset-0 bg-[rgba(24,24,32,0.4)] z-40" onClick={handleConfirm} />
       <div
-        className="fixed left-0 right-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col h-[640px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up"
-        style={{ bottom: keyboardOffset, maxHeight: `calc(100vh - ${keyboardOffset + 20}px)` }}
+        className="fixed left-0 right-0 bottom-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up overflow-hidden"
+        style={{ height: "min(640px, calc(100vh - 20px))" }}
       >
 
         {/* Header — pinned */}
@@ -95,7 +95,11 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
         </div>
 
         {/* Scrollable text area */}
-        <div ref={scrollRef} className={`flex-1 overflow-y-auto px-[20px] pt-[12px] ${isRecording ? "pb-[180px]" : "pb-[32px]"}`}>
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-[20px] pt-[12px]"
+          style={{ paddingBottom: isRecording ? 180 : Math.max(96, keyboardOffset + 96) }}
+        >
           <textarea
             ref={textareaRef}
             autoFocus
@@ -107,7 +111,10 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
         </div>
 
         {/* Audio button — pinned */}
-        <div className="shrink-0 flex justify-end px-[20px] pt-[20px] pb-[32px]">
+        <div
+          className="absolute right-[20px]"
+          style={{ bottom: keyboardOffset > 0 ? keyboardOffset + 20 : 32 }}
+        >
           <button
             type="button"
             onClick={handleOpenRecording}

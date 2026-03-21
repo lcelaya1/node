@@ -13,23 +13,6 @@ export function WhereModal({ isOpen, onClose, onSelect, initialValue = "" }: Whe
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [kbHeight, setKbHeight] = useState(0);
-  const [vvHeight, setVvHeight] = useState(window.visualViewport?.height ?? window.innerHeight);
-
-  // Keep modal sitting just above the keyboard on iOS
-  useEffect(() => {
-    if (!isOpen) { setKbHeight(0); setVvHeight(window.visualViewport?.height ?? window.innerHeight); return; }
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      // keyboard height = layout viewport minus visual viewport (no offsetTop — that's scroll, not keyboard)
-      setKbHeight(Math.max(0, window.innerHeight - vv.height));
-      setVvHeight(vv.height);
-    };
-    vv.addEventListener("resize", update);
-    update();
-    return () => { vv.removeEventListener("resize", update); setKbHeight(0); };
-  }, [isOpen]);
 
   // Reset query when modal opens
   useEffect(() => {
@@ -123,7 +106,7 @@ export function WhereModal({ isOpen, onClose, onSelect, initialValue = "" }: Whe
       {/* Sheet */}
       <div
         className="fixed left-0 right-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col pb-[32px] pt-[20px] px-[20px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up"
-        style={{ bottom: kbHeight, height: Math.min(640, vvHeight - 20) }}
+        style={{ bottom: 0, height: "min(640px, calc(100vh - 20px))" }}
       >
 
         {/* Header */}
