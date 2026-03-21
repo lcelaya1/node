@@ -10,7 +10,7 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     }, SPLASH_DURATION_MS);
 
     return () => window.clearTimeout(timeoutId);

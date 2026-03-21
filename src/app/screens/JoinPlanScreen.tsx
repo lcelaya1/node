@@ -9,7 +9,7 @@ export default function JoinPlanScreen() {
     <div className="flex h-full flex-col overflow-hidden bg-[#ededed] px-[25px] pb-[32px]">
       <button
         className="mt-[20px] flex items-center gap-2 text-[#071c07]"
-        onClick={() => navigate("/home")}
+        onClick={() => navigate("/")}
         type="button"
       >
         <ArrowLeft size={24} />
@@ -26,7 +26,7 @@ export default function JoinPlanScreen() {
             </p>
           </div>
 
-          <LiquidGlassButton className="w-full" onClick={() => navigate("/home")} variant="white">
+          <LiquidGlassButton className="w-full" onClick={() => navigate("/")} variant="white">
             Back Home
           </LiquidGlassButton>
         </div>
