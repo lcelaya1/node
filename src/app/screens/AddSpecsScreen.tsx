@@ -128,7 +128,7 @@ export default function AddSpecsScreen() {
                           handleChange("date", e.target.value);
                         }
                       }}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      className="absolute inset-0 opacity-[0.001] cursor-pointer"
                     />
                   </div>
                   <div className="border border-[#e4e4e7] flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px]">
