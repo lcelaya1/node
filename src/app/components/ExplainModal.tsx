@@ -16,7 +16,7 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
   const recordingBaseRef = useRef("");
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
-  // Keep modal above the keyboard on iOS
+  // Track keyboard height so only the audio button reacts to it.
   useEffect(() => {
     if (!isOpen) { setKeyboardOffset(0); return; }
     const vv = window.visualViewport;
@@ -25,6 +25,36 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
     vv.addEventListener("resize", update);
     update();
     return () => { vv.removeEventListener("resize", update); setKeyboardOffset(0); };
+  }, [isOpen]);
+
+  // iOS Safari tries to scroll the page to focused textareas.
+  // Freeze document scrolling while the modal is open so the sheet stays pinned.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const bodyStyle = document.body.style;
+    const htmlStyle = document.documentElement.style;
+    const previousBodyOverflow = bodyStyle.overflow;
+    const previousBodyPosition = bodyStyle.position;
+    const previousBodyTop = bodyStyle.top;
+    const previousBodyWidth = bodyStyle.width;
+    const previousHtmlOverflow = htmlStyle.overflow;
+    const scrollY = window.scrollY;
+
+    htmlStyle.overflow = "hidden";
+    bodyStyle.overflow = "hidden";
+    bodyStyle.position = "fixed";
+    bodyStyle.top = `-${scrollY}px`;
+    bodyStyle.width = "100%";
+
+    return () => {
+      htmlStyle.overflow = previousHtmlOverflow;
+      bodyStyle.overflow = previousBodyOverflow;
+      bodyStyle.position = previousBodyPosition;
+      bodyStyle.top = previousBodyTop;
+      bodyStyle.width = previousBodyWidth;
+      window.scrollTo(0, scrollY);
+    };
   }, [isOpen]);
 
   // Keep draft in sync when modal opens
@@ -69,12 +99,12 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
     <>
       <div className="fixed inset-0 bg-[rgba(24,24,32,0.4)] z-40" onClick={handleConfirm} />
       <div
-        className="fixed left-0 right-0 bottom-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up overflow-hidden"
-        style={{ height: "min(640px, calc(100vh - 20px))" }}
+        className="fixed left-0 right-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col pb-[32px] pt-[20px] px-[20px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up overflow-hidden"
+        style={{ bottom: 0, height: "min(640px, calc(100vh - 20px))" }}
       >
 
         {/* Header — pinned */}
-        <div className="shrink-0 flex flex-col gap-[16px] items-center pt-[20px] px-[20px]">
+        <div className="shrink-0 flex flex-col gap-[16px] items-center">
           <div className="bg-[#667085] h-[5px] rounded-full w-[44px]" />
           <div className="flex items-center justify-between w-full">
             <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[28px] leading-[36px] tracking-[-0.56px] text-[#09090b]">
@@ -97,14 +127,14 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
         {/* Scrollable text area */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-[20px] pt-[12px]"
+          className="flex-1 overflow-y-auto pt-[12px]"
           style={{ paddingBottom: isRecording ? 180 : Math.max(96, keyboardOffset + 96) }}
         >
           <textarea
             ref={textareaRef}
-            autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onFocus={() => window.scrollTo(0, 0)}
             placeholder="Start writing..."
             className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[21px] text-[#09090b] placeholder:text-[rgba(0,0,0,0.5)] bg-transparent border-none outline-none resize-none w-full overflow-hidden min-h-[24px]"
           />

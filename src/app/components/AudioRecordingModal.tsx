@@ -11,9 +11,12 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
   const [seconds, setSeconds] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [lang, setLang] = useState<"es-ES" | "en-US">("es-ES");
+  const [error, setError] = useState("");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const transcriptRef = useRef("");
   const timerRef = useRef<number | null>(null);
+  const shouldSaveOnEndRef = useRef(false);
+  const shouldRestartRef = useRef(false);
 
   // Visualizer
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,7 +31,10 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
       stopVisualizer();
       setSeconds(0);
       setIsRecording(false);
+      setError("");
       transcriptRef.current = "";
+      shouldSaveOnEndRef.current = false;
+      shouldRestartRef.current = false;
     }
   }, [isOpen]);
 
@@ -43,8 +49,9 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
       source.connect(analyser);
       analyserRef.current = analyser;
       drawLoop();
+      return true;
     } catch {
-      // mic denied — visualizer won't show
+      return false;
     }
   };
 
@@ -99,58 +106,146 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
     vizStreamRef.current = null;
   };
 
-  const handleToggle = () => {
+  const getSpeechRecognition = () => {
+    return (
+      window.SpeechRecognition ??
+      (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition
+    );
+  };
+
+  const cleanupRecognition = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    recognition.onresult = null;
+    recognition.onend = null;
+    recognition.onerror = null;
+    recognitionRef.current = null;
+  };
+
+  const saveTranscriptAndClose = () => {
+    onSave(transcriptRef.current.trim());
+    onClose();
+  };
+
+  const startRecognition = (SpeechRecognitionAPI: typeof SpeechRecognition) => {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = lang;
+
+    recognition.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          transcriptRef.current += `${t} `;
+        } else {
+          interim += t;
+        }
+      }
+      onLiveTranscript?.((transcriptRef.current + interim).trim());
+    };
+
+    recognition.onerror = (event) => {
+      const nextError =
+        event.error === "not-allowed"
+          ? "Microphone access is blocked on this device."
+          : event.error === "no-speech"
+            ? ""
+            : "Speech transcription is not available right now.";
+
+      if (nextError) setError(nextError);
+
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        shouldRestartRef.current = false;
+        shouldSaveOnEndRef.current = false;
+        setIsRecording(false);
+        stopVisualizer();
+        if (timerRef.current) window.clearInterval(timerRef.current);
+      }
+    };
+
+    recognition.onend = () => {
+      cleanupRecognition();
+
+      if (shouldSaveOnEndRef.current) {
+        shouldSaveOnEndRef.current = false;
+        shouldRestartRef.current = false;
+        saveTranscriptAndClose();
+        return;
+      }
+
+      if (shouldRestartRef.current) {
+        try {
+          startRecognition(SpeechRecognitionAPI);
+        } catch {
+          setError("Speech transcription stopped unexpectedly.");
+          shouldRestartRef.current = false;
+          setIsRecording(false);
+          stopVisualizer();
+          if (timerRef.current) window.clearInterval(timerRef.current);
+        }
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+
+  const handleToggle = async () => {
     if (!isRecording) {
+      setError("");
       transcriptRef.current = "";
       setSeconds(0);
+      shouldSaveOnEndRef.current = false;
+      shouldRestartRef.current = true;
 
-      const SpeechRecognitionAPI =
-        window.SpeechRecognition ??
-        (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+      if (!window.isSecureContext) {
+        setError("On iPhone, microphone access needs HTTPS. Open the secure deployed site to allow the mic.");
+        shouldRestartRef.current = false;
+        return;
+      }
 
-      if (SpeechRecognitionAPI) {
-        const recognition = new SpeechRecognitionAPI();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = lang;
+      const micReady = await startVisualizer();
+      if (!micReady) {
+        setError("Please allow microphone access to record audio.");
+        shouldRestartRef.current = false;
+        return;
+      }
 
-        recognition.onresult = (e) => {
-          let interim = "";
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            const t = e.results[i][0].transcript;
-            if (e.results[i].isFinal) {
-              transcriptRef.current += t + " ";
-            } else {
-              interim += t;
-            }
-          }
-          onLiveTranscript?.(transcriptRef.current + interim);
-        };
+      const SpeechRecognitionAPI = getSpeechRecognition();
+      if (!SpeechRecognitionAPI) {
+        stopVisualizer();
+        setError("Speech transcription is not supported on this mobile browser.");
+        shouldRestartRef.current = false;
+        return;
+      }
 
-        recognition.start();
-        recognitionRef.current = recognition;
+      try {
+        startRecognition(SpeechRecognitionAPI);
+      } catch {
+        stopVisualizer();
+        setError("Speech transcription could not start on this device.");
+        shouldRestartRef.current = false;
+        return;
       }
 
       timerRef.current = window.setInterval(() => {
         setSeconds((s) => s + 1);
       }, 1000);
 
-      startVisualizer();
       setIsRecording(true);
     } else {
       if (timerRef.current) window.clearInterval(timerRef.current);
       stopVisualizer();
+      shouldRestartRef.current = false;
+      shouldSaveOnEndRef.current = true;
 
       const recognition = recognitionRef.current;
       if (recognition) {
-        recognition.onend = () => {
-          onSave(transcriptRef.current.trim());
-          onClose();
-        };
         recognition.stop();
       } else {
-        onSave(transcriptRef.current.trim());
-        onClose();
+        saveTranscriptAndClose();
       }
 
       setIsRecording(false);
@@ -188,6 +283,11 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
             <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[16px] text-[#09090b]">
               Start Audio Recording
             </p>
+            {error && (
+              <p className="max-w-[240px] text-center font-['Milling_Trial:Duplex_1mm',sans-serif] text-[12px] leading-[16px] text-[#fc312e]">
+                {error}
+              </p>
+            )}
             <div className="flex bg-[#d4d4d8] rounded-[999px] p-[2px]">
               {(["es-ES", "en-US"] as const).map((l) => (
                 <button
