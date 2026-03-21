@@ -22,7 +22,6 @@ function getTomorrow(): string {
 
 export default function AddSpecsScreen() {
   const navigate = useNavigate();
-  const dateInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [whereModalOpen, setWhereModalOpen] = useState(false);
@@ -45,7 +44,8 @@ export default function AddSpecsScreen() {
         className="bg-[#fefefe] flex flex-col overflow-hidden"
         style={{
           marginTop: "calc(-1 * max(16px, env(safe-area-inset-top)))",
-          minHeight: "calc(100% + max(16px, env(safe-area-inset-top)))",
+          marginBottom: "calc(-1 * env(safe-area-inset-bottom))",
+          minHeight: "calc(100% + max(16px, env(safe-area-inset-top)) + env(safe-area-inset-bottom))",
         }}
       >
         {/* Cover image area */}
@@ -90,7 +90,7 @@ export default function AddSpecsScreen() {
 
         {/* Scrollable form content */}
         <div className="flex-1 overflow-y-auto flex flex-col">
-          <div className="flex flex-1 flex-col justify-between px-[20px] pt-[32px] pb-[32px]">
+          <div className="flex flex-1 flex-col justify-between px-[20px] pt-[32px]" style={{ paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}>
             <div className="flex flex-col gap-[24px]">
               {/* Title */}
               <input
@@ -105,10 +105,7 @@ export default function AddSpecsScreen() {
               <div className="flex flex-col gap-[12px] items-start w-full">
                 <SpeechBubbleChip direction="Left" text="When?" />
                 <div className="flex gap-[16px] h-[80px] items-center w-full">
-                  <div
-                    className="border border-[#e4e4e7] flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] cursor-pointer"
-                    onClick={() => dateInputRef.current?.showPicker()}
-                  >
+                  <div className="border border-[#e4e4e7] flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] relative overflow-hidden">
                     <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[21px] font-medium text-[#09090b]">
                       Date
                     </p>
@@ -120,12 +117,11 @@ export default function AddSpecsScreen() {
                         : "Pick a date"}
                     </span>
                     <input
-                      ref={dateInputRef}
                       type="date"
                       value={planData.date}
                       min={getTomorrow()}
                       onChange={(e) => handleChange("date", e.target.value)}
-                      className="sr-only"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                   </div>
                   <div className="border border-[#e4e4e7] flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px]">
@@ -180,7 +176,7 @@ export default function AddSpecsScreen() {
             <Button
               variant="secondary"
               onClick={() => navigate("/plans-home")}
-              className="w-full"
+              className="w-full mt-[24px]"
             >
               Create plan
             </Button>
