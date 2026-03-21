@@ -14,6 +14,18 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recordingBaseRef = useRef("");
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  // Keep modal above the keyboard on iOS
+  useEffect(() => {
+    if (!isOpen) { setKeyboardOffset(0); return; }
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setKeyboardOffset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    vv.addEventListener("resize", update);
+    update();
+    return () => { vv.removeEventListener("resize", update); setKeyboardOffset(0); };
+  }, [isOpen]);
 
   // Keep draft in sync when modal opens
   if (isOpen && draft !== value && !draft) setDraft(value);
@@ -56,7 +68,10 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
   return (
     <>
       <div className="fixed inset-0 bg-[rgba(24,24,32,0.4)] z-40" onClick={handleConfirm} />
-      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col h-[640px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up">
+      <div
+        className="fixed left-0 right-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col h-[640px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up"
+        style={{ bottom: keyboardOffset, maxHeight: `calc(100vh - ${keyboardOffset + 20}px)` }}
+      >
 
         {/* Header — pinned */}
         <div className="shrink-0 flex flex-col gap-[16px] items-center pt-[20px] px-[20px]">
