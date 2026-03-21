@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Trash2 } from "lucide-react";
-import { Button } from "../components/ui/button";
 import { IconButton } from "../components/IconButton";
 import { SpeechBubbleChip } from "../components/SpeechBubbleChip";
 import { WhereModal } from "../components/WhereModal";
@@ -237,13 +236,16 @@ export default function AddSpecsScreen() {
             </div>
 
             {/* Save button */}
-            <Button
-              variant="secondary"
+            <button
+              type="button"
               onClick={handleSave}
-              className="w-full mt-[24px]"
+              className="mt-[24px] w-full h-[45px] rounded-[999px] shrink-0 flex items-center justify-center"
+              style={{ background: "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)" }}
             >
-              {isEditing ? "Update plan" : "Create plan"}
-            </Button>
+              <span className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[21px] text-[#fefefe] text-center whitespace-nowrap">
+                {isEditing ? "Update plan" : "Create plan"}
+              </span>
+            </button>
           </div>
         </div>
       </div>
