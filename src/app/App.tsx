@@ -47,38 +47,32 @@ export default function App() {
     const avatarUrl = data?.avatar_url?.trim() ?? "";
     const hasLocation =
       typeof data?.latitude === "number" && typeof data?.longitude === "number";
+    const authProviderName =
+      typeof session.user.user_metadata?.full_name === "string"
+        ? session.user.user_metadata.full_name.trim()
+        : typeof session.user.user_metadata?.name === "string"
+          ? session.user.user_metadata.name.trim()
+          : "";
 
-    setProfileDraftName(fullName);
+    const isProfileComplete =
+      Boolean(fullName) &&
+      Boolean(birthDate) &&
+      Boolean(bio) &&
+      interests.length >= 3 &&
+      Boolean(avatarUrl) &&
+      hasLocation;
+
+    setProfileDraftName(
+      !isProfileComplete && fullName && authProviderName && fullName === authProviderName
+        ? ""
+        : fullName,
+    );
     setProfileDraftBirthDate(birthDate);
     setProfileDraftBio(bio);
     setProfileDraftInterests(interests);
     setProfileDraftAvatarUrl(avatarUrl);
 
-    if (!fullName) {
-      setPhase("create-profile");
-      return;
-    }
-    if (!birthDate) {
-      setPhase("create-profile-birthday");
-      return;
-    }
-
-    if (!bio) {
-      setPhase("create-profile-description");
-      return;
-    }
-
-    if (interests.length < 3) {
-      setPhase("create-profile-interests");
-      return;
-    }
-
-    if (!avatarUrl) {
-      setPhase("create-profile-picture");
-      return;
-    }
-
-    setPhase(hasLocation ? "app" : "create-profile-location");
+    setPhase(isProfileComplete ? "app" : "create-profile");
   };
 
   useEffect(() => {

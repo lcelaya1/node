@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import logoutIcon from "../../assets/svg/Log In.svg";
 import { AppNavbar } from "../components/AppNavbar";
@@ -12,6 +12,14 @@ const yogaImage = "https://www.figma.com/api/mcp/asset/6339610d-16c4-4351-b612-8
 const festivalImage = "https://www.figma.com/api/mcp/asset/3c756414-859a-411c-a3fa-1e2c8385c96e";
 
 type ProfileTab = "about" | "created" | "past";
+
+type ProfileData = {
+  avatarUrl: string;
+  bio: string;
+  birthDate: string;
+  fullName: string;
+  interests: string[];
+};
 
 type ProfileChipProps = {
   active?: boolean;
@@ -78,9 +86,106 @@ function CreatedPlanCard({ imageSrc, title, subtitle }: CreatedPlanCardProps) {
   );
 }
 
+function calculateAge(birthDate: string) {
+  if (!birthDate) return null;
+
+  const parsedDate = new Date(birthDate);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - parsedDate.getFullYear();
+  const hasHadBirthdayThisYear =
+    today.getMonth() > parsedDate.getMonth() ||
+    (today.getMonth() === parsedDate.getMonth() &&
+      today.getDate() >= parsedDate.getDate());
+
+  if (!hasHadBirthdayThisYear) {
+    age -= 1;
+  }
+
+  return age;
+}
+
+function getInterestImage(label: string) {
+  switch (label.trim().toLowerCase()) {
+    case "coffee":
+      return coffeeImage;
+    case "hikes":
+    case "hiking":
+    case "outdoors":
+    case "nature":
+      return hikesImage;
+    case "yoga":
+    case "mindfulness":
+    case "self-care":
+    case "spa":
+      return yogaImage;
+    case "festival":
+    case "music":
+    case "cocktails":
+    case "karaoke":
+      return festivalImage;
+    default:
+      return [coffeeImage, hikesImage, yogaImage, festivalImage][
+        label.length % 4
+      ];
+  }
+}
+
 export default function ProfileScreen() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ProfileTab>("about");
+  const [profile, setProfile] = useState<ProfileData>({
+    avatarUrl: "",
+    bio: "",
+    birthDate: "",
+    fullName: "",
+    interests: [],
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      if (!supabase) return;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, birth_date, bio, interests, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error || !data || !isMounted) return;
+
+      setProfile({
+        avatarUrl: typeof data.avatar_url === "string" ? data.avatar_url : "",
+        bio: typeof data.bio === "string" ? data.bio : "",
+        birthDate: typeof data.birth_date === "string" ? data.birth_date : "",
+        fullName: typeof data.full_name === "string" ? data.full_name : "",
+        interests: Array.isArray(data.interests) ? data.interests : [],
+      });
+    };
+
+    void loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const age = useMemo(() => calculateAge(profile.birthDate), [profile.birthDate]);
+  const displayName = profile.fullName.trim() || "Profile";
+  const displayTitle = age !== null ? `${displayName}, ${age}` : displayName;
+  const displayBio =
+    profile.bio.trim() || "Tell us a bit about yourself to complete your profile.";
+  const displayAvatar = profile.avatarUrl.trim() || avatarImage;
+  const displayInterests = profile.interests.slice(0, 4);
 
   const handleLogout = async () => {
     if (supabase) {
@@ -119,15 +224,15 @@ export default function ProfileScreen() {
             <div className="flex w-full flex-col items-center gap-[20px]">
               <div className="flex w-full flex-col items-center gap-[13px]">
                 <div className="size-[102px] overflow-hidden rounded-full bg-surface-secondary">
-                  <img alt="Sofia" className="size-full object-cover" src={avatarImage} />
+                  <img alt={displayName} className="size-full object-cover" src={displayAvatar} />
                 </div>
 
                 <div className="flex w-full flex-col items-center gap-[4px] text-center">
-                  <p className="type-heading-xl text-primary-token">Sofia, 27</p>
+                  <p className="type-heading-xl text-primary-token">{displayTitle}</p>
                   <div className="flex items-center gap-[8px] text-secondary-token">
-                    <span className="type-body-s">2 plans created</span>
+                    <span className="type-body-s">0 plans created</span>
                     <span className="type-body-s">·</span>
-                    <span className="type-body-s">15 plans done</span>
+                    <span className="type-body-s">0 plans done</span>
                   </div>
                 </div>
               </div>
@@ -155,19 +260,28 @@ export default function ProfileScreen() {
               <div className="flex w-full flex-col gap-[24px]">
                 <div className="flex flex-col gap-[8px]">
                   <h2 className="type-body-m-medium text-primary-token">About</h2>
-                  <p className="type-body-s text-primary-token">
-                    Design student on a quest for BCN&apos;s best coffee. Passionate about art,
-                    cinema, and meeting people who challenge my perspective.
-                  </p>
+                  <p className="type-body-s text-primary-token">{displayBio}</p>
                 </div>
 
                 <div className="flex flex-col gap-[8px]">
                   <h2 className="type-body-m-medium text-primary-token">Interests</h2>
                   <div className="grid grid-cols-2 gap-x-[8px] gap-y-[7px]">
-                    <InterestCard imageSrc={coffeeImage} label="Coffee" />
-                    <InterestCard imageSrc={hikesImage} label="Hikes" />
-                    <InterestCard imageSrc={yogaImage} label="Yoga" />
-                    <InterestCard imageSrc={festivalImage} label="Festival" />
+                    {displayInterests.length > 0 ? (
+                      displayInterests.map((interest) => (
+                        <InterestCard
+                          key={interest}
+                          imageSrc={getInterestImage(interest)}
+                          label={interest}
+                        />
+                      ))
+                    ) : (
+                      <>
+                        <InterestCard imageSrc={coffeeImage} label="Coffee" />
+                        <InterestCard imageSrc={hikesImage} label="Hikes" />
+                        <InterestCard imageSrc={yogaImage} label="Yoga" />
+                        <InterestCard imageSrc={festivalImage} label="Festival" />
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
