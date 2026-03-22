@@ -3,21 +3,9 @@ import { useLocation, useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { HomeHeader } from "../components/HomeHeader";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
+import NoPlansScreen from "./NoPlansScreen";
 
 const fallbackPlanImage = "https://www.figma.com/api/mcp/asset/f09dd6ab-6d26-46fd-85b8-0715408f10cb";
-const examplePlanImage = "https://www.figma.com/api/mcp/asset/f09dd6ab-6d26-46fd-85b8-0715408f10cb";
-
-const EXAMPLE_PLAN: SavedPlan = {
-  createdAt: "2026-03-22T18:00:00.000Z",
-  description: "Sunset drinks, good music, and an easy plan to end the week well.",
-  id: "example-home-plan",
-  picturePreview: examplePlanImage,
-  title: "Rooftop drinks in Madrid",
-  when: "Today, 18:00h",
-  whenDate: "2026-03-22",
-  whenTime: "18:00",
-  where: "Azotea del Círculo, Madrid",
-};
 
 function formatPlanMeta(plan: SavedPlan) {
   if (plan.when) return plan.when.replace("·", ",");
@@ -118,7 +106,10 @@ export default function PlansHomeScreen() {
   }, []);
 
   const highlightedPlanId = (location.state as { planId?: string } | null)?.planId;
-  const displayPlans = savedPlans.length ? savedPlans : [EXAMPLE_PLAN];
+
+  if (savedPlans.length === 0) {
+    return <NoPlansScreen />;
+  }
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
@@ -131,7 +122,7 @@ export default function PlansHomeScreen() {
         <div className="flex flex-col items-start gap-[8px]">
           <h2 className="type-body-m-medium text-primary-token">Upcoming Plans</h2>
 
-          {displayPlans.slice(0, 3).map((plan, index) => (
+          {savedPlans.slice(0, 3).map((plan, index) => (
             <HomePlanCard
               key={plan.id}
               highlighted={plan.id === highlightedPlanId || (!highlightedPlanId && index === 0)}
