@@ -1,9 +1,22 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { IconButton } from "../components/IconButton";
 import { AppIcon } from "../components/AppIcon";
+import {
+  getChatParticipants,
+  loadDemoUsers,
+  type DemoUser,
+} from "../lib/demoUsers";
+import { deletePlan } from "../lib/plans";
+import { loadCatalogPlanById } from "../lib/planCatalog";
+import { supabase } from "../lib/supabase";
 
 type ChatInfoPlanState = {
   plan?: {
+    budget?: string;
+    creator?: DemoUser | null;
+    description?: string;
+    source?: "created" | "joined";
     id: number | string;
     title: string;
     date?: string;
@@ -12,6 +25,8 @@ type ChatInfoPlanState = {
     where?: string;
   };
   imageSrc?: string;
+  isCreatedByUser?: boolean;
+  participants?: DemoUser[];
   selectedIndex?: number;
 };
 
@@ -34,11 +49,17 @@ function MemberDivider() {
 type MemberRowProps = {
   label: string;
   imageSrc?: string | null;
+  onClick?: () => void;
 };
 
-function MemberRow({ label, imageSrc = null }: MemberRowProps) {
+function MemberRow({ label, imageSrc = null, onClick }: MemberRowProps) {
   return (
-    <div className="flex w-full items-center justify-between">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-between"
+      aria-label={`Open ${label} profile`}
+    >
       <div className="flex items-center gap-[8px]">
         {imageSrc ? (
           <img
@@ -52,14 +73,59 @@ function MemberRow({ label, imageSrc = null }: MemberRowProps) {
         <p className="type-body-s text-primary-token">{label}</p>
       </div>
 
-      <button
-        type="button"
-        className="inline-flex items-center justify-center p-[4px] text-primary-token"
-        aria-label={`Open ${label} profile`}
-      >
+      <div className="inline-flex items-center justify-center p-[4px] text-primary-token">
         <AppIcon name="Left" size={20} className="rotate-180" />
-      </button>
-    </div>
+      </div>
+    </button>
+  );
+}
+
+type CancelPlanModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+};
+
+function CancelPlanModal({
+  isOpen,
+  onClose,
+  onConfirm,
+}: CancelPlanModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40"
+        style={{ backgroundColor: "var(--color-overlay-scrim)" }}
+        onClick={onClose}
+      />
+      <div className="fixed inset-x-[20px] bottom-[32px] z-50 mx-auto flex max-w-[353px] flex-col gap-[20px] rounded-[16px] bg-surface-primary p-[20px] shadow-[0px_12px_32px_rgba(9,9,11,0.16)]">
+        <div className="flex flex-col gap-[8px]">
+          <p className="type-heading-l text-primary-token">Cancel this plan?</p>
+          <p className="type-body-m text-secondary-token">
+            You will leave this plan and it will disappear from your home.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-[12px]">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-secondary"
+          >
+            <span className="type-body-m text-invert-token">Yes, cancel</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-[45px] w-full items-center justify-center rounded-[999px] border border-card-token bg-surface-primary"
+          >
+            <span className="type-body-m text-primary-token">Keep plan</span>
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -67,22 +133,148 @@ export default function ChatInfoPlanScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as ChatInfoPlanState | null) ?? null;
+  const [participants, setParticipants] = useState<DemoUser[]>(
+    state?.participants ?? [],
+  );
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
+  const [catalogLocation, setCatalogLocation] = useState<string | null>(null);
 
   const plan = state?.plan ?? {
     id: 1,
     title: "Title of the plan will be displayed like this",
+    description: "This plan looks like a strong match for what you selected.",
     date: "May 12 · 6pm",
     location: "Here will be the location (1.2km)",
   };
 
   const planDate = (plan.date ?? plan.when ?? "May 12 · 6pm").replace("·", "-");
+  const rawPlanLocation = plan.location ?? plan.where ?? "";
   const planLocation =
-    plan.location ?? plan.where ?? "Here will be the location (1.2km)";
+    catalogLocation ||
+    rawPlanLocation ||
+    "Here will be the location (1.2km)";
   const imageSrc = state?.imageSrc ?? FALLBACK_IMAGE;
   const mapQuery = encodeURIComponent(planLocation);
+  const isJoinedPlan =
+    state?.isCreatedByUser === true
+      ? false
+      : plan.source === "created"
+        ? false
+        : true;
+  const displayParticipants =
+    participants.length > 0
+      ? participants
+      : [
+          {
+            age: null,
+            avatarUrl: avatarImage,
+            bio: null,
+            city: null,
+            name: "Sofia",
+            plansCreated: null,
+            plansDone: null,
+            seedUserId: "demo-1",
+          },
+          {
+            age: null,
+            avatarUrl: null,
+            bio: null,
+            city: null,
+            name: "Lucía",
+            plansCreated: null,
+            plansDone: null,
+            seedUserId: "demo-2",
+          },
+        ];
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      if (state?.participants?.length) return;
+      const users = await loadDemoUsers();
+      if (!active) return;
+      setParticipants(getChatParticipants(users, plan.creator ?? users[0] ?? null));
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [plan.creator, state?.participants]);
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      if (!supabase) return;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || !active) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!active || error) return;
+
+      setCurrentUserAvatar(
+        typeof data?.avatar_url === "string" && data.avatar_url.trim()
+          ? data.avatar_url
+          : null,
+      );
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      const needsCatalogLocation =
+        !rawPlanLocation ||
+        rawPlanLocation === "Location (1.2km)" ||
+        rawPlanLocation === "Here will be the location (1.2km)";
+
+      if (!isJoinedPlan || !needsCatalogLocation || !plan.id) return;
+
+      try {
+        const catalogPlan = await loadCatalogPlanById(plan.id);
+        if (!active || !catalogPlan?.location) return;
+        setCatalogLocation(catalogPlan.location);
+      } catch {
+        if (!active) return;
+        setCatalogLocation(null);
+      }
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [isJoinedPlan, plan.id, rawPlanLocation]);
+
+  const handleConfirmCancel = async () => {
+    await deletePlan(String(plan.id));
+    navigate("/", { replace: true });
+  };
 
   return (
-    <div className="relative size-full overflow-y-auto bg-surface-primary">
+    <>
+      <div className="relative size-full overflow-y-auto bg-surface-primary">
       <div className="relative h-[380px] overflow-hidden rounded-bl-[16px] rounded-br-[16px]">
         <img
           alt={plan.title}
@@ -105,6 +297,15 @@ export default function ChatInfoPlanScreen() {
             onClick={() => navigate(-1)}
             size="Mid"
           />
+          {isJoinedPlan ? (
+            <button
+              type="button"
+              onClick={() => setIsCancelModalOpen(true)}
+              className="flex items-center justify-center rounded-[999px] bg-button-secondary px-[24px] py-[8px]"
+            >
+              <span className="type-body-m text-invert-token">Cancel</span>
+            </button>
+          ) : null}
         </div>
 
         <div className="absolute bottom-[16px] left-[20px] right-[20px]">
@@ -119,8 +320,7 @@ export default function ChatInfoPlanScreen() {
         <div className="flex w-full flex-col items-start gap-[8px]">
           <p className="type-body-m-medium text-primary-token">What?</p>
           <p className="type-body-m text-primary-token">
-            Aqui va la descripcion del plan asi como un poco mas larga para que
-            parezca que me interesa el plan.
+            {plan.description ?? "This plan looks like a strong match for what you selected."}
           </p>
           <div className="flex items-center gap-[12px]">
             <div className="flex items-center gap-[4px] text-primary-token">
@@ -132,10 +332,7 @@ export default function ChatInfoPlanScreen() {
               <p className="type-body-s text-primary-token">
                 {"Budget  "}
                 <span className="text-[12px] leading-[16px] text-primary-token">
-                  €
-                </span>
-                <span className="text-[12px] leading-[16px] text-tertiary-token">
-                  €€
+                  {plan.budget ?? "€"}
                 </span>
               </p>
             </div>
@@ -144,11 +341,27 @@ export default function ChatInfoPlanScreen() {
 
         <div className="flex w-full flex-col items-start gap-[8px]">
           <p className="type-body-m-medium text-primary-token">Who?</p>
-          <MemberRow label="You" imageSrc={memberAvatarImage} />
-          <MemberDivider />
-          <MemberRow label="Maria" imageSrc={avatarImage} />
-          <MemberDivider />
-          <MemberRow label="Laura" />
+          <MemberRow
+            label="You"
+            imageSrc={currentUserAvatar ?? memberAvatarImage}
+            onClick={() => navigate("/profile")}
+          />
+          {displayParticipants.map((participant) => (
+            <div key={participant.seedUserId} className="flex w-full flex-col gap-[8px]">
+              <MemberDivider />
+              <MemberRow
+                label={participant.name}
+                imageSrc={participant.avatarUrl}
+                onClick={() =>
+                  navigate("/profile", {
+                    state: {
+                      demoProfile: participant,
+                    },
+                  })
+                }
+              />
+            </div>
+          ))}
         </div>
 
         <div className="flex w-full flex-col items-start gap-[8px]">
@@ -176,13 +389,20 @@ export default function ChatInfoPlanScreen() {
             <iframe
               title={`Map for ${planLocation}`}
               src={`https://www.google.com/maps?q=${mapQuery}&z=14&output=embed`}
-              className="h-full w-full border-0"
+              className="pointer-events-none h-full w-full border-0"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
         </div>
       </div>
-    </div>
+      </div>
+
+      <CancelPlanModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={() => void handleConfirmCancel()}
+      />
+    </>
   );
 }

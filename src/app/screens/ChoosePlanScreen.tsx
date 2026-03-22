@@ -1,35 +1,106 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { PlanCard } from "../components/PlanCard";
+import { savePlan, toSavedPlan } from "../lib/plans";
+import {
+  loadMatchedCatalogPlans,
+  type CatalogPlan,
+  type JoinFilterState,
+} from "../lib/planCatalog";
+import {
+  getChatParticipants,
+  getPlanCreatorForIndex,
+  loadDemoUsers,
+  type DemoUser,
+} from "../lib/demoUsers";
 
-const imgPlanCover = "https://www.figma.com/api/mcp/asset/cfc93208-7871-4ba9-b2ac-70ad12a5380f";
-
-// ── Mock data ─────────────────────────────────────────────────────────────────
-const PLANS = [
-  { id: 1, title: "Title of the plan will be displayed like this", date: "May 12 · 6pm", location: "Location (1.2km)" },
-  { id: 2, title: "Title of the plan will be displayed like this", date: "May 13 · 8pm", location: "Location (2.0km)" },
-  { id: 3, title: "Title of the plan will be displayed like this", date: "May 14 · 7pm", location: "Location (1.8km)" },
-];
+type ChoosePlanLocationState = {
+  filters?: JoinFilterState;
+  selectedIndex?: number;
+};
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ChoosePlanScreen() {
   const navigate = useNavigate();
   const location = useLocation();
+  const state = (location.state as ChoosePlanLocationState | null) ?? null;
   const initialIndex =
-    typeof (location.state as { selectedIndex?: number } | null)?.selectedIndex === "number"
-      ? (location.state as { selectedIndex?: number }).selectedIndex ?? 0
+    typeof state?.selectedIndex === "number"
+      ? state.selectedIndex ?? 0
       : 0;
+  const filters = state?.filters;
   const [current, setCurrent] = useState(initialIndex);
   const [dragOffset, setDragOffset] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(393);
   const [isDragging, setIsDragging] = useState(false);
+  const [plans, setPlans] = useState<CatalogPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dragStartXRef = useRef<number | null>(null);
-  const total = PLANS.length;
+  const total = plans.length;
   const CARD_WIDTH = 309;
   const CARD_GAP = 20;
   const SWIPE_THRESHOLD = 60;
   const CARD_SPAN = CARD_WIDTH + CARD_GAP;
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      const users = await loadDemoUsers();
+      if (!active) return;
+      setDemoUsers(users);
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      if (!filters) {
+        setPlans([]);
+        setErrorMessage("Start from the join filters first so we can match plans for you.");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage("");
+
+      try {
+        const nextPlans = await loadMatchedCatalogPlans(filters);
+        if (!active) return;
+
+        setPlans(nextPlans);
+        setCurrent((prev) => Math.max(0, Math.min(nextPlans.length - 1, prev)));
+      } catch (error) {
+        if (!active) return;
+
+        setPlans([]);
+        setErrorMessage(
+          error instanceof Error ? error.message : "We couldn't load plans right now.",
+        );
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [filters]);
 
   useEffect(() => {
     const node = viewportRef.current;
@@ -76,6 +147,13 @@ export default function ChoosePlanScreen() {
   const baseOffset = (viewportWidth - CARD_WIDTH) / 2;
   const trackTranslateX = baseOffset - current * CARD_SPAN + dragOffset;
   const fractionalIndex = current - dragOffset / CARD_SPAN;
+  const currentPlan = plans[current];
+  const matchLabel = useMemo(() => {
+    if (!currentPlan?.matchScore) return "Matched for your filters";
+
+    const normalizedScore = Math.max(55, Math.min(99, 65 + currentPlan.matchScore * 8));
+    return `${normalizedScore}% match`;
+  }, [currentPlan?.matchScore]);
 
   const getCardTransform = (index: number) => {
     const distance = index - fractionalIndex;
@@ -84,6 +162,32 @@ export default function ChoosePlanScreen() {
     const verticalOffset = Math.min(Math.abs(distance), 1) * 10;
 
     return `translateY(${verticalOffset}px) rotate(${rotation}deg)`;
+  };
+
+  const handleJoinPlan = async (plan: CatalogPlan, index: number) => {
+    const creator = getPlanCreatorForIndex(demoUsers, index);
+    const participants = getChatParticipants(demoUsers, creator);
+    const savedPlan = toSavedPlan(
+      {
+        budget: plan.budget,
+        creator,
+        id: plan.id,
+        description: plan.description,
+        participants,
+        title: plan.title,
+        when: plan.when,
+        whenDate: plan.eventDate,
+        whenTime: plan.startTime,
+        where: plan.location,
+      },
+      plan.imageSrc,
+    );
+
+    await savePlan(savedPlan);
+
+    navigate("/", {
+      state: { planId: savedPlan.id, selectedIndex: index },
+    });
   };
 
   return (
@@ -115,7 +219,7 @@ export default function ChoosePlanScreen() {
             width: `${total * CARD_WIDTH + (total - 1) * CARD_GAP}px`,
           }}
         >
-          {PLANS.map((item, index) => (
+          {plans.map((item, index) => (
             <div
               key={item.id}
               className="shrink-0"
@@ -126,37 +230,76 @@ export default function ChoosePlanScreen() {
                 zIndex: total - Math.min(total - 1, Math.round(Math.abs(index - fractionalIndex))),
               }}
             >
+              {(() => {
+                const creator = getPlanCreatorForIndex(demoUsers, index);
+                const participants = getChatParticipants(demoUsers, creator);
+
+                return (
               <PlanCard
                 title={item.title}
-                date={item.date}
+                date={item.when}
                 location={item.location}
-                imageSrc={imgPlanCover}
+                imageSrc={item.imageSrc}
                 onClick={() =>
                   navigate("/info-plan", {
-                    state: { plan: item, imageSrc: imgPlanCover, selectedIndex: index },
+                    state: {
+                      plan: {
+                        ...item,
+                        creator,
+                      },
+                      imageSrc: item.imageSrc,
+                      participants,
+                      selectedIndex: index,
+                      filters,
+                    },
                   })
                 }
                 showButton={index === current}
-                onJoin={() => navigate("/")}
+                onJoin={() => void handleJoinPlan(item, index)}
               />
+                );
+              })()}
             </div>
           ))}
         </div>
       </div>
 
+      {isLoading ? (
+        <div className="absolute inset-x-[20px] top-[220px] rounded-[24px] border border-card-token bg-surface-primary px-[24px] py-[32px] text-center">
+          <p className="type-heading-m text-primary-token">Finding the best plans for you...</p>
+        </div>
+      ) : null}
+
+      {!isLoading && plans.length === 0 ? (
+        <div className="absolute inset-x-[20px] top-[220px] rounded-[24px] border border-card-token bg-surface-primary px-[24px] py-[32px] text-center">
+          <p className="type-heading-m text-primary-token">No plans found</p>
+          <p className="mt-[8px] type-body-s text-secondary-token">
+            {errorMessage || "Try changing the filters and search again."}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/join-plan")}
+            className="mt-[20px] inline-flex h-[40px] items-center justify-center rounded-[999px] border border-card-token px-[20px]"
+          >
+            <span className="type-body-s text-primary-token">Go back to filters</span>
+          </button>
+        </div>
+      ) : null}
+
       {/* Match info */}
-      <div
-        className="absolute flex flex-col gap-[4px] items-center text-center w-[222px]"
-        style={{ left: "calc(50% + 0.5px)", bottom: 32, transform: "translateX(-50%)" }}
-      >
-        <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token w-full text-center">
-          96% match
-        </p>
-        <p className="font-primary text-[14px] leading-[18px] text-primary-token w-full text-center">
-          We picked this for you based on{" "}
-          <em>some reasons that will appear here.</em>
-        </p>
-      </div>
+      {!isLoading && plans.length > 0 ? (
+        <div
+          className="absolute flex flex-col gap-[4px] items-center text-center w-[222px]"
+          style={{ left: "calc(50% + 0.5px)", bottom: 32, transform: "translateX(-50%)" }}
+        >
+          <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token w-full text-center">
+            {matchLabel}
+          </p>
+          <p className="font-primary text-[14px] leading-[18px] text-primary-token w-full text-center">
+            Based on your vibe, budget, distance, and timing filters.
+          </p>
+        </div>
+      ) : null}
 
     </div>
   );

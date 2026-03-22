@@ -81,7 +81,7 @@ export default function CreateProfileInterestsScreen({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const canContinue = value.length >= 3 && !isSaving;
+  const canContinue = value.length >= 4 && !isSaving;
 
   const toggleInterest = (interest: string) => {
     onChange?.(
@@ -143,7 +143,7 @@ export default function CreateProfileInterestsScreen({
           <div className="flex w-full flex-col gap-[8px]">
             <p className="type-heading-xl text-primary-token">What are you into?</p>
             <p className="type-body-s text-secondary-token">
-              Select minimum 3 preferences.
+              Select minimum 4 preferences.
             </p>
           </div>
 

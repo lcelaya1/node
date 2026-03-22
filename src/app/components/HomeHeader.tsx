@@ -84,6 +84,9 @@ export function HomeHeader({
         <img
           alt={fullName || "Profile"}
           className="size-full object-cover"
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
           src={avatarUrl || avatarImage}
         />
       </button>

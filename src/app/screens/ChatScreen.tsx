@@ -3,18 +3,28 @@ import { useLocation, useNavigate } from "react-router";
 import sendIcon from "../../assets/svg/Send.svg";
 import { IconButton } from "../components/IconButton";
 import { BubbleChip } from "../components/SpeechBubbleChip";
+import {
+  getChatParticipants,
+  loadDemoUsers,
+  type DemoUser,
+} from "../lib/demoUsers";
 
 type ChatPlan = {
+  budget?: string;
+  creator?: DemoUser | null;
+  description?: string;
   id?: string | number;
   title?: string;
   date?: string;
   when?: string;
   location?: string;
+  source?: "created" | "joined";
   where?: string;
 };
 
 type ChatState = {
   imageSrc?: string;
+  participants?: DemoUser[];
   plan?: ChatPlan;
   selectedIndex?: number;
 };
@@ -62,18 +72,35 @@ function MessageBubble({
 }
 
 type ParticipantBlockProps = {
+  avatarUrl?: string;
   messages: Array<{ text: string; time: string; showTail?: boolean }>;
   name: string;
+  onAvatarClick?: () => void;
 };
 
-function ParticipantBlock({ messages, name }: ParticipantBlockProps) {
+function ParticipantBlock({
+  avatarUrl,
+  messages,
+  name,
+  onAvatarClick,
+}: ParticipantBlockProps) {
   return (
     <div className="flex items-end gap-[8px]">
-      <img
-        alt={name}
-        className="size-[28px] shrink-0 rounded-full object-cover"
-        src="https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb"
-      />
+      <button
+        type="button"
+        onClick={onAvatarClick}
+        className="shrink-0"
+        aria-label={`Open ${name} profile`}
+      >
+        <img
+          alt={name}
+          className="size-[28px] shrink-0 rounded-full object-cover"
+          src={
+            avatarUrl ||
+            "https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb"
+          }
+        />
+      </button>
       <div className="flex flex-col items-start gap-[2px]">
         <p className="type-body-xs text-secondary-token">{name}</p>
         <div className="flex flex-col items-start gap-[4px]">
@@ -108,6 +135,7 @@ export default function ChatScreen() {
   const location = useLocation();
   const state = (location.state as ChatState | null) ?? null;
   const [draft, setDraft] = useState("");
+  const [participants, setParticipants] = useState<DemoUser[]>(state?.participants ?? []);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const plan = state?.plan ?? {
@@ -117,15 +145,36 @@ export default function ChatScreen() {
     where: "Azotea del Circulo, Madrid",
   };
 
-  const headerSubtitle = "2 members active";
+  const headerSubtitle = `${participants.length + 1} members active`;
   const dayLabel = plan.when ?? "Today · 19:17h";
   const displayTitle = plan.title ?? "Title of the plan";
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      if (state?.participants?.length) return;
+      const users = await loadDemoUsers();
+      if (!active) return;
+      setParticipants(getChatParticipants(users, plan.creator ?? users[0] ?? null));
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [plan.creator, state?.participants]);
+
+  const primaryParticipant = participants[0];
+  const secondaryParticipant = participants[1];
+  const tertiaryParticipant = participants[2];
 
   const conversation = useMemo<ConversationBlock[]>(
     () => [
       {
         type: "other",
-        name: "Maria",
+        name: primaryParticipant?.name ?? "Sofia",
         messages: [{ text: "Hey!", time: "19:41" }],
       },
       {
@@ -137,7 +186,7 @@ export default function ChatScreen() {
       },
       {
         type: "other",
-        name: "Maria",
+        name: primaryParticipant?.name ?? "Sofia",
         messages: [
           { text: "Yes", time: "19:42", showTail: false },
           { text: "What’s up?", time: "19:42", showTail: true },
@@ -152,7 +201,14 @@ export default function ChatScreen() {
       },
       {
         type: "other",
-        name: "Maria",
+        name: secondaryParticipant?.name ?? "Marcos",
+        messages: [
+          { text: "I’m in too, I can bring the speaker.", time: "19:43", showTail: true },
+        ],
+      },
+      {
+        type: "other",
+        name: primaryParticipant?.name ?? "Sofia",
         messages: [
           { text: "Yes, absolutely.", time: "19:44", showTail: false },
           { text: "I already booked the table outside.", time: "19:44", showTail: false },
@@ -164,15 +220,15 @@ export default function ChatScreen() {
         messages: [
           { text: "Perfect.", time: "19:45", showTail: false },
           { text: "I’ll get there around 8.", time: "19:45", showTail: false },
-          { text: "Do you want me to invite Laura too?", time: "19:45", showTail: true },
+          { text: `Do you want me to invite ${secondaryParticipant?.name ?? "Lucía"} too?`, time: "19:45", showTail: true },
         ],
       },
       {
         type: "other",
-        name: "Maria",
+        name: tertiaryParticipant?.name ?? "Lucía",
         messages: [
-          { text: "Yes please!", time: "19:46", showTail: false },
-          { text: "She said last week she wanted something chill.", time: "19:46", showTail: true },
+          { text: "I’m so up for this.", time: "19:46", showTail: false },
+          { text: "I’ve been wanting a calmer plan this week.", time: "19:46", showTail: true },
         ],
       },
       {
@@ -184,10 +240,17 @@ export default function ChatScreen() {
       },
       {
         type: "other",
-        name: "Maria",
+        name: primaryParticipant?.name ?? "Sofia",
         messages: [
           { text: "Maybe just drinks first.", time: "19:48", showTail: false },
           { text: "If we’re hungry after, we can move somewhere nearby.", time: "19:48", showTail: true },
+        ],
+      },
+      {
+        type: "other",
+        name: secondaryParticipant?.name ?? "Marcos",
+        messages: [
+          { text: "I can get there a bit earlier and save us a spot.", time: "19:48", showTail: true },
         ],
       },
       {
@@ -199,14 +262,14 @@ export default function ChatScreen() {
       },
       {
         type: "other",
-        name: "Maria",
+        name: primaryParticipant?.name ?? "Sofia",
         messages: [
           { text: "See you!", time: "19:49", showTail: false },
           { text: "And bring a jacket just in case.", time: "19:50", showTail: true },
         ],
       },
     ],
-    [],
+    [primaryParticipant?.name, secondaryParticipant?.name, tertiaryParticipant?.name],
   );
 
   useEffect(() => {
@@ -240,11 +303,12 @@ export default function ChatScreen() {
               state: {
                 imageSrc: state?.imageSrc,
                 plan: {
+                  ...plan,
+                  creator: plan.creator ?? primaryParticipant ?? null,
                   id: plan.id ?? 1,
                   title: displayTitle,
-                  date: plan.when ?? "May 12 · 6pm",
-                  location: plan.where ?? "Here will be the location (1.2km)",
                 },
+                participants,
                 selectedIndex: state?.selectedIndex ?? 0,
               },
             })
@@ -265,8 +329,23 @@ export default function ChatScreen() {
             block.type === "other" ? (
               <ParticipantBlock
                 key={`${block.name}-${blockIndex}`}
+                avatarUrl={
+                  participants.find((participant) => participant.name === block.name)
+                    ?.avatarUrl
+                }
                 name={block.name}
                 messages={block.messages}
+                onAvatarClick={() => {
+                  const participant = participants.find(
+                    (entry) => entry.name === block.name,
+                  );
+                  if (!participant) return;
+                  navigate("/profile", {
+                    state: {
+                      demoProfile: participant,
+                    },
+                  });
+                }}
               />
             ) : (
               <div key={`me-${blockIndex}`} className="flex flex-col items-end gap-[4px]">

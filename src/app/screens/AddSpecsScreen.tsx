@@ -92,6 +92,7 @@ export default function AddSpecsScreen() {
         whenDate: planData.date,
         whenTime: planData.hour,
         picturePreview: coverImage ?? "",
+        source: "created",
       });
 
       navigate("/", { state: { planId: id } });

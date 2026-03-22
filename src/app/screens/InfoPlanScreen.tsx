@@ -1,17 +1,29 @@
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { IconButton } from "../components/IconButton";
 import { AppIcon } from "../components/AppIcon";
+import { loadDemoUsers, type DemoUser } from "../lib/demoUsers";
+import { savePlan, toSavedPlan } from "../lib/plans";
+import type { JoinFilterState } from "../lib/planCatalog";
 
 type InfoPlanState = {
   plan?: {
+    budget?: string;
+    creator?: DemoUser | null;
+    description?: string;
     id: number | string;
-    title: string;
-    date?: string;
-    when?: string;
     location?: string;
+    placeName?: string;
+    startTime?: string;
+    title: string;
+    when?: string;
+    whenDate?: string;
     where?: string;
+    date?: string;
   };
+  filters?: JoinFilterState;
   imageSrc?: string;
+  participants?: DemoUser[];
   selectedIndex?: number;
 };
 
@@ -21,6 +33,7 @@ export default function InfoPlanScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as InfoPlanState | null) ?? null;
+  const [fallbackCreator, setFallbackCreator] = useState<DemoUser | null>(null);
 
   const plan = state?.plan ?? {
     id: 1,
@@ -34,6 +47,48 @@ export default function InfoPlanScreen() {
 
   const imageSrc = state?.imageSrc ?? FALLBACK_IMAGE;
   const mapQuery = encodeURIComponent(planLocation);
+  const creator = plan.creator ?? fallbackCreator;
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      if (plan.creator) return;
+      const users = await loadDemoUsers();
+      if (!active) return;
+      setFallbackCreator(users[0] ?? null);
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [plan.creator]);
+
+  const handleJoinPlan = async () => {
+    const savedPlan = toSavedPlan(
+      {
+        budget: plan.budget,
+        creator: plan.creator ?? null,
+        description: plan.description,
+        id: plan.id,
+        participants: state?.participants ?? [],
+        title: plan.title,
+        when: plan.when,
+        whenDate: plan.whenDate,
+        whenTime: plan.startTime,
+        where: plan.where,
+      },
+      imageSrc,
+    );
+
+    await savePlan(savedPlan);
+
+    navigate("/", {
+      state: { planId: savedPlan.id, selectedIndex: state?.selectedIndex ?? 0 },
+    });
+  };
 
   return (
     <div className="relative size-full overflow-y-auto bg-surface-primary">
@@ -54,7 +109,7 @@ export default function InfoPlanScreen() {
             icon="Left"
             onClick={() =>
               navigate("/choose-plan", {
-                state: { selectedIndex: state?.selectedIndex ?? 0 },
+                state: { filters: state?.filters, selectedIndex: state?.selectedIndex ?? 0 },
               })
             }
             size="Mid"
@@ -73,7 +128,7 @@ export default function InfoPlanScreen() {
         <div className="flex w-full flex-col items-start gap-[8px]">
           <p className="type-body-m-medium text-primary-token">What?</p>
           <p className="type-body-m text-primary-token">
-            Aqui va la descripcion del plan asi como un poco mas larga para que parezca que me interesa el plan.
+            {plan.description ?? "This plan looks like a strong match for what you selected."}
           </p>
           <div className="flex items-center gap-[12px]">
             <div className="flex items-center gap-[4px] text-primary-token">
@@ -84,8 +139,9 @@ export default function InfoPlanScreen() {
             <div className="flex items-center">
               <p className="type-body-s text-primary-token">
                 {"Budget  "}
-                <span className="text-[12px] leading-[16px] text-primary-token">€</span>
-                <span className="text-[12px] leading-[16px] text-tertiary-token">€€</span>
+                <span className="text-[12px] leading-[16px] text-primary-token">
+                  {plan.budget ?? "€"}
+                </span>
               </p>
             </div>
           </div>
@@ -94,9 +150,19 @@ export default function InfoPlanScreen() {
         <div className="flex w-[196px] flex-col items-start gap-[8px]">
           <p className="type-body-m-medium text-primary-token">Who?</p>
           <div className="flex w-full items-center gap-[8px]">
-            <div className="size-[44px] rounded-full bg-surface-secondary" />
+            {creator?.avatarUrl ? (
+              <img
+                alt={creator.name}
+                className="size-[44px] rounded-full object-cover"
+                src={creator.avatarUrl}
+              />
+            ) : (
+              <div className="size-[44px] rounded-full bg-surface-secondary" />
+            )}
             <div className="flex w-[144px] flex-col items-start">
-              <p className="type-body-s text-primary-token">Maria created the node</p>
+              <p className="type-body-s text-primary-token">
+                {creator ? `${creator.name} created the node` : "Plan creator"}
+              </p>
               <button
                 className="border-b border-[var(--color-text-secondary)] type-body-s text-secondary-token"
                 type="button"
@@ -132,7 +198,7 @@ export default function InfoPlanScreen() {
             <iframe
               title={`Map for ${planLocation}`}
               src={`https://www.google.com/maps?q=${mapQuery}&z=14&output=embed`}
-              className="h-full w-full border-0"
+              className="h-full w-full border-0 pointer-events-none"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
@@ -146,6 +212,7 @@ export default function InfoPlanScreen() {
       >
         <button
           type="button"
+          onClick={() => void handleJoinPlan()}
           className="flex h-[45px] w-full items-center justify-center rounded-[999px]"
           style={{ background: "linear-gradient(180deg, var(--color-button-secondary) 0%, var(--color-button-secondary) 100%)" }}
         >

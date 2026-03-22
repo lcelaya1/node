@@ -26,6 +26,7 @@ function Notification({ count = 3 }: NotificationProps) {
 
 type HomePlanCardProps = {
   highlighted?: boolean;
+  isCreatedByUser?: boolean;
   onClick?: () => void;
   onViewChat?: () => void;
   title: string;
@@ -35,6 +36,7 @@ type HomePlanCardProps = {
 
 function HomePlanCard({
   highlighted = false,
+  isCreatedByUser = false,
   onClick,
   onViewChat,
   title,
@@ -47,6 +49,16 @@ function HomePlanCard({
       onClick={onClick}
       className="relative flex w-full flex-col items-start overflow-hidden rounded-[8px] border border-card-token bg-surface-primary text-left"
     >
+      {isCreatedByUser ? (
+        <div className="pointer-events-none absolute left-0 top-0 z-[1] h-[92px] w-[92px] overflow-hidden rounded-tl-[8px]">
+          <div
+            className="absolute left-[-33px] top-[18px] w-[128px] -rotate-45 bg-[rgba(9,9,11,0.72)] py-[6px] text-center"
+          >
+            <span className="type-body-s text-invert-token">You</span>
+          </div>
+        </div>
+      ) : null}
+
       <div className="h-[163px] w-full overflow-hidden rounded-[8px]">
         <img
           alt={title}
@@ -71,18 +83,16 @@ function HomePlanCard({
         </div>
       </div>
 
-      {highlighted ? (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onViewChat?.();
-          }}
-          className="absolute left-[244px] top-[12px] flex w-[94px] items-center justify-center rounded-[999px] bg-button-secondary p-[8px]"
-        >
-          <span className="type-body-xs text-invert-token">View Chat</span>
-        </button>
-      ) : null}
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onViewChat?.();
+        }}
+        className="absolute left-[244px] top-[12px] flex w-[94px] items-center justify-center rounded-[999px] bg-button-secondary p-[8px]"
+      >
+        <span className="type-body-xs text-invert-token">View Chat</span>
+      </button>
     </button>
   );
 }
@@ -127,10 +137,12 @@ export default function PlansHomeScreen() {
               key={plan.id}
               highlighted={plan.id === highlightedPlanId || (!highlightedPlanId && index === 0)}
               imageSrc={plan.picturePreview || fallbackPlanImage}
+              isCreatedByUser={plan.source === "created"}
               onClick={() =>
                 navigate("/chat-info", {
                   state: {
                     imageSrc: plan.picturePreview || fallbackPlanImage,
+                    isCreatedByUser: plan.source === "created",
                     plan,
                     selectedIndex: index,
                   },

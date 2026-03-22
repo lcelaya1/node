@@ -1,0 +1,13 @@
+id,user_id,interest_id,interest_name
+1,1,9,Coffee
+2,1,21,Art
+3,1,19,Films
+4,1,8,Outdoors
+5,2,22,Music
+6,2,2,Travel
+7,2,7,Photography
+8,2,6,Food
+9,3,15,Cocktails
+10,3,18,Fashion
+11,3,23,Cooking
+12,3,26,Theatre

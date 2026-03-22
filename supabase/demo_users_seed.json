@@ -1,0 +1,51 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "name": "Sofia",
+      "age": "27",
+      "city": "Barcelona",
+      "bio": "Design student on a quest for BCN's best coffee. Passionate about art, cinema, and meeting people who challenge my perspective.",
+      "plans_created": "2",
+      "plans_done": "15",
+      "avatar_url": "https://wjohtvugahrzjkgydwxk.supabase.co/storage/v1/object/public/avatars/Hike%20in%20Barcelona%20at%20Sunset.jpeg",
+      "interests": "Coffee, Art, Films, Outdoors"
+    },
+    {
+      "id": "2",
+      "name": "Marcos",
+      "age": "24",
+      "city": "Barcelona",
+      "bio": "Architecture grad with a soft spot for rooftops and record stores. Always planning the next trip.",
+      "plans_created": "5",
+      "plans_done": "9",
+      "avatar_url": "https://wjohtvugahrzjkgydwxk.supabase.co/storage/v1/object/public/avatars/At%20Hergett.jpeg",
+      "interests": "Music, Travel, Photography, Food"
+    },
+    {
+      "id": "3",
+      "name": "Lucía",
+      "age": "29",
+      "city": "Barcelona",
+      "bio": "Marketing creative who lives for long dinners and spontaneous plans. Cocktails always involved.",
+      "plans_created": "8",
+      "plans_done": "22",
+      "avatar_url": "https://wjohtvugahrzjkgydwxk.supabase.co/storage/v1/object/public/avatars/_%20(20).jpeg",
+      "interests": "Cocktails, Fashion, Cooking, Theatre"
+    }
+  ],
+  "user_interests": [
+    { "id": "1", "user_id": "1", "interest_id": "9", "interest_name": "Coffee" },
+    { "id": "2", "user_id": "1", "interest_id": "21", "interest_name": "Art" },
+    { "id": "3", "user_id": "1", "interest_id": "19", "interest_name": "Films" },
+    { "id": "4", "user_id": "1", "interest_id": "8", "interest_name": "Outdoors" },
+    { "id": "5", "user_id": "2", "interest_id": "22", "interest_name": "Music" },
+    { "id": "6", "user_id": "2", "interest_id": "2", "interest_name": "Travel" },
+    { "id": "7", "user_id": "2", "interest_id": "7", "interest_name": "Photography" },
+    { "id": "8", "user_id": "2", "interest_id": "6", "interest_name": "Food" },
+    { "id": "9", "user_id": "3", "interest_id": "15", "interest_name": "Cocktails" },
+    { "id": "10", "user_id": "3", "interest_id": "18", "interest_name": "Fashion" },
+    { "id": "11", "user_id": "3", "interest_id": "23", "interest_name": "Cooking" },
+    { "id": "12", "user_id": "3", "interest_id": "26", "interest_name": "Theatre" }
+  ]
+}

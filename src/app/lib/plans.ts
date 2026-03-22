@@ -1,13 +1,34 @@
+import type { DemoUser } from "./demoUsers";
+
 export type SavedPlan = {
+  budget?: string;
+  creator?: DemoUser | null;
   createdAt: string;
   description: string;
   id: string;
+  participants?: DemoUser[];
   picturePreview: string;
+  source?: "created" | "joined";
   title: string;
   whenDate?: string;
   whenTime?: string;
   when: string;
   where: string;
+};
+
+type JoinablePlan = {
+  budget?: string;
+  creator?: DemoUser | null;
+  date?: string;
+  description?: string;
+  id: number | string;
+  location?: string;
+  participants?: DemoUser[];
+  title: string;
+  when?: string;
+  whenDate?: string;
+  whenTime?: string;
+  where?: string;
 };
 
 const DATABASE_NAME = "node-app";
@@ -99,6 +120,24 @@ export async function savePlan(plan: SavedPlan): Promise<SavedPlan[]> {
 
     transaction.onerror = () => reject(transaction.error ?? new Error("Could not save plan."));
   });
+}
+
+export function toSavedPlan(plan: JoinablePlan, imageSrc?: string): SavedPlan {
+  return {
+    budget: plan.budget,
+    creator: plan.creator ?? null,
+    createdAt: new Date().toISOString(),
+    description: plan.description ?? "Joined from the discover flow.",
+    id: String(plan.id),
+    participants: plan.participants ?? [],
+    picturePreview: imageSrc ?? "",
+    source: "joined",
+    title: plan.title,
+    when: plan.when ?? plan.date ?? "May 12 · 6pm",
+    whenDate: plan.whenDate,
+    whenTime: plan.whenTime,
+    where: plan.where ?? plan.location ?? "Location (1.2km)",
+  };
 }
 
 export async function deletePlan(planId: string): Promise<void> {

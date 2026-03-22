@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { IconButton } from "../components/IconButton";
+import type { JoinFilterState } from "../lib/planCatalog";
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 function getDateLabel(offset: number) {
@@ -161,10 +162,10 @@ function DateCard({
 export default function JoinPlanScreen() {
   const navigate = useNavigate();
 
-  const [date, setDate] = useState<"today" | "tomorrow" | "weekend">("today");
-  const [battery, setBattery] = useState<"low" | "mid" | "full">("low");
-  const [budget, setBudget] = useState<"free" | "€" | "€€" | "€€€">("€");
-  const [distance, setDistance] = useState<"close" | "ride" | "anywhere">("close");
+  const [date, setDate] = useState<JoinFilterState["date"]>("today");
+  const [battery, setBattery] = useState<JoinFilterState["battery"]>("low");
+  const [budget, setBudget] = useState<JoinFilterState["budget"]>("€");
+  const [distance, setDistance] = useState<JoinFilterState["distance"]>("close");
 
   const todayLabel = getDateLabel(0);
   const tomorrowLabel = getDateLabel(1);
@@ -265,7 +266,18 @@ export default function JoinPlanScreen() {
         {/* Search button */}
         <button
           type="button"
-          onClick={() => navigate("/choose-plan")}
+          onClick={() =>
+            navigate("/choose-plan", {
+              state: {
+                filters: {
+                  battery,
+                  budget,
+                  date,
+                  distance,
+                } satisfies JoinFilterState,
+              },
+            })
+          }
           className="w-full h-[45px] rounded-[999px] flex items-center justify-center gap-[6px] mt-auto shrink-0"
           style={{ background: "linear-gradient(180deg, var(--color-button-secondary) 0%, var(--color-button-secondary) 100%)" }}
         >

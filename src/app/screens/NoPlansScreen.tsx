@@ -1,9 +1,9 @@
+import stackImageLeft from "../../assets/Rectangle 7.png";
+import stackImageCenter from "../../assets/Rectangle 8.png";
+import stackImageRight from "../../assets/Rectangle 9.png";
 import { useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { HomeHeader } from "../components/HomeHeader";
-const stackImageLeft = "https://www.figma.com/api/mcp/asset/a8be7322-91e6-4d6b-813b-a8befcea8cf2";
-const stackImageRight = "https://www.figma.com/api/mcp/asset/c0338857-fd7a-4824-bb8e-c52d22950e8d";
-const stackImageCenter = "https://www.figma.com/api/mcp/asset/955a598c-1a81-4d3a-bc64-2e210e4c90cc";
 
 type StackCardProps = {
   className?: string;
@@ -17,7 +17,20 @@ function StackCard({ className = "", rotation, style }: StackCardProps) {
       className={`absolute h-[186px] w-[138px] overflow-hidden rounded-[8px] border border-card-token bg-surface-primary ${className}`}
       style={{ transform: rotation, ...style }}
     >
-      <img alt="" className="size-full object-cover" src={className.includes("center-card") ? stackImageCenter : className.includes("right-card") ? stackImageRight : stackImageLeft} />
+      <img
+        alt=""
+        className="size-full object-cover"
+        decoding="async"
+        fetchPriority="high"
+        loading="eager"
+        src={
+          className.includes("center-card")
+            ? stackImageCenter
+            : className.includes("right-card")
+              ? stackImageRight
+              : stackImageLeft
+        }
+      />
     </div>
   );
 }

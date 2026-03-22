@@ -58,7 +58,7 @@ export default function App() {
       Boolean(fullName) &&
       Boolean(birthDate) &&
       Boolean(bio) &&
-      interests.length >= 3 &&
+      interests.length >= 4 &&
       Boolean(avatarUrl) &&
       hasLocation;
 
