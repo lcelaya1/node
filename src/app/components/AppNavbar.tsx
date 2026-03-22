@@ -18,22 +18,36 @@ type AppNavbarProps = {
 type NavItemProps = {
   active?: boolean;
   activeClassName?: string;
+  disabled?: boolean;
   icon?: "Home" | "User" | "Comment" | "Camera";
   label: string;
   onClick?: () => void;
   textOnly?: boolean;
 };
 
-function NavItem({ active = false, activeClassName = "text-brand-token icon-brand-token", icon, label, onClick, textOnly = false }: NavItemProps) {
+function NavItem({
+  active = false,
+  activeClassName = "text-brand-token icon-brand-token",
+  disabled = false,
+  icon,
+  label,
+  onClick,
+  textOnly = false,
+}: NavItemProps) {
   const colorClass = active ? activeClassName : "text-primary-token icon-primary-token";
 
   return (
     <button
       type="button"
       aria-current={active ? "page" : undefined}
+      aria-disabled={disabled || undefined}
       aria-label={label}
-      className="flex min-h-[44px] flex-1 basis-0 items-center justify-center"
-      onClick={onClick}
+      className={cn(
+        "flex min-h-[44px] flex-1 basis-0 items-center justify-center",
+        disabled ? "cursor-default" : "",
+      )}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
     >
       <div className={cn("flex flex-col items-center justify-center gap-[4px]", colorClass)}>
         {textOnly ? null : <AppIcon className="shrink-0" name={icon!} size={24} />}
@@ -121,6 +135,7 @@ export function AppNavbar({
         <NavItem
           active={activeTab === "groups"}
           activeClassName={activeClass}
+          disabled
           icon="Comment"
           label="Groups"
           onClick={() => onTabClick?.("groups")}

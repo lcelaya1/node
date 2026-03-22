@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router";
+
 const avatarImage = "https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb";
 
 function getTodayLabel() {
@@ -17,6 +19,7 @@ export function HomeHeader({
   title = "Hello, Cristina!",
   topPaddingClassName = "pt-[32px]",
 }: HomeHeaderProps) {
+  const navigate = useNavigate();
   const todayLabel = getTodayLabel();
 
   return (
@@ -26,9 +29,14 @@ export function HomeHeader({
         <h1 className="type-heading-2xl text-primary-token">{title}</h1>
       </div>
 
-      <div className="size-[40px] overflow-hidden rounded-full bg-surface-secondary">
+      <button
+        type="button"
+        aria-label="Open profile"
+        className="size-[40px] overflow-hidden rounded-full bg-surface-secondary"
+        onClick={() => navigate("/profile")}
+      >
         <img alt="Cristina" className="size-full object-cover" src={avatarImage} />
-      </div>
+      </button>
     </div>
   );
 }
