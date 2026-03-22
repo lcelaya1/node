@@ -366,13 +366,13 @@ export default function ChatInfoPlanScreen() {
 
         <div className="flex w-full flex-col items-start gap-[8px]">
           <p className="type-body-m-medium text-primary-token">Where?</p>
-          <div className="flex items-center gap-[4px] text-primary-token">
+          <div className="flex items-start gap-[4px] text-primary-token">
             <svg
               width="12"
               height="12"
               viewBox="0 0 12 12"
               fill="none"
-              className="shrink-0"
+              className="mt-[2px] shrink-0"
               aria-hidden="true"
             >
               <path

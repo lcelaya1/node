@@ -147,7 +147,7 @@ export default function InfoPlanScreen() {
           </div>
         </div>
 
-        <div className="flex w-[196px] flex-col items-start gap-[8px]">
+        <div className="flex w-full flex-col items-start gap-[8px]">
           <p className="type-body-m-medium text-primary-token">Who?</p>
           <div className="flex w-full items-center gap-[8px]">
             {creator?.avatarUrl ? (
@@ -159,11 +159,15 @@ export default function InfoPlanScreen() {
             ) : (
               <div className="size-[44px] rounded-full bg-surface-secondary" />
             )}
-            <div className="flex w-[144px] flex-col items-start">
+            <div className="flex min-w-0 flex-1 flex-col items-start">
               <p className="type-body-s text-primary-token">
                 {creator ? `${creator.name} created the node` : "Plan creator"}
               </p>
               <button
+                onClick={() => {
+                  if (!creator) return;
+                  navigate("/profile", { state: { demoProfile: creator } });
+                }}
                 className="border-b border-[var(--color-text-secondary)] type-body-s text-secondary-token"
                 type="button"
               >
@@ -175,13 +179,13 @@ export default function InfoPlanScreen() {
 
         <div className="flex w-full flex-col items-start gap-[8px]">
           <p className="type-body-m-medium text-primary-token">Where?</p>
-          <div className="flex items-center gap-[4px] text-primary-token">
+          <div className="flex items-start gap-[4px] text-primary-token">
             <svg
               width="12"
               height="12"
               viewBox="0 0 12 12"
               fill="none"
-              className="shrink-0"
+              className="mt-[2px] shrink-0"
               aria-hidden="true"
             >
               <path
