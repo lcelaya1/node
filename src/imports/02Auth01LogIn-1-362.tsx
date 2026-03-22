@@ -27,7 +27,7 @@ export default function Component02Auth01LogIn() {
         </div>
         <FillBackgroundImage additionalClassNames="inset-[0_5.71px_5.71px_0]" />
         <div className="absolute bg-[rgba(0,0,0,0)] inset-0 rounded-[310.192px]" data-name="Glass Effect" />
-        <p className="-translate-x-1/2 absolute font-['Milling_Trial:Duplex_1mm',sans-serif] h-[18.863px] leading-[normal] left-[62.35px] not-italic text-[14.671px] text-black text-center top-[53.45px] w-[80.692px]">Location</p>
+        <p className="-translate-x-1/2 absolute font-primary h-[18.863px] leading-[normal] left-[62.35px] not-italic text-[14.671px] text-black text-center top-[53.45px] w-[80.692px]">Location</p>
       </div>
       <div className="absolute left-0 right-0 top-0" data-name="Status Bar">
         <div className="flex flex-row items-center justify-center size-full">
@@ -66,8 +66,8 @@ export default function Component02Auth01LogIn() {
         </div>
       </div>
       <div className="absolute content-stretch flex flex-col gap-[8px] items-start left-[53px] not-italic text-center top-[121px] w-[287px]" data-name="Info Content">
-        <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] leading-[30px] relative shrink-0 text-[#071c07] text-[24px] w-full">Add your Specs</p>
-        <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[18px] relative shrink-0 text-[#999] text-[12px] w-full">Choose what others will see about your plan. The more you add, the more persuasive.</p>
+        <p className="font-primary leading-[30px] relative shrink-0 text-[#071c07] text-[24px] w-full">Add your Specs</p>
+        <p className="font-primary leading-[18px] relative shrink-0 text-[#999] text-[12px] w-full">Choose what others will see about your plan. The more you add, the more persuasive.</p>
       </div>
       <div className="absolute content-stretch flex flex-col items-start left-[36px] p-[8.384px] rounded-[125.753px] shadow-[0px_4.192px_54.493px_0px_rgba(0,0,0,0.05)] size-[119.466px] top-[365.77px]">
         <div className="absolute inset-[0_5.47px_5.47px_0]" data-name="BG">
@@ -79,7 +79,7 @@ export default function Component02Auth01LogIn() {
           </div>
           <FillBackgroundImage additionalClassNames="inset-0" />
           <div className="absolute bg-[rgba(0,0,0,0)] inset-0 rounded-[296px]" data-name="Glass Effect">
-            <p className="-translate-x-1/2 absolute font-['Milling_Trial:Duplex_1mm',sans-serif] h-[18px] leading-[normal] left-[56.5px] not-italic text-[14px] text-black text-center top-[48px] w-[77px]">Title</p>
+            <p className="-translate-x-1/2 absolute font-primary h-[18px] leading-[normal] left-[56.5px] not-italic text-[14px] text-black text-center top-[48px] w-[77px]">Title</p>
           </div>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function Component02Auth01LogIn() {
         </div>
         <FillBackgroundImage additionalClassNames="inset-[0_7px_7px_0]" />
         <div className="absolute bg-[rgba(0,0,0,0)] inset-0 rounded-[310.192px]" data-name="Glass Effect">
-          <p className="-translate-x-1/2 absolute font-['Milling_Trial:Duplex_1mm',sans-serif] h-[18.863px] leading-[normal] left-[80.17px] not-italic text-[14.671px] text-black text-center top-[67.07px] w-[89.075px]">Description</p>
+          <p className="-translate-x-1/2 absolute font-primary h-[18.863px] leading-[normal] left-[80.17px] not-italic text-[14.671px] text-black text-center top-[67.07px] w-[89.075px]">Description</p>
         </div>
       </div>
       <div className="absolute h-[5px] left-[calc(25%+86.75px)] top-[537px] w-[23px]">

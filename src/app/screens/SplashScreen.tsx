@@ -18,7 +18,7 @@ export default function SplashScreen() {
 
   return (
     <div
-      className="flex h-full items-center justify-center overflow-hidden bg-[#ededed]"
+      className="flex h-full items-center justify-center overflow-hidden bg-surface-primary"
       style={{
         height: "calc(100% + env(safe-area-inset-bottom))",
         marginBottom: "calc(env(safe-area-inset-bottom) * -1)",

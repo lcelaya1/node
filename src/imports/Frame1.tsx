@@ -18,7 +18,7 @@ export default function Frame() {
         </div>
         <div className="absolute bg-[rgba(0,0,0,0)] inset-0 rounded-[296px]" data-name="Glass Effect" />
         <div className="content-stretch flex h-[36px] items-center justify-center relative rounded-[100px] shrink-0" data-name="Text">
-          <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-center text-white whitespace-nowrap">
+          <div className="flex flex-col font-primary justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-center text-white whitespace-nowrap">
             <p className="leading-[normal]">Join Plan</p>
           </div>
         </div>
@@ -40,7 +40,7 @@ export default function Frame() {
         <div className="h-[36px] relative rounded-[100px] shrink-0" data-name="Text">
           <div className="flex flex-row items-center justify-center size-full">
             <div className="content-stretch flex h-full items-center justify-center relative">
-              <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#404040] text-[14px] text-center whitespace-nowrap" style={{ fontFeatureSettings: "'ss16'" }}>
+              <div className="flex flex-col font-primary justify-center leading-[0] not-italic relative shrink-0 text-[#404040] text-[14px] text-center whitespace-nowrap" style={{ fontFeatureSettings: "'ss16'" }}>
                 <p className="leading-[normal]">Create Plan</p>
               </div>
             </div>

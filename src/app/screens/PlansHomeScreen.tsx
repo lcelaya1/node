@@ -1,79 +1,102 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { Plus } from "lucide-react";
-import NoPlansScreen from "./NoPlansScreen";
+import { AppNavbar } from "../components/AppNavbar";
+import { HomeHeader } from "../components/HomeHeader";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 
-type PlanCardProps = {
-  description: string;
-  imageSrc?: string;
-  isHighlighted?: boolean;
-  location: string;
-  onClick?: () => void;
-  title: string;
+const fallbackPlanImage = "https://www.figma.com/api/mcp/asset/f09dd6ab-6d26-46fd-85b8-0715408f10cb";
+const examplePlanImage = "https://www.figma.com/api/mcp/asset/f09dd6ab-6d26-46fd-85b8-0715408f10cb";
+
+const EXAMPLE_PLAN: SavedPlan = {
+  createdAt: "2026-03-22T18:00:00.000Z",
+  description: "Sunset drinks, good music, and an easy plan to end the week well.",
+  id: "example-home-plan",
+  picturePreview: examplePlanImage,
+  title: "Rooftop drinks in Madrid",
+  when: "Today, 18:00h",
+  whenDate: "2026-03-22",
+  whenTime: "18:00",
+  where: "Azotea del Círculo, Madrid",
 };
 
-function PlanCard({ description, imageSrc, isHighlighted = false, location, onClick, title }: PlanCardProps) {
-  const cardHeight = imageSrc ? "min-h-[280px]" : "";
+function formatPlanMeta(plan: SavedPlan) {
+  if (plan.when) return plan.when.replace("·", ",");
+  return "Today, 18:00h";
+}
 
+type NotificationProps = {
+  count?: number;
+};
+
+function Notification({ count = 3 }: NotificationProps) {
   return (
-    <button
-      className={`w-full rounded-[16px] px-[20px] py-[18px] text-left transition-shadow ${cardHeight}`}
-      onClick={onClick}
-      style={{
-        background:
-          "linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.62) 100%)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255, 255, 255, 0.58)",
-        boxShadow: isHighlighted
-          ? "0 1px 0 rgba(255,255,255,0.82) inset, 0 -1px 1px rgba(0,0,0,0.04) inset, 0 16px 32px -8px rgba(0,0,0,0.14), 0 4px 12px rgba(255,255,255,0.76)"
-          : "0 1px 0 rgba(255,255,255,0.82) inset, 0 -1px 1px rgba(0,0,0,0.04) inset, 0 8px 20px -4px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
-      }}
-    >
-      <div className="flex min-h-full flex-col">
-        <div className="w-full">
-          <p
-            className="overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Triplex_1mm',sans-serif] text-[18px] leading-[22px] text-[#fc312e]"
-            style={{ fontFeatureSettings: "'ss16'" }}
-          >
-            {title}
-          </p>
-          <p
-            className="mt-[4px] overflow-hidden text-ellipsis whitespace-nowrap font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[18px] text-[#404040]"
-            style={{ fontFeatureSettings: "'ss16'" }}
-          >
-            {location}
-          </p>
-          <p
-            className="mt-[2px] overflow-hidden font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[18px] text-[#bbbbbb]"
-            style={{
-              display: "-webkit-box",
-              WebkitBoxOrient: "vertical",
-              WebkitLineClamp: 1,
-            }}
-          >
-            {description}
-          </p>
-        </div>
-
-        {imageSrc ? (
-          <div className="mt-[14px] h-[180px] w-full overflow-hidden rounded-[16px]">
-            <img alt={title} className="h-full w-full object-cover" src={imageSrc} />
-          </div>
-        ) : null}
-      </div>
-    </button>
+    <div className="flex size-[24px] items-center justify-center rounded-full bg-button-secondary">
+      <span className="type-body-s text-invert-token">{count}</span>
+    </div>
   );
 }
 
-function formatPlanForCard(plan: SavedPlan) {
-  return {
-    description: plan.description || "Description",
-    imageSrc: plan.picturePreview || undefined,
-    location: plan.where || plan.when || "Add a location",
-    title: plan.title || "Untitled Plan",
-  };
+type HomePlanCardProps = {
+  highlighted?: boolean;
+  onClick?: () => void;
+  onViewChat?: () => void;
+  title: string;
+  subtitle: string;
+  imageSrc?: string;
+};
+
+function HomePlanCard({
+  highlighted = false,
+  onClick,
+  onViewChat,
+  title,
+  subtitle,
+  imageSrc,
+}: HomePlanCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative flex w-full flex-col items-start overflow-hidden rounded-[8px] border border-card-token bg-surface-primary text-left"
+    >
+      <div className="h-[163px] w-full overflow-hidden rounded-[8px]">
+        <img
+          alt={title}
+          className="size-full object-cover"
+          src={imageSrc || fallbackPlanImage}
+        />
+      </div>
+
+      <div className="flex w-full items-center gap-[8px] p-[12px]">
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-[2px]">
+          <p className="type-body-m-medium w-full text-primary-token">
+            {title}
+          </p>
+          <p className="type-body-xs w-full text-secondary-token">{subtitle}</p>
+        </div>
+
+        <div className="flex h-[40px] flex-col items-center justify-between">
+          <span className="type-body-xs overflow-hidden text-[10px] leading-[16px] text-brand-token">
+            now
+          </span>
+          <Notification />
+        </div>
+      </div>
+
+      {highlighted ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onViewChat?.();
+          }}
+          className="absolute left-[244px] top-[12px] flex w-[94px] items-center justify-center rounded-[999px] bg-button-secondary p-[8px]"
+        >
+          <span className="type-body-xs text-invert-token">View Chat</span>
+        </button>
+      ) : null}
+    </button>
+  );
 }
 
 export default function PlansHomeScreen() {
@@ -95,52 +118,62 @@ export default function PlansHomeScreen() {
   }, []);
 
   const highlightedPlanId = (location.state as { planId?: string } | null)?.planId;
-
-  if (!savedPlans.length) {
-    return <NoPlansScreen />;
-  }
+  const displayPlans = savedPlans.length ? savedPlans : [EXAMPLE_PLAN];
 
   return (
-    <div className="h-full overflow-y-auto bg-[#ededed]" data-name="02 Auth / 01 Log in">
-      <div className="mx-auto flex min-h-full w-full max-w-[390px] flex-col">
-        <div className="px-[16px] pt-[16px]">
-          <h1 className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[24px] leading-[30px] text-[#071c07]">
-            Next Up
-          </h1>
-          <p className="mt-[6px] font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[20px] text-[#071c07]">
-            Your Upcoming Plans
-          </p>
-        </div>
+    <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
+      <div
+        className="flex flex-1 flex-col gap-[24px] overflow-y-auto px-[20px]"
+        style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
+      >
+        <HomeHeader title="Hello, Cristina!" topPaddingClassName="pt-[32px]" />
 
-        <div className="flex flex-col gap-[18px] px-[16px] pb-[32px] pt-[24px]">
-          {savedPlans.map((plan) => {
-            const card = formatPlanForCard(plan);
+        <div className="flex flex-col items-start gap-[8px]">
+          <h2 className="type-body-m-medium text-primary-token">Upcoming Plans</h2>
 
-            return (
-              <PlanCard
-                key={plan.id}
-                description={card.description}
-                imageSrc={card.imageSrc}
-                isHighlighted={plan.id === highlightedPlanId}
-                location={card.location}
-                onClick={() => navigate("/add-specs", { state: { planId: plan.id } })}
-                title={card.title}
-              />
-            );
-          })}
+          {displayPlans.slice(0, 3).map((plan, index) => (
+            <HomePlanCard
+              key={plan.id}
+              highlighted={plan.id === highlightedPlanId || (!highlightedPlanId && index === 0)}
+              imageSrc={plan.picturePreview || fallbackPlanImage}
+              onClick={() =>
+                navigate("/chat-info", {
+                  state: {
+                    imageSrc: plan.picturePreview || fallbackPlanImage,
+                    plan,
+                    selectedIndex: index,
+                  },
+                })
+              }
+              onViewChat={() =>
+                navigate("/chat", {
+                  state: {
+                    imageSrc: plan.picturePreview || fallbackPlanImage,
+                    plan,
+                    selectedIndex: index,
+                  },
+                })
+              }
+              subtitle={formatPlanMeta(plan)}
+              title={plan.title || "Title of the plan will be displayed like this"}
+            />
+          ))}
         </div>
       </div>
 
-      <button
-        className="fixed bottom-[28px] left-1/2 z-20 ml-[115px] flex h-[64px] w-[64px] items-center justify-center rounded-full text-white shadow-[0_10px_24px_rgba(255,59,48,0.36)]"
-        onClick={() => navigate("/add-specs")}
-        style={{
-          background: "linear-gradient(180deg, rgba(255,72,62,1) 0%, rgba(255,48,43,1) 100%)",
-        }}
-        type="button"
-      >
-        <Plus size={28} strokeWidth={2.4} />
-      </button>
+      <div className="absolute inset-x-0 bottom-0 border-t border-card-token bg-surface-primary">
+        <AppNavbar
+          activeTab="home"
+          activeTone="brand"
+          onCreatePlanClick={() => navigate("/add-specs")}
+          onJoinPlanClick={() => navigate("/join-plan")}
+          onTabClick={(tab) => {
+            if (tab === "home") navigate("/");
+            if (tab === "groups") navigate("/join-plan");
+            if (tab === "profile") navigate("/profile");
+          }}
+        />
+      </div>
     </div>
   );
 }

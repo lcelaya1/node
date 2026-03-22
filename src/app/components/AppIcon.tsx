@@ -11,11 +11,14 @@ export type IconName =
   | "Comment"
   | "Done"
   | "Home"
+  | "Info"
   | "Left"
   | "Like"
   | "Password"
   | "Search"
-  | "User";
+  | "SquarePen"
+  | "User"
+  | "Users";
 
 type AppIconProps = {
   name: IconName;
@@ -97,6 +100,13 @@ const icons: Record<IconName, React.ReactNode> = {
       <path d="M14.5 19V14H9.5V19" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
     </>
   ),
+  Info: (
+    <>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" />
+      <circle cx="12" cy="8" r="1" fill="currentColor" />
+      <path d="M12 11V17" stroke="currentColor" strokeLinecap="round" />
+    </>
+  ),
   Left: (
     <path d="M15 6L9 12L15 18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
   ),
@@ -115,10 +125,44 @@ const icons: Record<IconName, React.ReactNode> = {
       <path d="M20 20L15.5 15.5" stroke="currentColor" strokeLinecap="round" />
     </>
   ),
+  SquarePen: (
+    <>
+      <path
+        d="M7 4.5H6.5C5.39543 4.5 4.5 5.39543 4.5 6.5V17.5C4.5 18.6046 5.39543 19.5 6.5 19.5H17.5C18.6046 19.5 19.5 18.6046 19.5 17.5V17"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14.25 5.25L18.75 9.75M10 18H6V14L15.9393 4.06066C16.5251 3.47487 17.4749 3.47487 18.0607 4.06066L19.9393 5.93934C20.5251 6.52513 20.5251 7.47487 19.9393 8.06066L10 18Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </>
+  ),
   User: (
     <>
       <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeLinecap="round" />
       <path d="M4.84913 16.9479C5.48883 14.6034 7.91473 13.5 10.345 13.5H13.655C16.0853 13.5 18.5112 14.6034 19.1509 16.9479C19.282 17.4287 19.3868 17.9489 19.4462 18.5015C19.5052 19.0507 19.0523 19.5 18.5 19.5H5.5C4.94772 19.5 4.49482 19.0507 4.55382 18.5015C4.6132 17.9489 4.71796 17.4287 4.84913 16.9479Z" stroke="currentColor" strokeLinecap="round" />
+    </>
+  ),
+  Users: (
+    <>
+      <circle cx="9" cy="8.5" r="3" stroke="currentColor" strokeLinecap="round" />
+      <circle cx="16.5" cy="7" r="2.5" stroke="currentColor" strokeLinecap="round" />
+      <path
+        d="M4.5 18.5V17.75C4.5 15.9551 5.95508 14.5 7.75 14.5H10.25C12.0449 14.5 13.5 15.9551 13.5 17.75V18.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14.5 14.5H16.25C17.7688 14.5 19 15.7312 19 17.25V18.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </>
   ),
 };

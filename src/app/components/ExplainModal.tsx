@@ -97,27 +97,27 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
 
   return (
     <>
-      <div className="fixed inset-0 bg-[rgba(24,24,32,0.4)] z-40" onClick={handleConfirm} />
+      <div className="fixed inset-0 z-40" style={{ backgroundColor: "var(--color-overlay-scrim)" }} onClick={handleConfirm} />
       <div
-        className="fixed left-0 right-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col pb-[32px] pt-[20px] px-[20px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up overflow-hidden"
+        className="fixed left-0 right-0 mx-auto max-w-[393px] bg-surface-primary flex flex-col pb-[32px] pt-[20px] px-[20px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up overflow-hidden"
         style={{ bottom: 0, height: "min(640px, calc(100vh - 20px))" }}
       >
 
         {/* Header — pinned */}
         <div className="shrink-0 flex flex-col gap-[16px] items-center">
-          <div className="bg-[#667085] h-[5px] rounded-full w-[44px]" />
+          <div className="bg-surface-fill h-[5px] rounded-full w-[44px]" />
           <div className="flex items-center justify-between w-full">
-            <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[28px] leading-[36px] tracking-[-0.56px] text-[#09090b]">
+            <p className="font-primary text-[28px] leading-[36px] tracking-[-0.56px] text-primary-token">
               Explain a bit more
             </p>
             <div className="flex items-center gap-[8px]">
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="bg-[#fc312e] flex items-center justify-center p-[10px] rounded-[999px] shrink-0"
+                className="bg-button-secondary text-invert-token flex items-center justify-center p-[10px] rounded-[999px] shrink-0"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 14.925L7.2 19.125L21.2 5.125" stroke="#fefefe" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 14.925L7.2 19.125L21.2 5.125" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
@@ -136,7 +136,7 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
             onChange={(e) => setDraft(e.target.value)}
             onFocus={() => window.scrollTo(0, 0)}
             placeholder="Start writing..."
-            className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[21px] text-[#09090b] placeholder:text-[rgba(0,0,0,0.5)] bg-transparent border-none outline-none resize-none w-full overflow-hidden min-h-[24px]"
+            className="font-primary text-[16px] leading-[21px] text-primary-token placeholder:text-secondary-token bg-transparent border-none outline-none resize-none w-full overflow-hidden min-h-[24px]"
           />
         </div>
 
@@ -148,15 +148,15 @@ export function ExplainModal({ isOpen, onClose, value, onSave }: ExplainModalPro
           <button
             type="button"
             onClick={handleOpenRecording}
-            className="bg-[#09090b] flex items-center justify-center p-[10px] rounded-[999px]"
+            className="bg-button-primary text-invert-token flex items-center justify-center p-[10px] rounded-[999px]"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M2 10V13" stroke="#fefefe" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M6 6V17" stroke="#fefefe" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M10 3V21" stroke="#fefefe" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 8V15" stroke="#fefefe" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M18 5V18" stroke="#fefefe" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M22 10V13" stroke="#fefefe" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 10V13" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 6V17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 3V21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 8V15" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M18 5V18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M22 10V13" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>

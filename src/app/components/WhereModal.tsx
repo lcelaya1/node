@@ -99,13 +99,14 @@ export function WhereModal({ isOpen, onClose, onSelect, initialValue = "" }: Whe
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-[rgba(24,24,32,0.4)] z-40"
+        className="fixed inset-0 z-40"
+        style={{ backgroundColor: "var(--color-overlay-scrim)" }}
         onClick={onClose}
       />
 
       {/* Sheet */}
       <div
-        className="fixed left-0 right-0 mx-auto max-w-[393px] bg-[#f3f3f3] flex flex-col pb-[32px] pt-[20px] px-[20px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up"
+        className="fixed left-0 right-0 mx-auto max-w-[393px] bg-surface-primary flex flex-col pb-[32px] pt-[20px] px-[20px] rounded-tl-[16px] rounded-tr-[16px] z-50 animate-slide-up"
         style={{ bottom: 0, height: "min(640px, calc(100vh - 20px))" }}
       >
 
@@ -113,11 +114,11 @@ export function WhereModal({ isOpen, onClose, onSelect, initialValue = "" }: Whe
         <div className="flex flex-col gap-[12px] items-start w-full shrink-0">
           <div className="flex flex-col gap-[16px] items-center w-full">
             {/* Handle */}
-            <div className="bg-[#667085] h-[5px] rounded-full w-[44px]" />
+            <div className="bg-surface-fill h-[5px] rounded-full w-[44px]" />
 
             {/* Title row */}
             <div className="flex items-center justify-between w-full">
-              <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] text-[28px] leading-[36px] tracking-[-0.56px] text-[#09090b]">
+              <p className="font-primary text-[28px] leading-[36px] tracking-[-0.56px] text-primary-token">
                 Where
               </p>
 
@@ -125,13 +126,13 @@ export function WhereModal({ isOpen, onClose, onSelect, initialValue = "" }: Whe
               <button
                 type="button"
                 onClick={onClose}
-                className="bg-[#fc312e] flex items-center justify-center p-[10px] rounded-[999px] shrink-0"
+                className="bg-button-secondary text-invert-token flex items-center justify-center p-[10px] rounded-[999px] shrink-0"
                 aria-label="Confirm"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M3 14.925L7.2 19.125L21.2 5.125"
-                    stroke="#fefefe"
+                    stroke="currentColor"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -146,23 +147,23 @@ export function WhereModal({ isOpen, onClose, onSelect, initialValue = "" }: Whe
             placeholder="Search a bar, restaurant, venue..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[21px] text-[#09090b] placeholder:text-[rgba(0,0,0,0.5)] bg-transparent border-none outline-none w-full"
+            className="font-primary text-[16px] leading-[21px] text-primary-token placeholder:text-secondary-token bg-transparent border-none outline-none w-full"
           />
         </div>
 
         {/* Divider */}
-        <div className="bg-[#e4e4e7] h-px w-full mt-[12px] shrink-0" />
+        <div className="bg-surface-secondary h-px w-full mt-[12px] shrink-0" />
 
         {/* Results */}
         <div className="flex-1 overflow-y-auto mt-[4px]">
           {loading && (
-            <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[rgba(0,0,0,0.5)] py-[14px]">
+            <p className="font-primary text-[14px] leading-[20px] text-secondary-token py-[14px]">
               Searching...
             </p>
           )}
 
           {!loading && error && (
-            <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[rgba(0,0,0,0.5)] py-[14px]">
+            <p className="font-primary text-[14px] leading-[20px] text-secondary-token py-[14px]">
               {error}
             </p>
           )}
@@ -172,7 +173,7 @@ export function WhereModal({ isOpen, onClose, onSelect, initialValue = "" }: Whe
               key={suggestion}
               type="button"
               onClick={() => { onSelect(suggestion); onClose(); }}
-              className="border-b border-[#e4e4e7] py-[14px] text-left w-full font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[20px] text-[#09090b]"
+              className="border-b border-card-token py-[14px] text-left w-full font-primary text-[14px] leading-[20px] text-primary-token"
             >
               {suggestion}
             </button>

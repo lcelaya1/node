@@ -1,55 +1,89 @@
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
-import { DualActionButtons } from "../components/DualActionButtons";
-import { loadSavedPlans } from "../lib/plans";
+import { useNavigate } from "react-router";
+import { AppNavbar } from "../components/AppNavbar";
+import { HomeHeader } from "../components/HomeHeader";
+const stackImageLeft = "https://www.figma.com/api/mcp/asset/a8be7322-91e6-4d6b-813b-a8befcea8cf2";
+const stackImageRight = "https://www.figma.com/api/mcp/asset/c0338857-fd7a-4824-bb8e-c52d22950e8d";
+const stackImageCenter = "https://www.figma.com/api/mcp/asset/955a598c-1a81-4d3a-bc64-2e210e4c90cc";
+
+type StackCardProps = {
+  className?: string;
+  rotation: string;
+  style?: React.CSSProperties;
+};
+
+function StackCard({ className = "", rotation, style }: StackCardProps) {
+  return (
+    <div
+      className={`absolute h-[186px] w-[138px] overflow-hidden rounded-[8px] border border-card-token bg-surface-primary ${className}`}
+      style={{ transform: rotation, ...style }}
+    >
+      <img alt="" className="size-full object-cover" src={className.includes("center-card") ? stackImageCenter : className.includes("right-card") ? stackImageRight : stackImageLeft} />
+    </div>
+  );
+}
 
 export default function NoPlansScreen() {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleCreatePlan = () => {
-    navigate("/add-specs");
-
-    window.setTimeout(() => {
-      if (window.location.pathname !== "/add-specs") {
-        window.location.assign("/add-specs");
-      }
-    }, 50);
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    loadSavedPlans().then((savedPlans) => {
-      if (!isMounted) return;
-
-      if (savedPlans.length) {
-        navigate("/", {
-          replace: true,
-          state: location.state,
-        });
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [location.state, navigate]);
 
   return (
-    <div className="bg-[#ededed] flex h-full flex-col items-center overflow-hidden px-[25px] pb-[32px]" data-name="02 Auth / 01 Log in">
-      <div className="flex flex-1 items-center justify-center">
-        <div className="flex flex-col items-center gap-[28px] not-italic text-center w-full">
-          <div className="flex flex-col items-center gap-[8px] w-[292px]" data-name="Info Content">
-            <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] leading-[30px] relative shrink-0 text-[#071c07] text-[24px] w-full">No plans ahead!</p>
-            <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[20px] relative shrink-0 text-[#9a9a9a] text-[14px] w-[286px]">Let us handle it, we will match you with 3 plans that we know you will enjoy.</p>
+    <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
+      <div
+        className="flex flex-1 flex-col gap-[52px] overflow-y-auto px-[20px]"
+        style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
+      >
+        <HomeHeader title="Hello, Cristina!" topPaddingClassName="pt-[32px]" />
+
+        <div className="flex flex-col items-center gap-[32px]">
+          <div className="relative h-[258px] w-[330px]">
+            <StackCard className="left-card" rotation="rotate(-5.92deg)" style={{ left: "52px", top: "10px" }} />
+            <StackCard className="right-card" rotation="rotate(4.74deg)" style={{ left: "148px", top: "0px" }} />
+            <StackCard className="center-card" rotation="rotate(-1.13deg)" style={{ left: "118px", top: "60px" }} />
           </div>
 
-          <DualActionButtons
-            primary={{ label: "Join Plan", onClick: () => navigate("/join-plan") }}
-            secondary={{ label: "Create Plan", onClick: handleCreatePlan }}
-          />
+          <div className="flex flex-col items-center gap-[20px] text-center">
+            <div className="flex w-full flex-col items-center gap-[8px]">
+              <h2 className="type-heading-l text-primary-token w-[208px]">When if not today?</h2>
+              <p className="type-body-s text-primary-token w-[208px]">
+                You have nothing planned yet.
+                <br />
+                It&apos;s time to start a new experience.
+              </p>
+            </div>
+
+            <div className="flex w-[288px] items-start gap-[12px]">
+              <button
+                type="button"
+                onClick={() => navigate("/join-plan")}
+                className="flex h-[45px] min-w-0 flex-1 items-center justify-center rounded-[999px] px-[32px]"
+                style={{ background: "linear-gradient(180deg, var(--color-button-secondary) 0%, var(--color-button-secondary) 100%)" }}
+              >
+                <span className="type-body-m text-invert-token whitespace-nowrap">Join Plan</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/add-specs")}
+                className="flex h-[45px] min-w-0 flex-1 items-center justify-center rounded-[999px] border border-selected-token bg-surface-primary px-[32px]"
+              >
+                <span className="type-body-m text-primary-token whitespace-nowrap">Create Plan</span>
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 border-t border-card-token bg-surface-primary">
+        <AppNavbar
+          activeTab="home"
+          activeTone="brand"
+          onCreatePlanClick={() => navigate("/add-specs")}
+          onJoinPlanClick={() => navigate("/join-plan")}
+          onTabClick={(tab) => {
+            if (tab === "home") navigate("/");
+            if (tab === "groups") navigate("/join-plan");
+            if (tab === "profile") navigate("/profile");
+          }}
+        />
       </div>
     </div>
   );

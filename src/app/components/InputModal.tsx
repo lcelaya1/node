@@ -53,7 +53,8 @@ export function InputModal({ open, onClose, type, step, onSave }: InputModalProp
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/20 z-40 transition-opacity"
+        className="fixed inset-0 z-40 transition-opacity"
+        style={{ backgroundColor: "var(--color-overlay-scrim)" }}
         onClick={onClose}
       />
 
@@ -64,19 +65,19 @@ export function InputModal({ open, onClose, type, step, onSave }: InputModalProp
           animation: "slideUp 0.3s ease-out",
         }}
       >
-        <div className="bg-[#f3f3f3] rounded-tl-[32px] rounded-tr-[32px] pb-[40px] pt-[32px]">
+        <div className="bg-surface-primary rounded-tl-[32px] rounded-tr-[32px] pb-[40px] pt-[32px]">
           <div className="px-[53px]">
             <div className="content-stretch flex flex-col gap-[6px] items-start w-full max-w-[287px]" data-name="Info Content">
-              <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[20px] not-italic text-[14px] text-black">
+              <p className="font-primary leading-[20px] not-italic text-[14px] text-primary-token">
                 {currentConfig.label}
               </p>
-              <div className="bg-white content-stretch flex flex-col items-start p-[12px] rounded-[13px] w-full" data-name="Info Content">
+              <div className="bg-surface-primary content-stretch flex flex-col items-start p-[12px] rounded-[13px] w-full border border-card-token" data-name="Info Content">
                 <input
                   type="text"
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder={currentConfig.placeholder}
-                  className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[20px] text-[14px] w-full outline-none bg-transparent placeholder:text-[#bbb] text-black"
+                  className="font-primary leading-[20px] text-[14px] w-full outline-none bg-transparent placeholder:text-tertiary-token text-primary-token"
                   autoFocus
                 />
               </div>
@@ -88,13 +89,13 @@ export function InputModal({ open, onClose, type, step, onSave }: InputModalProp
               className="mt-[24px] w-full h-[56px] rounded-[28px] transition-all active:scale-[0.98] disabled:opacity-50"
               disabled={!value.trim()}
               style={{
-                background: 'linear-gradient(135deg, rgba(255, 59, 48, 0.95) 0%, rgba(255, 59, 48, 0.85) 100%)',
+                background: 'linear-gradient(135deg, var(--color-button-secondary) 0%, var(--color-button-secondary) 100%)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                boxShadow: '0px 1px 0px 0px rgba(255, 255, 255, 0.3) inset, 0px -1px 1px 0px rgba(0, 0, 0, 0.1) inset, 0px 8px 20px -4px rgba(255, 59, 48, 0.3), 0px 2px 4px -1px rgba(0, 0, 0, 0.1)',
+                border: '1px solid var(--color-white-30)',
+                boxShadow: '0px 1px 0px 0px var(--color-white-30) inset, 0px -1px 1px 0px var(--color-overlay-soft) inset, 0px 8px 20px -4px var(--color-brand-30), 0px 2px 4px -1px var(--color-overlay-soft)',
               }}
             >
-              <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[normal] text-white">
+              <p className="font-primary text-[16px] leading-[normal] text-invert-token">
                 Save
               </p>
             </button>

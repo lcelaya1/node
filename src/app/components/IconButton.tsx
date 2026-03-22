@@ -7,10 +7,10 @@ const iconButtonVariants = cva(
   {
     variants: {
       hierarchy: {
-        Primary:         "bg-[#09090b] text-[#fefefe] disabled:bg-[#a1a1aa]",
-        "Primary Light": "bg-[#fefefe] text-[#09090b] disabled:bg-[#e4e4e7]",
-        Secondary:       "bg-[#fc312e] text-[#fefefe] disabled:bg-[#a1a1aa]",
-        Link:            "bg-transparent text-[#09090b] disabled:text-[#a1a1aa]",
+        Primary:         "bg-button-primary text-invert-token disabled:bg-surface-fill",
+        "Primary Light": "bg-surface-primary text-primary-token disabled:bg-surface-secondary",
+        Secondary:       "bg-button-secondary text-invert-token disabled:bg-surface-fill",
+        Link:            "bg-transparent text-primary-token disabled:text-secondary-token",
       },
       size: {
         Large: "p-[10px]",

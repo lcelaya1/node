@@ -16,7 +16,7 @@ function MembersBackgroundImageAndText({ text }: MembersBackgroundImageAndTextPr
           </g>
         </svg>
       </div>
-      <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#b0b0b0] text-[10px] whitespace-nowrap">
+      <div className="flex flex-col font-primary justify-center leading-[0] not-italic relative shrink-0 text-[#b0b0b0] text-[10px] whitespace-nowrap">
         <p className="leading-[20px]">{text}</p>
       </div>
     </div>
@@ -30,14 +30,14 @@ function TextBackgroundImageAndText({ text }: TextBackgroundImageAndTextProps) {
   return (
     <div className="content-stretch flex flex-col gap-[4px] items-center justify-center leading-[0] not-italic relative rounded-[100px] shrink-0 w-full">
       <div className="content-stretch flex flex-col gap-[2px] items-start relative shrink-0">
-        <div className="flex flex-col font-['Milling_Trial:Triplex_1mm',sans-serif] justify-center relative shrink-0 text-[#fc312e] text-[14px] w-[207px]" style={{ fontFeatureSettings: "'ss16'" }}>
+        <div className="flex flex-col font-primary justify-center relative shrink-0 text-[#fc312e] text-[14px] w-[207px]" style={{ fontFeatureSettings: "'ss16'" }}>
           <p className="leading-[normal]">{`Caffe Break `}</p>
         </div>
-        <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center relative shrink-0 text-[#404040] text-[12px] w-[207px]" style={{ fontFeatureSettings: "'ss16'" }}>
+        <div className="flex flex-col font-primary justify-center relative shrink-0 text-[#404040] text-[12px] w-[207px]" style={{ fontFeatureSettings: "'ss16'" }}>
           <p className="leading-[normal]">{"Nomad Coffee, El Born Barcelona"}</p>
         </div>
       </div>
-      <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center min-w-full relative shrink-0 text-[#bbb] text-[12px] w-[min-content]" style={{ fontFeatureSettings: "'ss16'" }}>
+      <div className="flex flex-col font-primary justify-center min-w-full relative shrink-0 text-[#bbb] text-[12px] w-[min-content]" style={{ fontFeatureSettings: "'ss16'" }}>
         <p className="leading-[normal]">{text}</p>
       </div>
     </div>
@@ -94,8 +94,8 @@ export default function Component02Auth01LogIn() {
           </div>
         </div>
       </div>
-      <p className="absolute font-['Milling_Trial:Triplex_1mm',sans-serif] leading-[30px] left-[24px] not-italic text-[#071c07] text-[24px] top-[82px] w-[345px]">Next Up</p>
-      <p className="absolute font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[normal] left-[24px] not-italic text-[#071c07] text-[16px] top-[118px] w-[345px]">Your Upcoming Plans</p>
+      <p className="absolute font-primary leading-[30px] left-[24px] not-italic text-[#071c07] text-[24px] top-[82px] w-[345px]">Next Up</p>
+      <p className="absolute font-primary leading-[normal] left-[24px] not-italic text-[#071c07] text-[16px] top-[118px] w-[345px]">Your Upcoming Plans</p>
       <div className="absolute content-stretch flex gap-[4px] h-[231px] items-start left-[20px] p-[24px] rounded-[1000px] top-[151px] w-[255px]" data-name="Button - Liquid Glass - Text">
         <div className="absolute inset-[-26px] opacity-67" data-name="Blur">
           <div className="absolute bg-white inset-[-50px]" data-name="Mask">

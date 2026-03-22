@@ -40,8 +40,8 @@ export default function Component02Auth01LogIn() {
         </div>
       </div>
       <div className="absolute content-stretch flex flex-col gap-[6px] items-start left-[53px] not-italic text-center top-[336px] w-[287px]" data-name="Info Content">
-        <p className="font-['Milling_Trial:Triplex_1mm',sans-serif] leading-[30px] relative shrink-0 text-[#071c07] text-[24px] w-full">No plans ahead!</p>
-        <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] leading-[18px] relative shrink-0 text-[#848884] text-[12px] w-full">Let us handle it, we will match you with 3 plans that we know you will enjoy.</p>
+        <p className="font-primary leading-[30px] relative shrink-0 text-[#071c07] text-[24px] w-full">No plans ahead!</p>
+        <p className="font-primary leading-[18px] relative shrink-0 text-[#848884] text-[12px] w-full">Let us handle it, we will match you with 3 plans that we know you will enjoy.</p>
       </div>
       <div className="absolute content-stretch flex gap-[8px] items-center left-[25px] top-[436px]">
         <div className="content-stretch flex gap-[4px] items-center justify-center px-[20px] py-[6px] relative rounded-[1000px] shrink-0 w-[164px]" data-name="Button - Liquid Glass - Text">
@@ -61,7 +61,7 @@ export default function Component02Auth01LogIn() {
           </div>
           <div className="absolute bg-[rgba(0,0,0,0)] inset-0 rounded-[296px]" data-name="Glass Effect" />
           <div className="content-stretch flex h-[36px] items-center justify-center relative rounded-[100px] shrink-0" data-name="Text">
-            <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-center text-white whitespace-nowrap">
+            <div className="flex flex-col font-primary justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-center text-white whitespace-nowrap">
               <p className="leading-[normal]">Join Plan</p>
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function Component02Auth01LogIn() {
           <div className="h-[36px] relative rounded-[100px] shrink-0" data-name="Text">
             <div className="flex flex-row items-center justify-center size-full">
               <div className="content-stretch flex h-full items-center justify-center relative">
-                <div className="flex flex-col font-['Milling_Trial:Duplex_1mm',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#404040] text-[14px] text-center whitespace-nowrap" style={{ fontFeatureSettings: "'ss16'" }}>
+                <div className="flex flex-col font-primary justify-center leading-[0] not-italic relative shrink-0 text-[#404040] text-[14px] text-center whitespace-nowrap" style={{ fontFeatureSettings: "'ss16'" }}>
                   <p className="leading-[normal]">Create Plan</p>
                 </div>
               </div>

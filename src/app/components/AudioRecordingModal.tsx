@@ -79,7 +79,7 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
       const startX = (canvas.width - totalWidth) / 2;
       const centerY = canvas.height / 2;
 
-      ctx.strokeStyle = "#fc312e";
+      ctx.strokeStyle = "var(--color-text-brand)";
       ctx.lineWidth = barWidth;
       ctx.lineCap = "round";
 
@@ -263,10 +263,10 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
   return (
     <>
       <div className="fixed inset-0 z-50" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-[393px] bg-[#e4e4e7] flex flex-col h-[260px] items-center justify-between pb-[32px] pt-[28px] px-[20px] rounded-tl-[28px] rounded-tr-[28px] z-[51] animate-slide-up">
+      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-[393px] bg-surface-secondary flex flex-col h-[260px] items-center justify-between pb-[32px] pt-[28px] px-[20px] rounded-tl-[28px] rounded-tr-[28px] z-[51] animate-slide-up">
 
         {/* Timer */}
-        <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[16px] leading-[21px] text-[#09090b]">
+        <p className="font-primary text-[16px] leading-[21px] text-primary-token">
           {formatTime(seconds)}
         </p>
 
@@ -280,22 +280,22 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
           />
         ) : (
           <div className="flex flex-col items-center gap-[12px]">
-            <p className="font-['Milling_Trial:Duplex_1mm',sans-serif] text-[14px] leading-[16px] text-[#09090b]">
+            <p className="font-primary text-[14px] leading-[16px] text-primary-token">
               Start Audio Recording
             </p>
             {error && (
-              <p className="max-w-[240px] text-center font-['Milling_Trial:Duplex_1mm',sans-serif] text-[12px] leading-[16px] text-[#fc312e]">
+              <p className="max-w-[240px] text-center font-primary text-[12px] leading-[16px] text-brand-token">
                 {error}
               </p>
             )}
-            <div className="flex bg-[#d4d4d8] rounded-[999px] p-[2px]">
+            <div className="flex bg-surface-fill rounded-[999px] p-[2px]">
               {(["es-ES", "en-US"] as const).map((l) => (
                 <button
                   key={l}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setLang(l); }}
-                  className={`font-['Milling_Trial:Duplex_1mm',sans-serif] text-[13px] leading-[16px] px-[14px] py-[5px] rounded-[999px] ${
-                    lang === l ? "bg-[#fefefe] text-[#09090b]" : "text-[#71717a]"
+                  className={`font-primary text-[13px] leading-[16px] px-[14px] py-[5px] rounded-[999px] ${
+                    lang === l ? "bg-surface-primary text-primary-token" : "text-secondary-token"
                   }`}
                 >
                   {l === "es-ES" ? "ES" : "EN"}
@@ -309,10 +309,10 @@ export function AudioRecordingModal({ isOpen, onClose, onSave, onLiveTranscript 
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); handleToggle(); }}
-          className="flex items-center justify-center border-2 border-[#52525b] rounded-[100px] size-[56px]"
+          className="flex items-center justify-center border-2 border-[var(--primitive-neutral-600)] rounded-[100px] size-[56px]"
         >
           <div
-            className={`bg-[#fc312e] transition-all duration-150 ${
+            className={`bg-brand-token transition-all duration-150 ${
               isRecording ? "rounded-[4px] size-[16px]" : "rounded-[100px] size-[44px]"
             }`}
           />
