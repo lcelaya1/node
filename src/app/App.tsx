@@ -23,7 +23,17 @@ export default function App() {
   const [profileDraftInterests, setProfileDraftInterests] = useState<string[]>([]);
   const [profileDraftAvatarUrl, setProfileDraftAvatarUrl] = useState("");
 
+  const resetProfileDrafts = () => {
+    setProfileDraftName("");
+    setProfileDraftBirthDate("");
+    setProfileDraftBio("");
+    setProfileDraftInterests([]);
+    setProfileDraftAvatarUrl("");
+  };
+
   const resolveSignedInPhase = async (session: Session) => {
+    resetProfileDrafts();
+
     if (!supabase) {
       setPhase("app");
       return;
@@ -119,11 +129,7 @@ export default function App() {
         return;
       }
 
-      setProfileDraftName("");
-      setProfileDraftBirthDate("");
-      setProfileDraftBio("");
-      setProfileDraftInterests([]);
-      setProfileDraftAvatarUrl("");
+      resetProfileDrafts();
 
       setPhase((currentPhase) =>
         currentPhase === "splash" ? currentPhase : "auth",
