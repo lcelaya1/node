@@ -6,6 +6,7 @@ import { IconButton } from "../components/IconButton";
 import { InterestTile } from "../components/InterestTile";
 import { AppNavbar } from "../components/AppNavbar";
 import { loadInterestCatalogMap } from "../lib/interestCatalog";
+import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 import { supabase } from "../lib/supabase";
 import { cn } from "../components/ui/utils";
 import type { DemoUser } from "../lib/demoUsers";
@@ -172,6 +173,7 @@ export default function ProfileScreen() {
     plansCreated: 0,
     plansDone: 0,
   });
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
   const [interestImageMap, setInterestImageMap] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -241,7 +243,38 @@ export default function ProfileScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const run = async () => {
+      if (demoProfile) return;
+
+      try {
+        const plans = await loadSavedPlans();
+        if (!isMounted) return;
+        setSavedPlans(plans);
+      } catch {
+        if (!isMounted) return;
+        setSavedPlans([]);
+      }
+    };
+
+    void run();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [demoProfile]);
+
   const age = useMemo(() => calculateAge(profile.birthDate), [profile.birthDate]);
+  const createdPlans = useMemo(
+    () => savedPlans.filter((plan) => plan.source === "created"),
+    [savedPlans],
+  );
+  const joinedPlans = useMemo(
+    () => savedPlans.filter((plan) => plan.source !== "created"),
+    [savedPlans],
+  );
   const displayAge = demoProfile?.age ?? age;
   const displayName = profile.fullName.trim() || "Profile";
   const displayTitle = displayAge !== null ? `${displayName}, ${displayAge}` : displayName;
@@ -309,9 +342,13 @@ export default function ProfileScreen() {
                 <div className="flex w-full flex-col items-center gap-[4px] text-center">
                   <p className="type-heading-xl text-primary-token">{displayTitle}</p>
                   <div className="flex items-center gap-[8px] text-secondary-token">
-                    <span className="type-body-s">{profile.plansCreated ?? 0} plans created</span>
+                    <span className="type-body-s">
+                      {demoProfile ? profile.plansCreated ?? 0 : createdPlans.length} plans created
+                    </span>
                     <span className="type-body-s">·</span>
-                    <span className="type-body-s">{profile.plansDone ?? 0} plans done</span>
+                    <span className="type-body-s">
+                      {demoProfile ? profile.plansDone ?? 0 : joinedPlans.length} plans done
+                    </span>
                   </div>
                 </div>
               </div>
@@ -374,18 +411,46 @@ export default function ProfileScreen() {
             {activeTab === "created" ? (
               <div className="flex w-full flex-col gap-[16px]">
                 <h2 className="type-body-m-medium text-primary-token">Created by you</h2>
-                <p className="type-body-s text-secondary-token">
-                  You haven&apos;t created any plans yet.
-                </p>
+                {createdPlans.length > 0 ? (
+                  <div className="flex w-full flex-col gap-[8px]">
+                    {createdPlans.map((plan) => (
+                      <CreatedPlanCard
+                        key={plan.id}
+                        imageSrc={plan.picturePreview}
+                        location={plan.where}
+                        title={plan.title}
+                        when={plan.when}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="type-body-s text-secondary-token">
+                    You haven&apos;t created any plans yet.
+                  </p>
+                )}
               </div>
             ) : null}
 
             {activeTab === "past" ? (
               <div className="flex w-full flex-col gap-[16px]">
                 <h2 className="type-body-m-medium text-primary-token">Past plans</h2>
-                <p className="type-body-s text-secondary-token">
-                  You haven&apos;t joined any plans yet.
-                </p>
+                {joinedPlans.length > 0 ? (
+                  <div className="flex w-full flex-col gap-[8px]">
+                    {joinedPlans.map((plan) => (
+                      <CreatedPlanCard
+                        key={plan.id}
+                        imageSrc={plan.picturePreview}
+                        location={plan.where}
+                        title={plan.title}
+                        when={plan.when}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="type-body-s text-secondary-token">
+                    You haven&apos;t joined any plans yet.
+                  </p>
+                )}
               </div>
             ) : null}
           </div>

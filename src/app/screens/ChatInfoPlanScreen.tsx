@@ -80,17 +80,25 @@ function MemberRow({ label, imageSrc = null, onClick }: MemberRowProps) {
   );
 }
 
-type CancelPlanModalProps = {
+type ConfirmPlanActionModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  confirmLabel: string;
+  title: string;
+  description: string;
+  cancelLabel: string;
 };
 
-function CancelPlanModal({
+function ConfirmPlanActionModal({
   isOpen,
   onClose,
   onConfirm,
-}: CancelPlanModalProps) {
+  confirmLabel,
+  title,
+  description,
+  cancelLabel,
+}: ConfirmPlanActionModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -102,10 +110,8 @@ function CancelPlanModal({
       />
       <div className="fixed inset-x-[20px] bottom-[32px] z-50 mx-auto flex max-w-[353px] flex-col gap-[20px] rounded-[16px] bg-surface-primary p-[20px] shadow-[0px_12px_32px_rgba(9,9,11,0.16)]">
         <div className="flex flex-col gap-[8px]">
-          <p className="type-heading-l text-primary-token">Cancel this plan?</p>
-          <p className="type-body-m text-secondary-token">
-            You will leave this plan and it will disappear from your home.
-          </p>
+          <p className="type-heading-l text-primary-token">{title}</p>
+          <p className="type-body-m text-secondary-token">{description}</p>
         </div>
 
         <div className="flex flex-col gap-[12px]">
@@ -114,14 +120,14 @@ function CancelPlanModal({
             onClick={onConfirm}
             className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-secondary"
           >
-            <span className="type-body-m text-invert-token">Yes, cancel</span>
+            <span className="type-body-m text-invert-token">{confirmLabel}</span>
           </button>
           <button
             type="button"
             onClick={onClose}
             className="flex h-[45px] w-full items-center justify-center rounded-[999px] border border-card-token bg-surface-primary"
           >
-            <span className="type-body-m text-primary-token">Keep plan</span>
+            <span className="type-body-m text-primary-token">{cancelLabel}</span>
           </button>
         </div>
       </div>
@@ -162,6 +168,7 @@ export default function ChatInfoPlanScreen() {
       : plan.source === "created"
         ? false
         : true;
+  const isCreatedPlan = state?.isCreatedByUser === true || plan.source === "created";
   const displayParticipants =
     participants.length > 0
       ? participants
@@ -297,13 +304,15 @@ export default function ChatInfoPlanScreen() {
             onClick={() => navigate(-1)}
             size="Mid"
           />
-          {isJoinedPlan ? (
+          {isJoinedPlan || isCreatedPlan ? (
             <button
               type="button"
               onClick={() => setIsCancelModalOpen(true)}
-              className="flex items-center justify-center rounded-[999px] bg-button-secondary px-[24px] py-[8px]"
+              className="flex items-center justify-center rounded-[999px] bg-button-primary px-[24px] py-[8px]"
             >
-              <span className="type-body-m text-invert-token">Cancel</span>
+              <span className="type-body-m text-invert-token">
+                {isCreatedPlan ? "Delete" : "Cancel"}
+              </span>
             </button>
           ) : null}
         </div>
@@ -398,10 +407,18 @@ export default function ChatInfoPlanScreen() {
       </div>
       </div>
 
-      <CancelPlanModal
+      <ConfirmPlanActionModal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         onConfirm={() => void handleConfirmCancel()}
+        title={isCreatedPlan ? "Delete this plan?" : "Cancel this plan?"}
+        description={
+          isCreatedPlan
+            ? "This plan will be removed from your home and can’t be recovered."
+            : "You will leave this plan and it will disappear from your home."
+        }
+        confirmLabel={isCreatedPlan ? "Yes, delete" : "Yes, cancel"}
+        cancelLabel={isCreatedPlan ? "Keep plan" : "Keep plan"}
       />
     </>
   );
