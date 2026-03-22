@@ -62,8 +62,8 @@ type CreatedPlanCardProps = {
 
 function CreatedPlanCard({ imageSrc, location, title, when }: CreatedPlanCardProps) {
   return (
-    <div className="flex items-start overflow-hidden rounded-[4px] border border-card-token bg-surface-primary">
-      <div className="flex w-[240px] flex-col items-start px-[12px] py-[16px]">
+    <div className="flex h-[120px] items-start overflow-hidden rounded-[4px] border border-card-token bg-surface-primary">
+      <div className="flex h-full min-w-0 flex-1 flex-col items-start px-[12px] py-[16px]">
         <div className="flex w-full flex-col gap-[8px]">
           <p className="type-body-m-medium text-primary-token">{title}</p>
 
@@ -105,7 +105,7 @@ function CreatedPlanCard({ imageSrc, location, title, when }: CreatedPlanCardPro
         </div>
       </div>
 
-      <div className="min-h-0 min-w-0 flex-1 self-stretch overflow-hidden rounded-[8px]">
+      <div className="h-full w-[120px] shrink-0 overflow-hidden rounded-[8px]">
         <img alt={title} className="size-full object-cover" src={imageSrc} />
       </div>
     </div>
@@ -130,6 +130,15 @@ function calculateAge(birthDate: string) {
   }
 
   return age;
+}
+
+function getPlanStartDate(plan: SavedPlan) {
+  if (!plan.whenDate || !plan.whenTime) return null;
+
+  const parsedDate = new Date(`${plan.whenDate}T${plan.whenTime}`);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  return parsedDate;
 }
 
 function getInterestImage(label: string) {
@@ -275,6 +284,17 @@ export default function ProfileScreen() {
     () => savedPlans.filter((plan) => plan.source !== "created"),
     [savedPlans],
   );
+  const pastJoinedPlans = useMemo(() => {
+    const now = new Date();
+
+    return joinedPlans.filter((plan) => {
+      const startDate = getPlanStartDate(plan);
+      if (!startDate) return false;
+
+      const availableAt = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+      return now >= availableAt;
+    });
+  }, [joinedPlans]);
   const displayAge = demoProfile?.age ?? age;
   const displayName = profile.fullName.trim() || "Profile";
   const displayTitle = displayAge !== null ? `${displayName}, ${displayAge}` : displayName;
@@ -347,7 +367,7 @@ export default function ProfileScreen() {
                     </span>
                     <span className="type-body-s">·</span>
                     <span className="type-body-s">
-                      {demoProfile ? profile.plansDone ?? 0 : joinedPlans.length} plans done
+                      {demoProfile ? profile.plansDone ?? 0 : pastJoinedPlans.length} plans done
                     </span>
                   </div>
                 </div>
@@ -434,9 +454,9 @@ export default function ProfileScreen() {
             {activeTab === "past" ? (
               <div className="flex w-full flex-col gap-[16px]">
                 <h2 className="type-body-m-medium text-primary-token">Past plans</h2>
-                {joinedPlans.length > 0 ? (
+                {pastJoinedPlans.length > 0 ? (
                   <div className="flex w-full flex-col gap-[8px]">
-                    {joinedPlans.map((plan) => (
+                    {pastJoinedPlans.map((plan) => (
                       <CreatedPlanCard
                         key={plan.id}
                         imageSrc={plan.picturePreview}
@@ -448,7 +468,7 @@ export default function ProfileScreen() {
                   </div>
                 ) : (
                   <p className="type-body-s text-secondary-token">
-                    You haven&apos;t joined any plans yet.
+                    You don&apos;t have any past plans yet.
                   </p>
                 )}
               </div>
