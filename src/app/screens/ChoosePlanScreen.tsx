@@ -205,7 +205,7 @@ export default function ChoosePlanScreen() {
 
       <div
         ref={viewportRef}
-        className="absolute left-0 right-0 top-[88px] h-[481px] overflow-visible touch-pan-y"
+        className="absolute left-0 right-0 top-[80px] h-[481px] overflow-visible touch-pan-y"
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
