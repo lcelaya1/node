@@ -1,6 +1,6 @@
 {
-  "name": "Your App Name",
-  "short_name": "App",
+  "name": "Node App",
+  "short_name": "Node App",
   "display": "standalone",
   "start_url": "/",
   "background_color": "#ffffff",
