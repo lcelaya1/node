@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import logoNode from "../../assets/svg/Logo Node.svg";
+import logoNode from "../../assets/svg/Logo Node V2.svg";
 import { AppIcon } from "../components/AppIcon";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
@@ -184,7 +184,7 @@ export default function AuthScreen({ onContinue }: AuthScreenProps) {
           <div className="flex w-full flex-col gap-[32px]">
             <div className="flex items-start gap-[8px]">
               <p className="type-heading-2xl text-primary-token">{`Welcome to `}</p>
-              <img alt="Node" className="h-[33.12px] w-[92px]" src={logoNode} />
+              <img alt="Node" className="h-[34px]" src={logoNode} />
             </div>
 
             <div className="flex w-full items-start justify-center gap-[12px]">

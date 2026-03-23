@@ -1,4 +1,4 @@
-import logoNode from "../../assets/svg/Logo Node.svg";
+import logoNode from "../../assets/svg/Logo Node V2.svg";
 
 type OnboardingScreenProps = {
   onNext?: () => void;
@@ -26,7 +26,7 @@ export default function OnboardingScreen({ onNext }: OnboardingScreenProps) {
           <div className="flex w-[345px] flex-col gap-[8px]">
             <div className="flex items-start gap-[8px]">
               <p className="type-heading-2xl text-primary-token">{`Welcome to `}</p>
-              <img alt="Node" className="h-[33.12px] w-[92px]" src={logoNode} />
+              <img alt="Node" className="h-[34px]" src={logoNode} />
             </div>
             <p className="type-body-m text-secondary-token">A few things before you dive in.</p>
           </div>

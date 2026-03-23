@@ -1,4 +1,4 @@
-import logoNode from "../../assets/svg/Logo Node.svg";
+import logoNode from "../../assets/svg/Logo Node V2.svg";
 
 export const SPLASH_DURATION_MS = 3000;
 
@@ -14,7 +14,7 @@ export default function SplashScreen() {
         <div className="flex w-full items-center justify-center">
           <img
             alt="Node"
-            className="h-[64.8px] w-[180px]"
+            className="h-[66px]"
             src={logoNode}
           />
         </div>
