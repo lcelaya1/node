@@ -66,31 +66,6 @@ function AuthInput({
   );
 }
 
-function AuthToggleButton({
-  active,
-  label,
-  onClick,
-}: {
-  active?: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`min-h-0 min-w-0 flex-1 rounded-[50px] px-[16px] py-[8px] ${
-        active ? "bg-button-primary text-invert-token" : "bg-surface-primary text-primary-token"
-      }`}
-      style={{
-        border: active ? "0.5px solid var(--color-border-selected)" : "0.5px solid var(--color-border-selected)",
-      }}
-    >
-      <span className="type-body-m whitespace-nowrap">{label}</span>
-    </button>
-  );
-}
-
 export default function AuthScreen({ onContinue }: AuthScreenProps) {
   const [mode, setMode] = useState<AuthMode>("signup");
   const [email, setEmail] = useState("");
@@ -181,33 +156,14 @@ export default function AuthScreen({ onContinue }: AuthScreenProps) {
     <div className="flex size-full flex-col gap-[80px] bg-surface-primary pb-[32px]">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[24px] pt-[60px]">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[40px]">
-          <div className="flex w-full flex-col gap-[32px]">
+          <div className="flex w-full flex-col">
             <div className="flex items-start gap-[8px]">
               <p className="type-heading-2xl text-primary-token">{`Welcome to `}</p>
               <img alt="Node" className="h-[34px]" src={logoNode} />
             </div>
-
-            <div className="flex w-full items-start justify-center gap-[12px]">
-              <AuthToggleButton
-                active={isSignup}
-                label="Sign Up"
-                onClick={() => {
-                  setMode("signup");
-                  setErrorMessage("");
-                }}
-              />
-              <AuthToggleButton
-                active={!isSignup}
-                label="Log In"
-                onClick={() => {
-                  setMode("login");
-                  setErrorMessage("");
-                }}
-              />
-            </div>
           </div>
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[24px]">
             <div className="flex flex-col gap-[24px]">
               <AuthInput
                 label="Email"
@@ -240,12 +196,18 @@ export default function AuthScreen({ onContinue }: AuthScreenProps) {
                 type="button"
                 onClick={handleEmailAuth}
                 disabled={isLoading || !canSubmit}
-                className="flex w-full items-center justify-center rounded-[999px] bg-button-secondary px-[32px] py-[12px] disabled:bg-surface-fill"
+                className="flex w-full items-center justify-center rounded-[999px] bg-button-primary px-[32px] py-[12px] disabled:bg-surface-fill"
               >
                 <span className="type-body-m text-invert-token">
                   {isLoading ? "Loading..." : isSignup ? "Sign Up" : "Log In"}
                 </span>
               </button>
+
+              <div className="flex w-full items-center gap-[16px]">
+                <div className="h-px flex-1 bg-[#d9d9d9]" />
+                <span className="type-body-s text-secondary-token">Or</span>
+                <div className="h-px flex-1 bg-[#d9d9d9]" />
+              </div>
 
               <button
                 type="button"
@@ -261,6 +223,22 @@ export default function AuthScreen({ onContinue }: AuthScreenProps) {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="flex w-full items-center justify-center gap-[8px] px-[24px] text-center">
+        <span className="type-body-s text-secondary-token">
+          {isSignup ? "Already have an account?" : "Don’t have an account?"}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setMode(isSignup ? "login" : "signup");
+            setErrorMessage("");
+          }}
+          className="type-body-s-medium text-brand-token"
+        >
+          {isSignup ? "Log In" : "Sign Up"}
+        </button>
       </div>
     </div>
   );
