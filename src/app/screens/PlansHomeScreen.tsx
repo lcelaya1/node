@@ -31,7 +31,6 @@ type HomePlanCardProps = {
   highlighted?: boolean;
   isCreatedByUser?: boolean;
   onClick?: () => void;
-  onViewChat?: () => void;
   title: string;
   subtitle: string;
   imageSrc?: string;
@@ -41,7 +40,6 @@ function HomePlanCard({
   highlighted = false,
   isCreatedByUser = false,
   onClick,
-  onViewChat,
   title,
   subtitle,
   imageSrc,
@@ -50,11 +48,11 @@ function HomePlanCard({
     <button
       type="button"
       onClick={onClick}
-      className="relative flex w-full flex-col items-start overflow-hidden rounded-[8px] border border-card-token bg-surface-primary text-left"
+      className="relative flex w-full flex-col items-start rounded-[8px] border border-card-token bg-surface-primary text-left"
     >
       {isCreatedByUser ? (
         <div className="pointer-events-none absolute left-0 top-0 z-[1] h-[92px] w-[92px] overflow-hidden rounded-tl-[8px]">
-        <div
+          <div
             className="absolute left-[-33px] top-[18px] w-[128px] -rotate-45 py-[6px] text-center"
             style={{ backgroundColor: "var(--color-surface-bg-secondary)" }}
           >
@@ -63,7 +61,7 @@ function HomePlanCard({
         </div>
       ) : null}
 
-      <div className="h-[163px] w-full overflow-hidden rounded-[8px]">
+      <div className="h-[163px] w-full overflow-hidden rounded-t-[8px]">
         <img
           alt={title}
           className="size-full object-cover"
@@ -71,32 +69,18 @@ function HomePlanCard({
         />
       </div>
 
-      <div className="flex w-full items-center gap-[8px] p-[12px]">
+      <div className="w-full p-[12px]">
         <div className="flex min-w-0 flex-1 flex-col items-start gap-[2px]">
           <p className="type-body-m-medium w-full text-primary-token">
             {title}
           </p>
           <p className="type-body-xs w-full text-secondary-token">{subtitle}</p>
         </div>
-
-        <div className="flex h-[40px] flex-col items-center justify-between">
-          <span className="type-body-xs overflow-hidden text-[10px] leading-[16px] text-brand-token">
-            now
-          </span>
-          <Notification />
-        </div>
       </div>
 
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          onViewChat?.();
-        }}
-        className="absolute left-[244px] top-[12px] flex w-[94px] items-center justify-center rounded-[999px] bg-button-secondary p-[8px]"
-      >
-        <span className="type-body-xs text-invert-token">View Chat</span>
-      </button>
+      <div className="pointer-events-none absolute right-[-6px] top-[-8px] flex flex-col items-end justify-center">
+        <Notification />
+      </div>
     </button>
   );
 }
@@ -178,16 +162,6 @@ export default function PlansHomeScreen() {
               imageSrc={plan.picturePreview || fallbackPlanImage}
               isCreatedByUser={plan.source === "created"}
               onClick={() =>
-                navigate("/chat-info", {
-                  state: {
-                    imageSrc: plan.picturePreview || fallbackPlanImage,
-                    isCreatedByUser: plan.source === "created",
-                    plan,
-                    selectedIndex: index,
-                  },
-                })
-              }
-              onViewChat={() =>
                 navigate("/chat", {
                   state: {
                     imageSrc: plan.picturePreview || fallbackPlanImage,

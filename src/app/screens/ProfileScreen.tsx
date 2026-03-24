@@ -397,11 +397,6 @@ export default function ProfileScreen() {
             {demoProfile || activeTab === "about" ? (
               <div className="flex w-full flex-col gap-[24px]">
                 <div className="flex flex-col gap-[8px]">
-                  <h2 className="type-body-m-medium text-primary-token">About</h2>
-                  <p className="type-body-s text-primary-token">{displayBio}</p>
-                </div>
-
-                <div className="flex flex-col gap-[8px]">
                   <h2 className="type-body-m-medium text-primary-token">Interests</h2>
                   <div className="grid grid-cols-2 gap-x-[8px] gap-y-[7px]">
                     {displayInterests.length > 0 ? (

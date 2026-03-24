@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router";
 import AuthScreen from "./screens/AuthScreen";
 import CreateProfileBirthdayScreen from "./screens/CreateProfileBirthdayScreen";
-import CreateProfileDescriptionScreen from "./screens/CreateProfileDescriptionScreen";
 import CreateProfileInterestsScreen from "./screens/CreateProfileInterestsScreen";
 import CreateProfileNameScreen from "./screens/CreateProfileNameScreen";
 import CreateProfileLocationScreen from "./screens/CreateProfileLocationScreen";
@@ -15,7 +14,7 @@ import type { Session } from "@supabase/supabase-js";
 
 export default function App() {
   const [phase, setPhase] = useState<
-    "splash" | "onboarding" | "auth" | "create-profile" | "create-profile-birthday" | "create-profile-description" | "create-profile-interests" | "create-profile-picture" | "create-profile-location" | "app"
+    "splash" | "onboarding" | "auth" | "create-profile" | "create-profile-birthday" | "create-profile-interests" | "create-profile-picture" | "create-profile-location" | "app"
   >("splash");
   const [profileDraftName, setProfileDraftName] = useState("");
   const [profileDraftBirthDate, setProfileDraftBirthDate] = useState("");
@@ -52,7 +51,6 @@ export default function App() {
 
     const fullName = data?.full_name?.trim() ?? "";
     const birthDate = typeof data?.birth_date === "string" ? data.birth_date : "";
-    const bio = data?.bio?.trim() ?? "";
     const interests = Array.isArray(data?.interests) ? data.interests : [];
     const avatarUrl = data?.avatar_url?.trim() ?? "";
     const hasLocation =
@@ -67,7 +65,6 @@ export default function App() {
     const isProfileComplete =
       Boolean(fullName) &&
       Boolean(birthDate) &&
-      Boolean(bio) &&
       interests.length >= 4 &&
       Boolean(avatarUrl) &&
       hasLocation;
@@ -78,7 +75,7 @@ export default function App() {
         : fullName,
     );
     setProfileDraftBirthDate(birthDate);
-    setProfileDraftBio(bio);
+    setProfileDraftBio("");
     setProfileDraftInterests(interests);
     setProfileDraftAvatarUrl(avatarUrl);
 
@@ -177,13 +174,13 @@ export default function App() {
               value={profileDraftBirthDate}
               onChange={setProfileDraftBirthDate}
               onBack={() => setPhase("create-profile")}
-              onContinue={() => setPhase("create-profile-description")}
+              onContinue={() => setPhase("create-profile-picture")}
             />
           ) : null}
-          {phase === "create-profile-description" ? (
-            <CreateProfileDescriptionScreen
-              value={profileDraftBio}
-              onChange={setProfileDraftBio}
+          {phase === "create-profile-picture" ? (
+            <CreateProfilePictureScreen
+              value={profileDraftAvatarUrl}
+              onChange={setProfileDraftAvatarUrl}
               onBack={() => setPhase("create-profile-birthday")}
               onContinue={() => setPhase("create-profile-interests")}
             />
@@ -192,21 +189,13 @@ export default function App() {
             <CreateProfileInterestsScreen
               value={profileDraftInterests}
               onChange={setProfileDraftInterests}
-              onBack={() => setPhase("create-profile-description")}
-              onContinue={() => setPhase("create-profile-picture")}
-            />
-          ) : null}
-          {phase === "create-profile-picture" ? (
-            <CreateProfilePictureScreen
-              value={profileDraftAvatarUrl}
-              onChange={setProfileDraftAvatarUrl}
-              onBack={() => setPhase("create-profile-interests")}
+              onBack={() => setPhase("create-profile-picture")}
               onContinue={() => setPhase("create-profile-location")}
             />
           ) : null}
           {phase === "create-profile-location" ? (
             <CreateProfileLocationScreen
-              onBack={() => setPhase("create-profile-picture")}
+              onBack={() => setPhase("create-profile-interests")}
               onContinue={() => setPhase("app")}
             />
           ) : null}
