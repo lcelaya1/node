@@ -233,7 +233,7 @@ export default function JoinPlanScreen() {
 
           {/* Social battery */}
           <div className="flex flex-col gap-[12px]">
-            <SectionLabel title="How's your social battery?" hint={batteryHint} />
+            <SectionLabel title="How’s your energy today?" hint={batteryHint} />
             <div className="flex gap-[8px]">
               <BatteryOption level="low" label="Low" selected={battery === "low"} onClick={() => setBattery("low")} />
               <BatteryOption level="mid" label="Mid" selected={battery === "mid"} onClick={() => setBattery("mid")} />
