@@ -39,6 +39,9 @@ export default function ChoosePlanScreen() {
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dragStartXRef = useRef<number | null>(null);
+  const dragPointerIdRef = useRef<number | null>(null);
+  const dragMovedRef = useRef(false);
+  const suppressClickRef = useRef(false);
   const total = plans.length;
   const CARD_WIDTH = 309;
   const CARD_GAP = 20;
@@ -119,6 +122,7 @@ export default function ChoosePlanScreen() {
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     dragStartXRef.current = event.touches[0]?.clientX ?? null;
+    dragMovedRef.current = false;
     setIsDragging(true);
   };
 
@@ -126,22 +130,79 @@ export default function ChoosePlanScreen() {
     if (dragStartXRef.current === null) return;
 
     const nextOffset = event.touches[0].clientX - dragStartXRef.current;
+    if (Math.abs(nextOffset) > 6) {
+      dragMovedRef.current = true;
+    }
     const atStart = current === 0 && nextOffset > 0;
     const atEnd = current === total - 1 && nextOffset < 0;
 
     setDragOffset((atStart || atEnd) ? nextOffset * 0.35 : nextOffset);
   };
 
-  const handleTouchEnd = () => {
+  const finalizeDrag = () => {
     if (dragOffset <= -SWIPE_THRESHOLD) {
       setCurrent((prev) => clampIndex(prev + 1));
     } else if (dragOffset >= SWIPE_THRESHOLD) {
       setCurrent((prev) => clampIndex(prev - 1));
     }
 
+    suppressClickRef.current = dragMovedRef.current;
     dragStartXRef.current = null;
+    dragPointerIdRef.current = null;
+    dragMovedRef.current = false;
     setDragOffset(0);
     setIsDragging(false);
+  };
+
+  const handleTouchEnd = () => {
+    finalizeDrag();
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+
+    dragPointerIdRef.current = event.pointerId;
+    dragStartXRef.current = event.clientX;
+    dragMovedRef.current = false;
+    setIsDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+    if (dragPointerIdRef.current !== event.pointerId || dragStartXRef.current === null) return;
+
+    const nextOffset = event.clientX - dragStartXRef.current;
+    if (Math.abs(nextOffset) > 6) {
+      dragMovedRef.current = true;
+    }
+
+    const atStart = current === 0 && nextOffset > 0;
+    const atEnd = current === total - 1 && nextOffset < 0;
+
+    setDragOffset((atStart || atEnd) ? nextOffset * 0.35 : nextOffset);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+    if (dragPointerIdRef.current !== event.pointerId) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    finalizeDrag();
+  };
+
+  const handlePointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+    if (dragPointerIdRef.current !== event.pointerId) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    finalizeDrag();
   };
 
   const baseOffset = (viewportWidth - CARD_WIDTH) / 2;
@@ -205,7 +266,11 @@ export default function ChoosePlanScreen() {
 
       <div
         ref={viewportRef}
-        className="absolute left-0 right-0 top-[80px] h-[481px] overflow-visible touch-pan-y"
+        className={`absolute left-0 right-0 top-[80px] h-[481px] overflow-visible touch-pan-y ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        onPointerCancel={handlePointerCancel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchStart={handleTouchStart}
@@ -240,7 +305,12 @@ export default function ChoosePlanScreen() {
                 date={item.when}
                 location={item.location}
                 imageSrc={item.imageSrc}
-                onClick={() =>
+                onClick={() => {
+                  if (suppressClickRef.current) {
+                    suppressClickRef.current = false;
+                    return;
+                  }
+
                   navigate("/info-plan", {
                     state: {
                       plan: {
@@ -252,8 +322,8 @@ export default function ChoosePlanScreen() {
                       selectedIndex: index,
                       filters,
                     },
-                  })
-                }
+                  });
+                }}
                 showButton={index === current}
                 onJoin={() => void handleJoinPlan(item, index)}
               />
