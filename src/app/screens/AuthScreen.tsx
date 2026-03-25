@@ -5,6 +5,14 @@ import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 const googleIcon = new URL("../../assets/Google.png", import.meta.url).href;
 
+function getAuthRedirectUrl() {
+  if (typeof window === "undefined") return undefined;
+
+  const redirectUrl = new URL(window.location.pathname, window.location.origin);
+  redirectUrl.search = window.location.search;
+  return redirectUrl.toString();
+}
+
 type AuthScreenProps = {
   onContinue?: () => void;
 };
@@ -142,7 +150,7 @@ export default function AuthScreen({ onContinue }: AuthScreenProps) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: getAuthRedirectUrl(),
       },
     });
 
