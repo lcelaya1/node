@@ -31,6 +31,7 @@ export default function AddSpecsScreen() {
   const isEditing = planId !== null;
 
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [whereModalOpen, setWhereModalOpen] = useState(false);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
@@ -65,6 +66,20 @@ export default function AddSpecsScreen() {
 
   const handleChange = (field: keyof PlanData, value: string) => {
     setPlanData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const openDatePicker = () => {
+    const input = dateInputRef.current;
+    if (!input) return;
+
+    input.focus();
+
+    if ("showPicker" in input && typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.click();
   };
 
   const isFormComplete =
@@ -193,7 +208,11 @@ export default function AddSpecsScreen() {
               <div className="flex flex-col gap-[12px] items-start w-full">
                 <SpeechBubbleChip direction="Left" text="When?" />
                 <div className="flex gap-[16px] h-[80px] items-center w-full">
-                  <div className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] relative overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={openDatePicker}
+                    className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] relative overflow-hidden text-left"
+                  >
                     <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token">
                       Date
                     </p>
@@ -205,6 +224,7 @@ export default function AddSpecsScreen() {
                         : "Pick a date"}
                     </span>
                     <input
+                      ref={dateInputRef}
                       type="date"
                       value={planData.date}
                       min={getTomorrow()}
@@ -213,9 +233,11 @@ export default function AddSpecsScreen() {
                           handleChange("date", e.target.value);
                         }
                       }}
-                      className="absolute inset-0 opacity-[0.001] cursor-pointer"
+                      className="absolute inset-0 opacity-0 pointer-events-none"
+                      tabIndex={-1}
+                      aria-hidden="true"
                     />
-                  </div>
+                  </button>
                   <div className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px]">
                     <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token">
                       Hour

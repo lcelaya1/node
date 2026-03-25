@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { PlanCard } from "../components/PlanCard";
+import { useIsMobile } from "../components/ui/use-mobile";
 import { savePlan, toSavedPlan } from "../lib/plans";
 import {
   loadMatchedCatalogPlans,
@@ -37,12 +38,16 @@ export default function ChoosePlanScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
+  const isMobile = useIsMobile();
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dragStartXRef = useRef<number | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const shouldBlockClickRef = useRef(false);
   const total = plans.length;
   const CARD_WIDTH = 309;
   const CARD_GAP = 20;
   const SWIPE_THRESHOLD = 60;
+  const DRAG_CLICK_THRESHOLD = 8;
   const CARD_SPAN = CARD_WIDTH + CARD_GAP;
 
   useEffect(() => {
@@ -117,22 +122,18 @@ export default function ChoosePlanScreen() {
 
   const clampIndex = (value: number) => Math.max(0, Math.min(total - 1, value));
 
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    dragStartXRef.current = event.touches[0]?.clientX ?? null;
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    if (dragStartXRef.current === null) return;
-
-    const nextOffset = event.touches[0].clientX - dragStartXRef.current;
+  const applyDragOffset = (nextOffset: number) => {
     const atStart = current === 0 && nextOffset > 0;
     const atEnd = current === total - 1 && nextOffset < 0;
 
     setDragOffset((atStart || atEnd) ? nextOffset * 0.35 : nextOffset);
+
+    if (Math.abs(nextOffset) > DRAG_CLICK_THRESHOLD) {
+      shouldBlockClickRef.current = true;
+    }
   };
 
-  const handleTouchEnd = () => {
+  const finishDrag = () => {
     if (dragOffset <= -SWIPE_THRESHOLD) {
       setCurrent((prev) => clampIndex(prev + 1));
     } else if (dragOffset >= SWIPE_THRESHOLD) {
@@ -140,8 +141,74 @@ export default function ChoosePlanScreen() {
     }
 
     dragStartXRef.current = null;
+    activePointerIdRef.current = null;
     setDragOffset(0);
     setIsDragging(false);
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    dragStartXRef.current = event.touches[0]?.clientX ?? null;
+    shouldBlockClickRef.current = false;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (dragStartXRef.current === null) return;
+
+    const nextOffset = event.touches[0].clientX - dragStartXRef.current;
+    applyDragOffset(nextOffset);
+  };
+
+  const handleTouchEnd = () => {
+    finishDrag();
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (isMobile || event.pointerType === "touch" || total <= 1 || event.button !== 0) return;
+
+    activePointerIdRef.current = event.pointerId;
+    dragStartXRef.current = event.clientX;
+    shouldBlockClickRef.current = false;
+    setIsDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (isMobile || activePointerIdRef.current !== event.pointerId || dragStartXRef.current === null) return;
+
+    const nextOffset = event.clientX - dragStartXRef.current;
+    applyDragOffset(nextOffset);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    finishDrag();
+  };
+
+  const handlePointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    dragStartXRef.current = null;
+    activePointerIdRef.current = null;
+    setDragOffset(0);
+    setIsDragging(false);
+  };
+
+  const handleViewportClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!shouldBlockClickRef.current) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    shouldBlockClickRef.current = false;
   };
 
   const baseOffset = (viewportWidth - CARD_WIDTH) / 2;
@@ -191,10 +258,8 @@ export default function ChoosePlanScreen() {
   };
 
   return (
-    <div className="bg-surface-primary relative size-full overflow-hidden">
-
-      {/* Header */}
-      <div className="absolute flex items-center justify-between left-0 right-0 px-[20px] top-[32px] whitespace-nowrap">
+    <div className="bg-surface-primary relative flex size-full flex-col overflow-hidden px-[20px] pb-[32px] pt-[32px]">
+      <div className="flex items-center justify-between whitespace-nowrap">
         <p className="font-primary text-[20px] leading-[24px] font-medium text-primary-token">
           Choose a plan
         </p>
@@ -203,104 +268,111 @@ export default function ChoosePlanScreen() {
         </p>
       </div>
 
-      <div
-        ref={viewportRef}
-        className="absolute left-0 right-0 top-[80px] h-[481px] overflow-visible touch-pan-y"
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchMove}
-        onTouchStart={handleTouchStart}
-      >
-        <div
-          className="flex items-start"
-          style={{
-            gap: `${CARD_GAP}px`,
-            transform: `translateX(${trackTranslateX}px)`,
-            transition: isDragging ? "none" : "transform 240ms cubic-bezier(0.22, 1, 0.36, 1)",
-            width: `${total * CARD_WIDTH + (total - 1) * CARD_GAP}px`,
-          }}
-        >
-          {plans.map((item, index) => (
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center">
+        <div className="flex flex-col items-center gap-[40px] md:gap-[56px]">
+          <div
+            ref={viewportRef}
+            className="h-[481px] w-[calc(100vw-40px)] max-w-full overflow-visible touch-pan-y md:w-full"
+            onClickCapture={handleViewportClickCapture}
+            onPointerCancel={handlePointerCancel}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchMove}
+            onTouchStart={handleTouchStart}
+            style={{
+              cursor: !isMobile && total > 1 ? (isDragging ? "grabbing" : "grab") : undefined,
+            }}
+          >
             <div
-              key={item.id}
-              className="shrink-0"
+              className="flex items-start"
               style={{
-                transform: getCardTransform(index),
-                transformOrigin: "center bottom",
+                gap: `${CARD_GAP}px`,
+                transform: `translateX(${trackTranslateX}px)`,
                 transition: isDragging ? "none" : "transform 240ms cubic-bezier(0.22, 1, 0.36, 1)",
-                zIndex: total - Math.min(total - 1, Math.round(Math.abs(index - fractionalIndex))),
+                width: `${total * CARD_WIDTH + (total - 1) * CARD_GAP}px`,
               }}
             >
-              {(() => {
-                const creator = getPlanCreatorForIndex(demoUsers, index);
-                const participants = getChatParticipants(demoUsers, creator);
+              {plans.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="shrink-0"
+                  style={{
+                    transform: getCardTransform(index),
+                    transformOrigin: "center bottom",
+                    transition: isDragging ? "none" : "transform 240ms cubic-bezier(0.22, 1, 0.36, 1)",
+                    zIndex: total - Math.min(total - 1, Math.round(Math.abs(index - fractionalIndex))),
+                  }}
+                >
+                  {(() => {
+                    const creator = getPlanCreatorForIndex(demoUsers, index);
+                    const participants = getChatParticipants(demoUsers, creator);
 
-                return (
-              <PlanCard
-                title={item.title}
-                date={item.when}
-                location={item.location}
-                imageSrc={item.imageSrc}
-                onClick={() =>
-                  navigate("/info-plan", {
-                    state: {
-                      plan: {
-                        ...item,
-                        creator,
-                      },
-                      imageSrc: item.imageSrc,
-                      participants,
-                      selectedIndex: index,
-                      filters,
-                    },
-                  })
-                }
-                showButton={index === current}
-                onJoin={() => void handleJoinPlan(item, index)}
-              />
-                );
-              })()}
+                    return (
+                      <PlanCard
+                        title={item.title}
+                        date={item.when}
+                        location={item.location}
+                        imageSrc={item.imageSrc}
+                        onClick={() =>
+                          navigate("/info-plan", {
+                            state: {
+                              plan: {
+                                ...item,
+                                creator,
+                              },
+                              imageSrc: item.imageSrc,
+                              participants,
+                              selectedIndex: index,
+                              filters,
+                            },
+                          })
+                        }
+                        showButton={index === current}
+                        onJoin={() => void handleJoinPlan(item, index)}
+                      />
+                    );
+                  })()}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {!isLoading && plans.length > 0 ? (
+            <div className="flex w-[222px] flex-col items-center gap-[4px] text-center">
+              <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token w-full text-center">
+                {matchLabel}
+              </p>
+              <p className="font-primary text-[14px] leading-[18px] text-primary-token w-full text-center">
+                Based on your vibe, budget, distance, and timing filters.
+              </p>
+            </div>
+          ) : null}
         </div>
+
+        {isLoading ? (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 rounded-[24px] border border-card-token bg-surface-primary px-[24px] py-[32px] text-center">
+            <p className="type-heading-m text-primary-token">Finding the best plans for you...</p>
+          </div>
+        ) : null}
+
+        {!isLoading && plans.length === 0 ? (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 rounded-[24px] border border-card-token bg-surface-primary px-[24px] py-[32px] text-center">
+            <p className="type-heading-m text-primary-token">No plans found</p>
+            <p className="mt-[8px] type-body-s text-secondary-token">
+              {errorMessage || "Try changing the filters and search again."}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/join-plan")}
+              className="mt-[20px] inline-flex h-[40px] items-center justify-center rounded-[999px] border border-card-token px-[20px]"
+            >
+              <span className="type-body-s text-primary-token">Go back to filters</span>
+            </button>
+          </div>
+        ) : null}
       </div>
-
-      {isLoading ? (
-        <div className="absolute inset-x-[20px] top-[220px] rounded-[24px] border border-card-token bg-surface-primary px-[24px] py-[32px] text-center">
-          <p className="type-heading-m text-primary-token">Finding the best plans for you...</p>
-        </div>
-      ) : null}
-
-      {!isLoading && plans.length === 0 ? (
-        <div className="absolute inset-x-[20px] top-[220px] rounded-[24px] border border-card-token bg-surface-primary px-[24px] py-[32px] text-center">
-          <p className="type-heading-m text-primary-token">No plans found</p>
-          <p className="mt-[8px] type-body-s text-secondary-token">
-            {errorMessage || "Try changing the filters and search again."}
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/join-plan")}
-            className="mt-[20px] inline-flex h-[40px] items-center justify-center rounded-[999px] border border-card-token px-[20px]"
-          >
-            <span className="type-body-s text-primary-token">Go back to filters</span>
-          </button>
-        </div>
-      ) : null}
-
-      {/* Match info */}
-      {!isLoading && plans.length > 0 ? (
-        <div
-          className="absolute flex flex-col gap-[4px] items-center text-center w-[222px]"
-          style={{ left: "calc(50% + 0.5px)", bottom: 32, transform: "translateX(-50%)" }}
-        >
-          <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token w-full text-center">
-            {matchLabel}
-          </p>
-          <p className="font-primary text-[14px] leading-[18px] text-primary-token w-full text-center">
-            Based on your vibe, budget, distance, and timing filters.
-          </p>
-        </div>
-      ) : null}
-
     </div>
   );
 }
