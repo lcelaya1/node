@@ -304,17 +304,6 @@ export default function ChatInfoPlanScreen() {
             onClick={() => navigate(-1)}
             size="Mid"
           />
-          {isJoinedPlan || isCreatedPlan ? (
-            <button
-              type="button"
-              onClick={() => setIsCancelModalOpen(true)}
-              className="flex items-center justify-center rounded-[999px] bg-button-primary px-[24px] py-[8px]"
-            >
-              <span className="type-body-m text-invert-token">
-                {isCreatedPlan ? "Delete" : "Cancel"}
-              </span>
-            </button>
-          ) : null}
         </div>
 
         <div className="absolute bottom-[16px] left-[20px] right-[20px]">
@@ -404,6 +393,18 @@ export default function ChatInfoPlanScreen() {
             />
           </div>
         </div>
+
+        {isJoinedPlan || isCreatedPlan ? (
+          <div className="flex w-full justify-center pt-[8px]">
+            <button
+              type="button"
+              onClick={() => setIsCancelModalOpen(true)}
+              className="type-body-s text-secondary-token underline underline-offset-[4px]"
+            >
+              {isCreatedPlan ? "Delete plan" : "Cancel plan"}
+            </button>
+          </div>
+        ) : null}
       </div>
       </div>
 
