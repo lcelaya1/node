@@ -109,23 +109,6 @@ export default function AddSpecsScreen() {
     navigate("/");
   };
 
-  const handleOpenDatePicker = () => {
-    const input = dateInputRef.current;
-    if (!input) return;
-
-    try {
-      if ("showPicker" in input && typeof input.showPicker === "function") {
-        input.showPicker();
-        return;
-      }
-    } catch {
-      // Fall back to focus/click for browsers with restricted showPicker support.
-    }
-
-    input.focus();
-    input.click();
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full bg-surface-primary">
@@ -211,11 +194,7 @@ export default function AddSpecsScreen() {
               <div className="flex flex-col gap-[12px] items-start w-full">
                 <SpeechBubbleChip direction="Left" text="When?" />
                 <div className="flex gap-[16px] h-[80px] items-center w-full">
-                  <button
-                    type="button"
-                    onClick={handleOpenDatePicker}
-                    className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] relative overflow-hidden text-left"
-                  >
+                  <label className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] relative overflow-hidden text-left cursor-pointer">
                     <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token">
                       Date
                     </p>
@@ -236,11 +215,9 @@ export default function AddSpecsScreen() {
                           handleChange("date", e.target.value);
                         }
                       }}
-                      className="pointer-events-none absolute inset-0 opacity-0"
-                      tabIndex={-1}
-                      aria-hidden="true"
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                     />
-                  </button>
+                  </label>
                   <div className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px]">
                     <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token">
                       Hour
