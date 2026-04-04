@@ -65,7 +65,7 @@ export default function CreateProfileNameScreen({
 
   return (
     <div className="flex size-full flex-col gap-[80px] bg-surface-primary pb-[32px]">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between px-[24px] pt-[80px]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between px-[24px] pt-[16px]">
         <div className="flex w-full flex-col gap-[20px]">
           <CreateAccountBackButton onClick={onBack} />
 

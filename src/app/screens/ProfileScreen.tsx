@@ -321,7 +321,7 @@ export default function ProfileScreen() {
         className="flex flex-1 flex-col overflow-y-auto"
         style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
       >
-        <div className="border-b border-card-token bg-surface-primary px-[20px] pt-[32px]">
+        <div className="border-b border-card-token bg-surface-primary px-[20px] pt-[16px]">
           <div className="flex items-center justify-between pb-[12px] pt-[0px]">
             {demoProfile ? (
               <>
