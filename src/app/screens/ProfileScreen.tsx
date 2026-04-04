@@ -317,166 +317,164 @@ export default function ProfileScreen() {
       className="relative flex h-full min-h-0 flex-col overflow-hidden"
       style={{ backgroundColor: "var(--color-surface-bg-primary)" }}
     >
+      <div className="shrink-0 border-b border-card-token bg-surface-primary px-[20px] pt-[16px]">
+        <div className="flex items-center justify-between pb-[12px] pt-[0px]">
+          {demoProfile ? (
+            <>
+              <IconButton
+                icon="Left"
+                hierarchy="Link"
+                size="Mid"
+                onClick={() => navigate(-1)}
+                aria-label="Back"
+              />
+              <h1 className="type-heading-m text-primary-token">Profile</h1>
+              <div className="size-[44px]" />
+            </>
+          ) : (
+            <>
+              <h1 className="type-heading-m text-primary-token">Profile</h1>
+              <button
+                type="button"
+                aria-label="Log out"
+                className="flex size-[44px] items-center justify-center"
+                onClick={handleLogout}
+              >
+                <img alt="" aria-hidden="true" className="size-[24px]" src={logoutIcon} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       <div
-        className="flex min-h-0 flex-1 touch-pan-y flex-col overflow-y-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto px-[20px] pt-[24px]"
         style={{
           WebkitOverflowScrolling: "touch",
           overscrollBehaviorY: "contain",
           paddingBottom: "calc(108px + env(safe-area-inset-bottom))",
         }}
       >
-        <div className="sticky top-0 z-10 border-b border-card-token bg-surface-primary px-[20px] pt-[16px]">
-          <div className="flex items-center justify-between pb-[12px] pt-[0px]">
-            {demoProfile ? (
-              <>
-                <IconButton
-                  icon="Left"
-                  hierarchy="Link"
-                  size="Mid"
-                  onClick={() => navigate(-1)}
-                  aria-label="Back"
-                />
-                <h1 className="type-heading-m text-primary-token">Profile</h1>
-                <div className="size-[44px]" />
-              </>
-            ) : (
-              <>
-                <h1 className="type-heading-m text-primary-token">Profile</h1>
-                <button
-                  type="button"
-                  aria-label="Log out"
-                  className="flex size-[44px] items-center justify-center"
-                  onClick={handleLogout}
-                >
-                  <img alt="" aria-hidden="true" className="size-[24px]" src={logoutIcon} />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="px-[20px] pt-[24px]">
-          <div className="flex flex-col items-center gap-[32px]">
-            <div className="flex w-full flex-col items-center gap-[20px]">
-              <div className="flex w-full flex-col items-center gap-[13px]">
-                <div className="size-[102px] overflow-hidden rounded-full bg-surface-secondary">
-                  <img alt={displayName} className="size-full object-cover" src={displayAvatar} />
-                </div>
-
-                <div className="flex w-full flex-col items-center gap-[4px] text-center">
-                  <p className="type-heading-xl text-primary-token">{displayTitle}</p>
-                  <div className="flex items-center gap-[8px] text-secondary-token">
-                    <span className="type-body-s">
-                      {demoProfile ? profile.plansCreated ?? 0 : createdPlans.length} plans created
-                    </span>
-                    <span className="type-body-s">·</span>
-                    <span className="type-body-s">
-                      {demoProfile ? profile.plansDone ?? 0 : pastJoinedPlans.length} plans done
-                    </span>
-                  </div>
-                </div>
+        <div className="flex flex-col items-center gap-[32px]">
+          <div className="flex w-full flex-col items-center gap-[20px]">
+            <div className="flex w-full flex-col items-center gap-[13px]">
+              <div className="size-[102px] overflow-hidden rounded-full bg-surface-secondary">
+                <img alt={displayName} className="size-full object-cover" src={displayAvatar} />
               </div>
 
-              {demoProfile ? null : (
-                <div className="flex w-full items-start justify-center gap-[12px]">
-                  <ProfileChip
-                    active={activeTab === "about"}
-                    label="About"
-                    onClick={() => setActiveTab("about")}
-                  />
-                  <ProfileChip
-                    active={activeTab === "created"}
-                    label="Created by you"
-                    onClick={() => setActiveTab("created")}
-                  />
-                  <ProfileChip
-                    active={activeTab === "past"}
-                    label="Past plans"
-                    onClick={() => setActiveTab("past")}
-                  />
+              <div className="flex w-full flex-col items-center gap-[4px] text-center">
+                <p className="type-heading-xl text-primary-token">{displayTitle}</p>
+                <div className="flex items-center gap-[8px] text-secondary-token">
+                  <span className="type-body-s">
+                    {demoProfile ? profile.plansCreated ?? 0 : createdPlans.length} plans created
+                  </span>
+                  <span className="type-body-s">·</span>
+                  <span className="type-body-s">
+                    {demoProfile ? profile.plansDone ?? 0 : pastJoinedPlans.length} plans done
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
 
-            {demoProfile || activeTab === "about" ? (
-              <div className="flex w-full flex-col gap-[24px]">
-                <div className="flex flex-col gap-[8px]">
-                  <h2 className="type-body-m-medium text-primary-token">Interests</h2>
-                  <div className="grid grid-cols-2 gap-x-[8px] gap-y-[7px]">
-                    {displayInterests.length > 0 ? (
-                      displayInterests.map((interest) => (
-                        <InterestTile
-                          key={interest}
-                          imageSrc={
-                            interestImageMap.get(interest.trim().toLowerCase()) ??
-                            getInterestImage(interest)
-                          }
-                          label={interest}
-                        />
-                      ))
-                    ) : (
-                      <>
-                        <InterestTile imageSrc={coffeeImage} label="Coffee" />
-                        <InterestTile imageSrc={hikesImage} label="Hikes" />
-                        <InterestTile imageSrc={yogaImage} label="Yoga" />
-                        <InterestTile imageSrc={festivalImage} label="Festival" />
-                      </>
-                    )}
-                  </div>
+            {demoProfile ? null : (
+              <div className="flex w-full items-start justify-center gap-[12px]">
+                <ProfileChip
+                  active={activeTab === "about"}
+                  label="About"
+                  onClick={() => setActiveTab("about")}
+                />
+                <ProfileChip
+                  active={activeTab === "created"}
+                  label="Created by you"
+                  onClick={() => setActiveTab("created")}
+                />
+                <ProfileChip
+                  active={activeTab === "past"}
+                  label="Past plans"
+                  onClick={() => setActiveTab("past")}
+                />
+              </div>
+            )}
+          </div>
+
+          {demoProfile || activeTab === "about" ? (
+            <div className="flex w-full flex-col gap-[24px]">
+              <div className="flex flex-col gap-[8px]">
+                <h2 className="type-body-m-medium text-primary-token">Interests</h2>
+                <div className="grid grid-cols-2 gap-x-[8px] gap-y-[7px]">
+                  {displayInterests.length > 0 ? (
+                    displayInterests.map((interest) => (
+                      <InterestTile
+                        key={interest}
+                        imageSrc={
+                          interestImageMap.get(interest.trim().toLowerCase()) ??
+                          getInterestImage(interest)
+                        }
+                        label={interest}
+                      />
+                    ))
+                  ) : (
+                    <>
+                      <InterestTile imageSrc={coffeeImage} label="Coffee" />
+                      <InterestTile imageSrc={hikesImage} label="Hikes" />
+                      <InterestTile imageSrc={yogaImage} label="Yoga" />
+                      <InterestTile imageSrc={festivalImage} label="Festival" />
+                    </>
+                  )}
                 </div>
               </div>
-            ) : null}
+            </div>
+          ) : null}
 
-            {activeTab === "created" ? (
-              <div className="flex w-full flex-col gap-[16px]">
-                <h2 className="type-body-m-medium text-primary-token">Created by you</h2>
-                {createdPlans.length > 0 ? (
-                  <div className="flex w-full flex-col gap-[8px]">
-                    {createdPlans.map((plan) => (
-                      <CreatedPlanCard
-                        key={plan.id}
-                        imageSrc={plan.picturePreview}
-                        location={plan.where}
-                        title={plan.title}
-                        when={plan.when}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="type-body-s text-secondary-token">
-                    You haven&apos;t created any plans yet.
-                  </p>
-                )}
-              </div>
-            ) : null}
+          {activeTab === "created" ? (
+            <div className="flex w-full flex-col gap-[16px]">
+              <h2 className="type-body-m-medium text-primary-token">Created by you</h2>
+              {createdPlans.length > 0 ? (
+                <div className="flex w-full flex-col gap-[8px]">
+                  {createdPlans.map((plan) => (
+                    <CreatedPlanCard
+                      key={plan.id}
+                      imageSrc={plan.picturePreview}
+                      location={plan.where}
+                      title={plan.title}
+                      when={plan.when}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="type-body-s text-secondary-token">
+                  You haven&apos;t created any plans yet.
+                </p>
+              )}
+            </div>
+          ) : null}
 
-            {activeTab === "past" ? (
-              <div className="flex w-full flex-col gap-[16px]">
-                <h2 className="type-body-m-medium text-primary-token">Past plans</h2>
-                {pastJoinedPlans.length > 0 ? (
-                  <div className="flex w-full flex-col gap-[8px]">
-                    {pastJoinedPlans.map((plan) => (
-                      <CreatedPlanCard
-                        key={plan.id}
-                        imageSrc={plan.picturePreview}
-                        location={plan.where}
-                        title={plan.title}
-                        when={plan.when}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="type-body-s text-secondary-token">
-                    You don&apos;t have any past plans yet.
-                  </p>
-                )}
-              </div>
-            ) : null}
-          </div>
+          {activeTab === "past" ? (
+            <div className="flex w-full flex-col gap-[16px]">
+              <h2 className="type-body-m-medium text-primary-token">Past plans</h2>
+              {pastJoinedPlans.length > 0 ? (
+                <div className="flex w-full flex-col gap-[8px]">
+                  {pastJoinedPlans.map((plan) => (
+                    <CreatedPlanCard
+                      key={plan.id}
+                      imageSrc={plan.picturePreview}
+                      location={plan.where}
+                      title={plan.title}
+                      when={plan.when}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="type-body-s text-secondary-token">
+                  You don&apos;t have any past plans yet.
+                </p>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 border-t border-card-token bg-surface-primary">
+      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-card-token bg-surface-primary">
         {demoProfile ? null : (
           <AppNavbar
             activeTab="profile"

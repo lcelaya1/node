@@ -142,7 +142,7 @@ export default function PlansHomeScreen() {
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 border-t border-card-token bg-surface-primary">
+      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-card-token bg-surface-primary">
         <AppNavbar
           activeTab="home"
           activeTone="brand"
