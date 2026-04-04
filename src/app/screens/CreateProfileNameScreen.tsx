@@ -1,15 +1,18 @@
 import { useState } from "react";
+import { CreateAccountBackButton } from "../components/CreateAccountBackButton";
 import { supabase } from "../lib/supabase";
 
 type CreateProfileNameScreenProps = {
   value?: string;
   onChange?: (value: string) => void;
+  onBack?: () => void;
   onContinue?: () => void;
 };
 
 export default function CreateProfileNameScreen({
   value = "",
   onChange,
+  onBack,
   onContinue,
 }: CreateProfileNameScreenProps) {
   const [isSaving, setIsSaving] = useState(false);
@@ -64,6 +67,8 @@ export default function CreateProfileNameScreen({
     <div className="flex size-full flex-col gap-[80px] bg-surface-primary pb-[32px]">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between px-[24px] pt-[80px]">
         <div className="flex w-full flex-col gap-[20px]">
+          <CreateAccountBackButton onClick={onBack} />
+
           <div className="flex w-full flex-col gap-[8px]">
             <p className="type-heading-xl text-primary-token">
               First, what&apos;s your name?

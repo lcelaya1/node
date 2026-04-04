@@ -77,7 +77,7 @@ export default function App() {
     setProfileDraftBirthDate(birthDate);
     setProfileDraftBio("");
     setProfileDraftInterests(interests);
-    setProfileDraftAvatarUrl(avatarUrl);
+    setProfileDraftAvatarUrl(isProfileComplete ? avatarUrl : "");
 
     setPhase(isProfileComplete ? "app" : "create-profile");
   };
@@ -165,6 +165,7 @@ export default function App() {
             <CreateProfileNameScreen
               value={profileDraftName}
               onChange={setProfileDraftName}
+              onBack={() => setPhase("auth")}
               onContinue={() => setPhase("create-profile-birthday")}
             />
           ) : null}

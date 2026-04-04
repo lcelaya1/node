@@ -1,4 +1,5 @@
 import type { DemoUser } from "./demoUsers";
+import { supabase } from "./supabase";
 
 export type SavedPlan = {
   budget?: string;
@@ -10,10 +11,12 @@ export type SavedPlan = {
   picturePreview: string;
   source?: "created" | "joined";
   title: string;
+  userId?: string;
   whenDate?: string;
   whenTime?: string;
   when: string;
   where: string;
+  storageKey?: string;
 };
 
 type JoinablePlan = {
@@ -32,8 +35,22 @@ type JoinablePlan = {
 };
 
 const DATABASE_NAME = "node-app";
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const STORE_NAME = "plans";
+
+async function getCurrentPlansUserId(): Promise<string> {
+  if (!supabase) return "guest";
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user?.id ?? "guest";
+}
+
+function buildStorageKey(userId: string, planId: string): string {
+  return `${userId}:${planId}`;
+}
 
 function openPlansDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -46,10 +63,13 @@ function openPlansDatabase(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const database = request.result;
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        const store = database.createObjectStore(STORE_NAME, { keyPath: "id" });
-        store.createIndex("createdAt", "createdAt");
+      if (database.objectStoreNames.contains(STORE_NAME)) {
+        database.deleteObjectStore(STORE_NAME);
       }
+
+      const store = database.createObjectStore(STORE_NAME, { keyPath: "storageKey" });
+      store.createIndex("createdAt", "createdAt");
+      store.createIndex("userId", "userId");
     };
 
     request.onsuccess = () => resolve(request.result);
@@ -58,6 +78,7 @@ function openPlansDatabase(): Promise<IDBDatabase> {
 }
 
 export async function loadSavedPlans(): Promise<SavedPlan[]> {
+  const userId = await getCurrentPlansUserId();
   const database = await openPlansDatabase();
 
   return new Promise((resolve, reject) => {
@@ -67,7 +88,11 @@ export async function loadSavedPlans(): Promise<SavedPlan[]> {
 
     request.onsuccess = () => {
       const plans = (request.result as SavedPlan[]) ?? [];
-      resolve(plans.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+      resolve(
+        plans
+          .filter((plan) => plan.userId === userId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      );
     };
 
     request.onerror = () => {
@@ -80,12 +105,13 @@ export async function loadSavedPlans(): Promise<SavedPlan[]> {
 }
 
 export async function loadSavedPlan(planId: string): Promise<SavedPlan | null> {
+  const userId = await getCurrentPlansUserId();
   const database = await openPlansDatabase();
 
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, "readonly");
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(planId);
+    const request = store.get(buildStorageKey(userId, planId));
 
     request.onsuccess = () => {
       resolve((request.result as SavedPlan | undefined) ?? null);
@@ -101,12 +127,17 @@ export async function loadSavedPlan(planId: string): Promise<SavedPlan | null> {
 }
 
 export async function savePlan(plan: SavedPlan): Promise<SavedPlan[]> {
+  const userId = await getCurrentPlansUserId();
   const database = await openPlansDatabase();
 
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    store.put(plan);
+    store.put({
+      ...plan,
+      storageKey: buildStorageKey(userId, plan.id),
+      userId,
+    });
 
     transaction.oncomplete = async () => {
       database.close();
@@ -141,12 +172,13 @@ export function toSavedPlan(plan: JoinablePlan, imageSrc?: string): SavedPlan {
 }
 
 export async function deletePlan(planId: string): Promise<void> {
+  const userId = await getCurrentPlansUserId();
   const database = await openPlansDatabase();
 
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    store.delete(planId);
+    store.delete(buildStorageKey(userId, planId));
 
     transaction.oncomplete = () => {
       database.close();

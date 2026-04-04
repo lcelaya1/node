@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import sampleCreatedPlanImage from "../../assets/d92dc11944c0835af8728de9c8586c5a5d0d5a38.png";
 import { AppNavbar } from "../components/AppNavbar";
 import { HomeHeader } from "../components/HomeHeader";
-import { loadSavedPlans, savePlan, type SavedPlan } from "../lib/plans";
+import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 import NoPlansScreen from "./NoPlansScreen";
 
 const fallbackPlanImage = "https://www.figma.com/api/mcp/asset/f09dd6ab-6d26-46fd-85b8-0715408f10cb";
-const SAMPLE_CREATED_PLAN_ID = "sample-created-plan";
-const SAMPLE_CREATED_PLAN_SEEDED_KEY = "node-sample-created-plan-seeded";
 
 function formatPlanMeta(plan: SavedPlan) {
   if (plan.when) return plan.when.replace("·", ",");
@@ -96,39 +93,7 @@ export default function PlansHomeScreen() {
     const run = async () => {
       const plans = await loadSavedPlans();
       if (!isMounted) return;
-
-      const hasCreatedPlan = plans.some((plan) => plan.source === "created");
-      if (hasCreatedPlan) {
-        window.localStorage.setItem(SAMPLE_CREATED_PLAN_SEEDED_KEY, "true");
-        setSavedPlans(plans);
-        return;
-      }
-
-      const hasSeededSamplePlan =
-        window.localStorage.getItem(SAMPLE_CREATED_PLAN_SEEDED_KEY) === "true";
-
-      if (hasSeededSamplePlan) {
-        setSavedPlans(plans);
-        return;
-      }
-
-      const nextPlans = await savePlan({
-        createdAt: new Date().toISOString(),
-        description:
-          "A relaxed afterwork plan with natural wine, soft lighting, and enough time to catch up properly.",
-        id: SAMPLE_CREATED_PLAN_ID,
-        picturePreview: sampleCreatedPlanImage,
-        source: "created",
-        title: "Natural wine afterwork",
-        when: "27 Mar, 7:00pm",
-        whenDate: "2026-03-27",
-        whenTime: "19:00",
-        where: "Batea, Passeig de Gràcia 44, 08007 Barcelona",
-      });
-
-      if (!isMounted) return;
-      window.localStorage.setItem(SAMPLE_CREATED_PLAN_SEEDED_KEY, "true");
-      setSavedPlans(nextPlans);
+      setSavedPlans(plans);
     };
 
     void run();
