@@ -34,7 +34,7 @@ function NavItem({
   onClick,
   textOnly = false,
 }: NavItemProps) {
-  const colorClass = active ? activeClassName : "text-primary-token icon-primary-token";
+  const colorClass = disabled ? "text-secondary-token" : active ? activeClassName : "text-primary-token";
 
   return (
     <button
@@ -43,13 +43,19 @@ function NavItem({
       aria-disabled={disabled || undefined}
       aria-label={label}
       className={cn(
-        "flex min-h-[44px] flex-1 basis-0 items-center justify-center",
+        "flex min-h-[44px] flex-1 basis-0 items-center justify-center transition-opacity",
         disabled ? "cursor-default" : "",
       )}
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
     >
-      <div className={cn("flex flex-col items-center justify-center gap-[4px]", colorClass)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center gap-[4px]",
+          disabled ? "opacity-70" : "",
+          colorClass,
+        )}
+      >
         {textOnly ? null : <AppIcon className="shrink-0" name={icon!} size={24} />}
         <span className="type-body-xs whitespace-nowrap">{label}</span>
       </div>
@@ -167,6 +173,7 @@ export function AppNavbar({
         <NavItem
           active={activeTab === "diary"}
           activeClassName={activeClass}
+          disabled
           icon="Camera"
           label="Diary"
           onClick={() => onTabClick?.("diary")}
