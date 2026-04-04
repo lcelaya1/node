@@ -314,7 +314,12 @@ export default function ProfileScreen() {
 
   return (
     <div
-      className="relative flex h-full min-h-0 flex-col overflow-hidden"
+      className={cn(
+        "relative grid h-full overflow-hidden",
+        demoProfile
+          ? "grid-rows-[auto_minmax(0,1fr)]"
+          : "grid-rows-[auto_minmax(0,1fr)_auto]",
+      )}
       style={{ backgroundColor: "var(--color-surface-bg-primary)" }}
     >
       <div className="shrink-0 border-b border-card-token bg-surface-primary px-[20px] pt-[16px]">
@@ -348,11 +353,13 @@ export default function ProfileScreen() {
       </div>
 
       <div
-        className="flex min-h-0 flex-1 flex-col overflow-y-auto px-[20px] pt-[24px]"
+        className="min-h-0 overflow-y-scroll px-[20px] pt-[24px]"
         style={{
           WebkitOverflowScrolling: "touch",
           overscrollBehaviorY: "contain",
-          paddingBottom: "calc(108px + env(safe-area-inset-bottom))",
+          paddingBottom: demoProfile
+            ? "calc(24px + env(safe-area-inset-bottom))"
+            : "calc(24px + env(safe-area-inset-bottom))",
         }}
       >
         <div className="flex flex-col items-center gap-[32px]">
@@ -474,7 +481,7 @@ export default function ProfileScreen() {
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20 border-t border-card-token bg-surface-primary">
+      <div className="z-20 border-t border-card-token bg-surface-primary">
         {demoProfile ? null : (
           <AppNavbar
             activeTab="profile"
