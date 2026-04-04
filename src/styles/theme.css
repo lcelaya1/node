@@ -346,7 +346,9 @@
 
   .app-device {
     background: var(--app-surface);
+    height: 100dvh;
     max-height: none;
+    min-height: 100dvh;
     overflow: hidden;
     position: relative;
     width: 393px;
