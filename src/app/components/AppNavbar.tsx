@@ -127,8 +127,8 @@ export function AppNavbar({
       ) : null}
 
       <div
-        className="flex w-full items-center justify-center pb-[12px] pt-[12px]"
-        style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+        className="flex w-full items-center justify-center pb-[16px] pt-[12px]"
+        style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
       >
         <NavItem
           active={activeTab === "home"}
