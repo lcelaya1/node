@@ -314,11 +314,11 @@ export default function ProfileScreen() {
 
   return (
     <div
-      className="relative flex h-full flex-col overflow-hidden"
+      className="relative flex h-full min-h-0 flex-col overflow-hidden"
       style={{ backgroundColor: "var(--color-surface-bg-primary)" }}
     >
       <div
-        className="flex flex-1 flex-col overflow-y-auto"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto"
         style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
       >
         <div className="border-b border-card-token bg-surface-primary px-[20px] pt-[16px]">
