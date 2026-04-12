@@ -360,7 +360,7 @@ export default function DiaryScreen() {
   }, [memories, savedPlans]);
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface-primary">
       <div className="shrink-0 px-[20px]">
         <Header
           onViewModeChange={setViewMode}
@@ -369,8 +369,11 @@ export default function DiaryScreen() {
       </div>
 
       <div
-        className="flex flex-1 flex-col overflow-y-auto px-[20px] pt-[24px]"
-        style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
+        className="flex flex-1 min-h-0 flex-col overflow-y-auto px-[20px] pt-[24px]"
+        style={{
+          paddingBottom: "calc(108px + env(safe-area-inset-bottom))",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
         {memoryGroups.length > 0 ? (
           viewMode === "calendar" ? (
