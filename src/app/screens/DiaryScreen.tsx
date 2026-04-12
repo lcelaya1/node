@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { DiaryMemoryCard, type DiaryMemoryGroup } from "../components/DiaryMemoryCard";
@@ -71,27 +71,16 @@ function DiaryViewSwitch({
 }
 
 function Header({
-  avatarUrl,
   onViewModeChange,
   viewMode,
 }: {
-  avatarUrl: string;
   onViewModeChange: (value: DiaryViewMode) => void;
   viewMode: DiaryViewMode;
 }) {
   return (
     <div className="flex items-center justify-between pt-[32px]">
       <h1 className="type-heading-2xl text-primary-token">Diary</h1>
-
-      <div className="flex items-center gap-[8px]">
-        <DiaryViewSwitch onChange={onViewModeChange} value={viewMode} />
-
-        <div className="size-[40px] overflow-hidden rounded-full bg-surface-secondary">
-          {avatarUrl ? (
-            <img alt="Profile" className="size-full object-cover" src={avatarUrl} />
-          ) : null}
-        </div>
-      </div>
+      <DiaryViewSwitch onChange={onViewModeChange} value={viewMode} />
     </div>
   );
 }
@@ -253,14 +242,22 @@ function CalendarView({
       });
   }, [memories]);
 
-  useEffect(() => {
+  const hasScrolledRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (hasScrolledRef.current) return;
+
     const container = scrollContainerRef.current;
     const currentMonthElement = currentMonthRef.current;
 
     if (!container || !currentMonthElement) return;
 
-    const offsetTop = currentMonthElement.offsetTop;
-    container.scrollTop = Math.max(offsetTop - 12, 0);
+    hasScrolledRef.current = true;
+
+    // Wait one frame so the browser finishes layout before measuring offsetTop
+    requestAnimationFrame(() => {
+      container.scrollTop = Math.max(currentMonthElement.offsetTop - 12, 0);
+    });
   }, [months]);
 
   return (
@@ -319,7 +316,6 @@ function CalendarView({
 
 export default function DiaryScreen() {
   const navigate = useNavigate();
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [viewMode, setViewMode] = useState<DiaryViewMode>("grid");
   const [memories, setMemories] = useState<PlanMemoryImage[]>([]);
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
@@ -346,35 +342,6 @@ export default function DiaryScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    let active = true;
-
-    const run = async () => {
-      if (!supabase) return;
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || !active) return;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("avatar_url")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!active || error) return;
-
-      setAvatarUrl(typeof data?.avatar_url === "string" ? data.avatar_url.trim() : "");
-    };
-
-    void run();
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const memoryGroups = useMemo(() => {
     const planMap = new Map(savedPlans.map((plan) => [plan.id, plan]));
@@ -410,7 +377,6 @@ export default function DiaryScreen() {
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
       <div className="shrink-0 px-[20px]">
         <Header
-          avatarUrl={avatarUrl}
           onViewModeChange={setViewMode}
           viewMode={viewMode}
         />
