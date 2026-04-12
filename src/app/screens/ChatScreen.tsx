@@ -23,7 +23,9 @@ type ChatPlan = {
 };
 
 type ChatState = {
+  groupId?: string;
   imageSrc?: string;
+  isRepeatGroup?: boolean;
   participants?: DemoUser[];
   plan?: ChatPlan;
   selectedIndex?: number;
@@ -137,6 +139,7 @@ export default function ChatScreen() {
   const [draft, setDraft] = useState("");
   const [participants, setParticipants] = useState<DemoUser[]>(state?.participants ?? []);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isRepeatGroup = state?.isRepeatGroup === true;
 
   const plan = state?.plan ?? {
     id: 1,
@@ -170,8 +173,42 @@ export default function ChatScreen() {
   const secondaryParticipant = participants[1];
   const tertiaryParticipant = participants[2];
 
-  const conversation = useMemo<ConversationBlock[]>(
-    () => [
+  const conversation = useMemo<ConversationBlock[]>(() => {
+    if (isRepeatGroup) {
+      return [
+        ...participants.flatMap((participant, index) => [
+          {
+            type: "other" as const,
+            name: participant.name,
+            messages: [
+              {
+                text:
+                  index === 0
+                    ? "Glad we kept the vibe going."
+                    : "I’m happy we matched again.",
+                time: `20:4${index}`,
+                showTail: true,
+              },
+            ],
+          },
+          {
+            type: "me" as const,
+            messages: [
+              {
+                text:
+                  index === 0
+                    ? "Same here. Let’s keep this chat alive."
+                    : "Let’s plan something soon.",
+                time: `20:4${index}`,
+                showTail: true,
+              },
+            ],
+          },
+        ]),
+      ];
+    }
+
+    return [
       {
         type: "other",
         name: primaryParticipant?.name ?? "Sofia",
@@ -268,9 +305,8 @@ export default function ChatScreen() {
           { text: "And bring a jacket just in case.", time: "19:50", showTail: true },
         ],
       },
-    ],
-    [primaryParticipant?.name, secondaryParticipant?.name, tertiaryParticipant?.name],
-  );
+    ];
+  }, [isRepeatGroup, participants, primaryParticipant?.name, secondaryParticipant?.name, tertiaryParticipant?.name]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -279,7 +315,7 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
-    if (!state?.plan || !plan.source) return;
+    if (!state?.plan || !plan.source || isRepeatGroup) return;
 
     const timeoutId = window.setTimeout(() => {
       navigate("/plan-confirmation", {
@@ -289,12 +325,13 @@ export default function ChatScreen() {
             id: plan.id,
             title: displayTitle,
           },
+          participants,
         },
       });
     }, 5000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [displayTitle, navigate, plan.source, state?.plan]);
+  }, [displayTitle, isRepeatGroup, navigate, participants, plan.id, plan.source, state?.plan]);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
@@ -312,27 +349,29 @@ export default function ChatScreen() {
           <p className="type-body-xs text-secondary-token">{headerSubtitle}</p>
         </div>
 
-        <IconButton
-          icon="Info"
-          hierarchy="Link"
-          size="Mid"
-          onClick={() =>
-            navigate("/chat-info", {
-              state: {
-                imageSrc: state?.imageSrc,
-                plan: {
-                  ...plan,
-                  creator: plan.creator ?? primaryParticipant ?? null,
-                  id: plan.id ?? 1,
-                  title: displayTitle,
+        {isRepeatGroup ? <div className="size-[40px]" /> : (
+          <IconButton
+            icon="Info"
+            hierarchy="Link"
+            size="Mid"
+            onClick={() =>
+              navigate("/chat-info", {
+                state: {
+                  imageSrc: state?.imageSrc,
+                  plan: {
+                    ...plan,
+                    creator: plan.creator ?? primaryParticipant ?? null,
+                    id: plan.id ?? 1,
+                    title: displayTitle,
+                  },
+                  participants,
+                  selectedIndex: state?.selectedIndex ?? 0,
                 },
-                participants,
-                selectedIndex: state?.selectedIndex ?? 0,
-              },
-            })
-          }
-          aria-label="Plan info"
-        />
+              })
+            }
+            aria-label="Plan info"
+          />
+        )}
       </div>
 
       <div

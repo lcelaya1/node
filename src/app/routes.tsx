@@ -8,6 +8,10 @@ import ChatScreen from "./screens/ChatScreen";
 import ChatInfoPlanScreen from "./screens/ChatInfoPlanScreen";
 import PlanConfirmationScreen from "./screens/PlanConfirmationScreen";
 import PlanRatingScreen from "./screens/PlanRatingScreen";
+import PlanReviewsScreen from "./screens/PlanReviewsScreen";
+import RepeatVibeScreen from "./screens/RepeatVibeScreen";
+import GroupsScreen from "./screens/GroupsScreen";
+import VibeMatchedScreen from "./screens/VibeMatchedScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 
 export const router = createBrowserRouter([
@@ -36,6 +40,10 @@ export const router = createBrowserRouter([
     Component: ChatScreen,
   },
   {
+    path: "/groups",
+    Component: GroupsScreen,
+  },
+  {
     path: "/chat-info",
     Component: ChatInfoPlanScreen,
   },
@@ -46,6 +54,18 @@ export const router = createBrowserRouter([
   {
     path: "/plan-rating",
     Component: PlanRatingScreen,
+  },
+  {
+    path: "/plan-reviews",
+    Component: PlanReviewsScreen,
+  },
+  {
+    path: "/repeat-vibe",
+    Component: RepeatVibeScreen,
+  },
+  {
+    path: "/vibe-matched",
+    Component: VibeMatchedScreen,
   },
   {
     path: "/profile",

@@ -76,7 +76,7 @@ export default function NoPlansScreen() {
           onJoinPlanClick={() => navigate("/join-plan")}
           onTabClick={(tab) => {
             if (tab === "home") navigate("/");
-            if (tab === "groups") navigate("/join-plan");
+            if (tab === "groups") navigate("/groups");
             if (tab === "profile") navigate("/profile");
           }}
         />

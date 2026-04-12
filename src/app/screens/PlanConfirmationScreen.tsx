@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
+import type { DemoUser } from "../lib/demoUsers";
 import { deletePlan } from "../lib/plans";
 
 type PlanConfirmationState = {
@@ -7,6 +8,7 @@ type PlanConfirmationState = {
     id?: string | number;
     title?: string;
   };
+  participants?: DemoUser[];
 };
 
 function InfoContent({ planName }: { planName: string }) {
@@ -33,7 +35,7 @@ export default function PlanConfirmationScreen() {
   const goHome = () => navigate("/");
   const handlePositiveFeedback = () =>
     navigate("/plan-rating", {
-      state: {
+      state: state ?? {
         plan: {
           id: planId,
           title: planName,

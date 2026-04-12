@@ -105,7 +105,7 @@ function CreatedPlanCard({ imageSrc, location, title, when }: CreatedPlanCardPro
         </div>
       </div>
 
-      <div className="h-full w-[120px] shrink-0 overflow-hidden rounded-[8px]">
+      <div className="h-full w-[120px] shrink-0 overflow-hidden rounded-[4px]">
         <img alt={title} className="size-full object-cover" src={imageSrc} />
       </div>
     </div>
@@ -288,6 +288,8 @@ export default function ProfileScreen() {
     const now = new Date();
 
     return joinedPlans.filter((plan) => {
+      if (plan.completedAt) return true;
+
       const startDate = getPlanStartDate(plan);
       if (!startDate) return false;
 
@@ -490,7 +492,7 @@ export default function ProfileScreen() {
             onJoinPlanClick={() => navigate("/join-plan")}
             onTabClick={(tab) => {
               if (tab === "home") navigate("/");
-              if (tab === "groups") navigate("/join-plan");
+              if (tab === "groups") navigate("/groups");
               if (tab === "profile") navigate("/profile");
             }}
           />

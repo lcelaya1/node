@@ -109,6 +109,12 @@ export default function PlansHomeScreen() {
     return <NoPlansScreen />;
   }
 
+  const upcomingPlans = savedPlans.filter((plan) => !plan.completedAt);
+
+  if (upcomingPlans.length === 0) {
+    return <NoPlansScreen />;
+  }
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
       <div
@@ -120,7 +126,7 @@ export default function PlansHomeScreen() {
         <div className="flex flex-col items-start gap-[8px]">
           <h2 className="type-body-m-medium text-primary-token">Upcoming Plans</h2>
 
-          {savedPlans.slice(0, 3).map((plan, index) => (
+          {upcomingPlans.slice(0, 3).map((plan, index) => (
             <HomePlanCard
               key={plan.id}
               highlighted={plan.id === highlightedPlanId || (!highlightedPlanId && index === 0)}
@@ -150,7 +156,7 @@ export default function PlansHomeScreen() {
           onJoinPlanClick={() => navigate("/join-plan")}
           onTabClick={(tab) => {
             if (tab === "home") navigate("/");
-            if (tab === "groups") navigate("/join-plan");
+            if (tab === "groups") navigate("/groups");
             if (tab === "profile") navigate("/profile");
           }}
         />

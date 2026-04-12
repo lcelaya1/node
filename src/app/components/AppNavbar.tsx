@@ -141,7 +141,6 @@ export function AppNavbar({
         <NavItem
           active={activeTab === "groups"}
           activeClassName={activeClass}
-          disabled
           icon="Comment"
           label="Groups"
           onClick={() => onTabClick?.("groups")}

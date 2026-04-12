@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState, useCallback } from "react";
-import { useNavigate } from "react-router";
-import { IconButton } from "../components/IconButton";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import { FlowScreenHeader } from "../components/FlowScreenHeader";
 
 const ratingLabels = ["Terrible", "Not great", "It was okay", "Pretty good", "Amazing!"];
 const ratingEmojis = ["🥱", "😐", "🙂", "😁", "😍"];
@@ -31,8 +31,8 @@ function InfoContent() {
 
 export default function PlanRatingScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [rating, setRating] = useState(2);
-  const [feedback, setFeedback] = useState("");
 
   const progressWidth = useMemo(() => `${(rating / 4) * 100}%`, [rating]);
 
@@ -71,31 +71,17 @@ export default function PlanRatingScreen() {
 
   return (
     <div className="flex size-full flex-col gap-[36px] bg-surface-primary px-[20px] pb-[16px] pt-[32px]">
-      <div className="flex items-center justify-between">
-        <IconButton
-          icon="Left"
-          hierarchy="Link"
-          size="Large"
-          onClick={() => navigate(-1)}
-          aria-label="Back"
-          className="-ml-[10px]"
-        />
-
-        <button
-          type="button"
-          onClick={() => navigate("/", { replace: true })}
-          className="type-body-s text-secondary-token"
-        >
-          Skip
-        </button>
-      </div>
+      <FlowScreenHeader
+        onBack={() => navigate(-1)}
+        onSkip={() => navigate("/", { replace: true })}
+      />
 
       <div className="flex min-h-0 flex-1 items-start justify-center">
-        <div className="flex w-full flex-col items-center gap-[24px]">
+        <div className="flex w-full flex-col items-center">
           <InfoContent />
 
           {/* Emoji arc — rotates so selected emoji is always at center */}
-          <div className="relative w-full" style={{ height: "163px" }}>
+          <div className="relative mt-[48px] w-full" style={{ height: "163px" }}>
             {ratingEmojis.map((emoji, index) => {
               const mod5 = ((index - rating) % 5 + 5) % 5;
               const relPos = mod5 > 2 ? mod5 - 5 : mod5;
@@ -132,56 +118,51 @@ export default function PlanRatingScreen() {
             })}
           </div>
 
-          <div className="rounded-[999px] border border-card-token px-[16px] py-[8px]">
-            <p className="text-[12px] leading-[16px] text-primary-token">{ratingLabels[rating]}</p>
-          </div>
-
-          <div className="relative w-full pt-[9px]">
-            <div className="h-[8px] w-full rounded-[999px] bg-surface-secondary" />
-            <div
-              className="absolute left-0 top-[9px] h-[8px] rounded-[999px] bg-button-secondary transition-all duration-300"
-              style={{ width: progressWidth }}
-            />
-            <div
-              className="absolute top-0 size-[26px] -translate-x-1/2 rounded-full border border-card-token bg-surface-primary shadow-sm transition-all duration-300"
-              style={{ left: `calc(${progressWidth} + ${13 - (rating / 4) * 26}px)` }}
-            />
-            <input
-              type="range"
-              min={0}
-              max={4}
-              step={1}
-              value={rating}
-              onChange={(event) => updateRating(Number(event.target.value))}
-              className="absolute inset-0 z-10 h-[26px] w-full cursor-pointer opacity-0"
-              aria-label="Rate the plan"
-            />
-          </div>
-
-          <div className="flex w-full flex-col items-start gap-[8px]">
-            <div className="flex items-start gap-[4px]">
-              <p className="type-body-s text-primary-token">What could have been better?</p>
-              <p className="type-body-s text-secondary-token">(Optional)</p>
+          <div className="-mt-[40px] flex w-full flex-col items-center gap-[24px]">
+            <div className="rounded-[999px] border border-card-token px-[16px] py-[8px]">
+              <p className="text-[12px] leading-[16px] text-primary-token">{ratingLabels[rating]}</p>
             </div>
 
-            <div className="h-[92px] w-full rounded-[12px] bg-[#f3f3f3] p-[12px] shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
-              <textarea
-                className="size-full resize-none bg-transparent text-[14px] leading-[18px] text-primary-token outline-none placeholder:text-[#9a9a9a]"
-                placeholder="Feedback..."
-                value={feedback}
-                onChange={(event) => setFeedback(event.target.value)}
+            <div className="relative w-full pt-[9px]">
+              <div className="h-[8px] w-full rounded-[999px] bg-surface-secondary" />
+              <div
+                className="absolute left-0 top-[9px] h-[8px] rounded-[999px] bg-button-secondary transition-all duration-300"
+                style={{ width: progressWidth }}
+              />
+              <div
+                className="absolute top-0 size-[26px] -translate-x-1/2 rounded-full border border-card-token bg-surface-primary shadow-sm transition-all duration-300"
+                style={{ left: `calc(${progressWidth} + ${13 - (rating / 4) * 26}px)` }}
+              />
+              <input
+                type="range"
+                min={0}
+                max={4}
+                step={1}
+                value={rating}
+                onChange={(event) => updateRating(Number(event.target.value))}
+                className="absolute inset-0 z-10 h-[26px] w-full cursor-pointer opacity-0"
+                aria-label="Rate the plan"
               />
             </div>
           </div>
+
         </div>
       </div>
 
       <button
         type="button"
-        onClick={() => navigate("/", { replace: true })}
+        onClick={() =>
+          navigate("/plan-reviews", {
+            state: {
+              ...(location.state as Record<string, unknown> | null),
+              overallLabel: ratingLabels[rating],
+              overallRating: rating,
+            },
+          })
+        }
         className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-primary"
       >
-        <span className="type-body-m text-invert-token">Submit</span>
+        <span className="type-body-m text-invert-token">Continue</span>
       </button>
     </div>
   );

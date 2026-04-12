@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 
 export type SavedPlan = {
   budget?: string;
+  completedAt?: string;
   creator?: DemoUser | null;
   createdAt: string;
   description: string;
@@ -186,5 +187,44 @@ export async function deletePlan(planId: string): Promise<void> {
     };
 
     transaction.onerror = () => reject(transaction.error ?? new Error("Could not delete plan."));
+  });
+}
+
+export async function markPlanCompleted(planId: string): Promise<SavedPlan[]> {
+  const userId = await getCurrentPlansUserId();
+  const database = await openPlansDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE_NAME, "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+    const key = buildStorageKey(userId, planId);
+    const request = store.get(key);
+
+    request.onsuccess = () => {
+      const existingPlan = (request.result as SavedPlan | undefined) ?? null;
+      if (!existingPlan) return;
+
+      store.put({
+        ...existingPlan,
+        completedAt: new Date().toISOString(),
+      });
+    };
+
+    request.onerror = () => {
+      reject(request.error ?? new Error("Could not load plan to complete."));
+    };
+
+    transaction.oncomplete = async () => {
+      database.close();
+
+      try {
+        resolve(await loadSavedPlans());
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    transaction.onerror = () =>
+      reject(transaction.error ?? new Error("Could not mark plan as completed."));
   });
 }
