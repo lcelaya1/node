@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { DiaryMemoryCard, type DiaryMemoryGroup } from "../components/DiaryMemoryCard";
@@ -194,7 +194,6 @@ function CalendarView({
   memories: PlanMemoryImage[];
 }) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const currentMonthRef = useRef<HTMLElement | null>(null);
   const memoriesByDay = useMemo(() => {
     const map = new Map<string, PlanMemoryImage>();
 
@@ -235,37 +234,24 @@ function CalendarView({
           (rightDate.getFullYear() - currentMonth.getFullYear()) * 12 +
           (rightDate.getMonth() - currentMonth.getMonth());
 
-        if (leftOffset >= 0 && rightOffset < 0) return -1;
-        if (leftOffset < 0 && rightOffset >= 0) return 1;
-        if (leftOffset >= 0 && rightOffset >= 0) return rightOffset - leftOffset;
-        return rightOffset - leftOffset;
+        // Current month always first
+        if (leftOffset === 0) return -1;
+        if (rightOffset === 0) return 1;
+        // Past months before future months
+        if (leftOffset < 0 && rightOffset > 0) return -1;
+        if (leftOffset > 0 && rightOffset < 0) return 1;
+        // Both past: most recent first
+        if (leftOffset < 0 && rightOffset < 0) return rightOffset - leftOffset;
+        // Both future: nearest first
+        return leftOffset - rightOffset;
       });
   }, [memories]);
 
-  const hasScrolledRef = useRef(false);
-
-  useLayoutEffect(() => {
-    if (hasScrolledRef.current) return;
-
-    const container = scrollContainerRef.current;
-    const currentMonthElement = currentMonthRef.current;
-
-    if (!container || !currentMonthElement) return;
-
-    hasScrolledRef.current = true;
-
-    // Wait one frame so the browser finishes layout before measuring offsetTop
-    requestAnimationFrame(() => {
-      container.scrollTop = Math.max(currentMonthElement.offsetTop - 12, 0);
-    });
-  }, [months]);
-
   return (
-    <div ref={scrollContainerRef} className="flex max-h-[calc(100dvh-220px)] flex-col gap-[28px] overflow-y-auto pr-[2px]">
+    <div ref={scrollContainerRef} className="flex flex-1 min-h-0 flex-col gap-[28px] overflow-y-auto pr-[2px]">
       {months.map((month) => (
         <section
           key={month.key}
-          ref={month.key === formatMonthKey(new Date()) ? currentMonthRef : undefined}
           className="flex flex-col gap-[16px]"
         >
           <h2 className="type-body-m-medium text-primary-token">{month.label}</h2>
