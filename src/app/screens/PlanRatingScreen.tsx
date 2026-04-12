@@ -1,16 +1,20 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { IconButton } from "../components/IconButton";
 
-const ratingLabels = [
-  "Terrible",
-  "Not great",
-  "It was okay",
-  "Pretty good",
-  "Amazing!",
-];
-
+const ratingLabels = ["Terrible", "Not great", "It was okay", "Pretty good", "Amazing!"];
 const ratingEmojis = ["🥱", "😐", "🙂", "😁", "😍"];
+
+// Arc slot positions (x offset from center, y from top, size in px, opacity)
+// Derived from the fixed arc design so each slot looks natural on the circle
+const arcSlots: Record<number, { x: number; top: number; size: number; opacity: number }> = {
+  [-2]: { x: -175, top: 113, size: 50, opacity: 0.4 },
+  [-1]: { x: -110.5, top: 51, size: 64, opacity: 0.4 },
+  [0]:  { x: 0,      top: 8,  size: 100, opacity: 1   },
+  [1]:  { x: 110.5,  top: 51, size: 64, opacity: 0.4 },
+  [2]:  { x: 175,    top: 113, size: 50, opacity: 0.4 },
+};
+
 
 function InfoContent() {
   return (
@@ -30,9 +34,40 @@ export default function PlanRatingScreen() {
   const [rating, setRating] = useState(2);
   const [feedback, setFeedback] = useState("");
 
-  const progressWidth = useMemo(() => `${((rating + 1) / 5) * 100}%`, [rating]);
-  const emojiStep = 72;
-  const trackTranslate = `calc(50% - ${emojiStep / 2}px - ${rating * emojiStep}px)`;
+  const progressWidth = useMemo(() => `${(rating / 4) * 100}%`, [rating]);
+
+  // Two-phase animation: snap wrapping emoji to bottom, then let it rise to its slot
+  const prevRatingRef = useRef(rating);
+  const [snapState, setSnapState] = useState<{ index: number; x: number } | null>(null);
+
+  const updateRating = useCallback((newRating: number) => {
+    const prev = prevRatingRef.current;
+    if (newRating === prev) return;
+    const delta = newRating - prev;
+
+    if (Math.abs(delta) === 1) {
+      // Find the one emoji that will "wrap" around the circle
+      const wrappingIdx = delta === 1
+        ? (prev + 3) % 5   // was at relPos=-2, will land at relPos=+2 → comes from bottom-right
+        : (prev + 2) % 5;  // was at relPos=+2, will land at relPos=-2 → comes from bottom-left
+      const bottomX = delta === 1 ? 175 : -175;
+
+      // Phase 1: instantly teleport wrapping emoji below the visible container
+      setSnapState({ index: wrappingIdx, x: bottomX });
+
+      // Phase 2: one frame later, update rating + clear snap so emoji transitions up from bottom
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          prevRatingRef.current = newRating;
+          setRating(newRating);
+          setSnapState(null);
+        });
+      });
+    } else {
+      prevRatingRef.current = newRating;
+      setRating(newRating);
+    }
+  }, []);
 
   return (
     <div className="flex size-full flex-col gap-[36px] bg-surface-primary px-[20px] pb-[16px] pt-[32px]">
@@ -59,37 +94,42 @@ export default function PlanRatingScreen() {
         <div className="flex w-full flex-col items-center gap-[24px]">
           <InfoContent />
 
-          <div className="relative w-full overflow-hidden py-[8px]">
-            <div
-              className="flex items-end transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(${trackTranslate})` }}
-            >
-              {ratingEmojis.map((emoji, index) => {
-                const isActive = rating === index;
-                const signedDistance = index - rating;
-                const distance = Math.abs(signedDistance);
-                const rotate = isActive ? 0 : signedDistance < 0 ? -10 : 10;
+          {/* Emoji arc — rotates so selected emoji is always at center */}
+          <div className="relative w-full" style={{ height: "163px" }}>
+            {ratingEmojis.map((emoji, index) => {
+              const mod5 = ((index - rating) % 5 + 5) % 5;
+              const relPos = mod5 > 2 ? mod5 - 5 : mod5;
+              const isSnapping = snapState?.index === index;
 
-                return (
-                  <div
-                    key={emoji}
-                    className="flex w-[72px] shrink-0 items-center justify-center"
+              // During snap phase: place emoji off-screen below (no transition)
+              const slot = isSnapping
+                ? { x: snapState.x, top: 280, size: 50, opacity: 0 }
+                : arcSlots[relPos];
+
+              return (
+                <div
+                  key={emoji}
+                  className="absolute cursor-pointer"
+                  style={{
+                    left: "50%",
+                    top: 0,
+                    width: `${slot.size}px`,
+                    height: `${slot.size}px`,
+                    opacity: slot.opacity,
+                    transform: `translateX(calc(-50% + ${slot.x}px)) translateY(${slot.top}px)`,
+                    transition: isSnapping ? "none" : "all 300ms ease-out",
+                  }}
+                  onClick={() => updateRating(index)}
+                >
+                  <span
+                    className="flex size-full items-center justify-center leading-none"
+                    style={{ fontSize: `${slot.size}px` }}
                   >
-                    <span
-                      className="leading-none transition-all duration-300 ease-out"
-                      style={{
-                        filter: isActive ? "none" : "grayscale(1)",
-                        fontSize: isActive ? "72px" : distance === 1 ? "52px" : "40px",
-                        opacity: isActive ? 1 : distance === 1 ? 0.58 : 0.22,
-                        transform: `translateY(${isActive ? "0px" : distance === 1 ? "12px" : "24px"}) rotate(${rotate}deg) scale(${isActive ? 1 : distance === 1 ? 0.94 : 0.82})`,
-                      }}
-                    >
-                      {emoji}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                    {emoji}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           <div className="rounded-[999px] border border-card-token px-[16px] py-[8px]">
@@ -103,8 +143,8 @@ export default function PlanRatingScreen() {
               style={{ width: progressWidth }}
             />
             <div
-              className="absolute top-0 size-[26px] -translate-x-1/2 rounded-full border border-card-token bg-surface-primary transition-all duration-300"
-              style={{ left: progressWidth }}
+              className="absolute top-0 size-[26px] -translate-x-1/2 rounded-full border border-card-token bg-surface-primary shadow-sm transition-all duration-300"
+              style={{ left: `calc(${progressWidth} + ${13 - (rating / 4) * 26}px)` }}
             />
             <input
               type="range"
@@ -112,7 +152,7 @@ export default function PlanRatingScreen() {
               max={4}
               step={1}
               value={rating}
-              onChange={(event) => setRating(Number(event.target.value))}
+              onChange={(event) => updateRating(Number(event.target.value))}
               className="absolute inset-0 z-10 h-[26px] w-full cursor-pointer opacity-0"
               aria-label="Rate the plan"
             />
