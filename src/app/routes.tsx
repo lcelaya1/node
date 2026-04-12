@@ -6,6 +6,8 @@ import ChoosePlanScreen from "./screens/ChoosePlanScreen";
 import InfoPlanScreen from "./screens/InfoPlanScreen";
 import ChatScreen from "./screens/ChatScreen";
 import ChatInfoPlanScreen from "./screens/ChatInfoPlanScreen";
+import PlanConfirmationScreen from "./screens/PlanConfirmationScreen";
+import PlanRatingScreen from "./screens/PlanRatingScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 
 export const router = createBrowserRouter([
@@ -36,6 +38,14 @@ export const router = createBrowserRouter([
   {
     path: "/chat-info",
     Component: ChatInfoPlanScreen,
+  },
+  {
+    path: "/plan-confirmation",
+    Component: PlanConfirmationScreen,
+  },
+  {
+    path: "/plan-rating",
+    Component: PlanRatingScreen,
   },
   {
     path: "/profile",

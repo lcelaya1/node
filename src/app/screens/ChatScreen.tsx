@@ -278,6 +278,24 @@ export default function ChatScreen() {
     container.scrollTop = container.scrollHeight;
   }, []);
 
+  useEffect(() => {
+    if (!state?.plan || !plan.source) return;
+
+    const timeoutId = window.setTimeout(() => {
+      navigate("/plan-confirmation", {
+        replace: true,
+        state: {
+          plan: {
+            id: plan.id,
+            title: displayTitle,
+          },
+        },
+      });
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [displayTitle, navigate, plan.source, state?.plan]);
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
       <div className="flex items-center justify-between border-b border-card-token px-[20px] py-[12px] pt-[32px]">
