@@ -142,7 +142,7 @@ export function AppNavbar({
           active={activeTab === "groups"}
           activeClassName={activeClass}
           icon="Comment"
-          label="Groups"
+          label="Circles"
           onClick={() => onTabClick?.("groups")}
         />
 

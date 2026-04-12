@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { GroupCard } from "../components/GroupCard";
-import { loadSavedGroups } from "../lib/groups";
+import { loadSavedGroups, type SavedGroup } from "../lib/groups";
 import { supabase } from "../lib/supabase";
+import imageLeft from "../../assets/V2 APP (25/Rectangle 13.png";
+import imageBottom from "../../assets/V2 APP (25/Rectangle 14.png";
+import imageRight from "../../assets/V2 APP (25/Rectangle 15.png";
 
 export default function GroupsScreen() {
   const navigate = useNavigate();
@@ -101,9 +104,51 @@ export default function GroupsScreen() {
               />
             ))
           ) : (
-            <p className="type-body-s text-secondary-token">
-              Your repeat-vibe groups will appear here.
-            </p>
+            <div className="flex min-h-[calc(100dvh-238px)] w-full items-center justify-center">
+              <div className="flex w-full max-w-[353px] flex-col items-center gap-[40px]">
+                <div className="relative h-[125px] w-[257.5px]">
+                  <div
+                    className="absolute left-0 top-[0.46px] flex size-[100px] items-center justify-center"
+                    style={{ transform: "rotate(-12deg)" }}
+                  >
+                    <img
+                      alt=""
+                      className="size-[100px] rounded-full border-[2.5px] object-cover"
+                      style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
+                      src={imageLeft}
+                    />
+                  </div>
+                  <div
+                    className="absolute right-0 top-0 flex size-[100px] items-center justify-center"
+                    style={{ transform: "rotate(10deg)" }}
+                  >
+                    <img
+                      alt=""
+                      className="size-[100px] rounded-full border-[2.5px] object-cover"
+                      style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
+                      src={imageRight}
+                    />
+                  </div>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
+                    <img
+                      alt=""
+                      className="size-[100px] rounded-full border-[2.5px] object-cover"
+                      style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
+                      src={imageBottom}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex w-full flex-col items-center gap-[8px] text-center">
+                  <p className="type-heading-l text-primary-token">
+                    You don&apos;t have any circles yet
+                  </p>
+                  <p className="w-[218px] type-body-s text-primary-token">
+                    After you finish a plan, you&apos;ll choose who you&apos;d like to meet again.
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

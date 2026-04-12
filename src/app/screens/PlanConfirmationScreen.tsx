@@ -32,7 +32,6 @@ export default function PlanConfirmationScreen() {
   const planId = state?.plan?.id;
   const planName = state?.plan?.title?.trim() || "your plan";
 
-  const goHome = () => navigate("/");
   const handlePositiveFeedback = () =>
     navigate("/plan-rating", {
       state: state ?? {
@@ -58,8 +57,8 @@ export default function PlanConfirmationScreen() {
   };
 
   return (
-    <div className="relative size-full bg-surface-primary">
-      <div className="absolute left-[20px] right-[20px] top-[32px] flex flex-col items-start gap-[32px]">
+    <div className="flex size-full items-center justify-center bg-surface-primary px-[20px]">
+      <div className="flex w-full max-w-[353px] flex-col items-start gap-[32px]">
         <InfoContent planName={planName} />
 
         <div className="flex w-full flex-col items-start gap-[12px]">
@@ -81,17 +80,6 @@ export default function PlanConfirmationScreen() {
             </span>
           </button>
         </div>
-      </div>
-
-      <div className="absolute left-[20px] right-[20px] bottom-[16px] flex flex-col items-center gap-[8px]">
-        <p className="type-body-s text-primary-token text-center">Not what you expected?</p>
-        <button
-          type="button"
-          onClick={goHome}
-          className="border-b border-secondary-token type-body-s text-secondary-token"
-        >
-          Tell us more
-        </button>
       </div>
     </div>
   );

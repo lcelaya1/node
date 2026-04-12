@@ -302,21 +302,24 @@ export default function PlanReviewsScreen() {
     });
   }, [participants]);
 
-  const handleSkip = () => navigate("/", { replace: true });
-  const handleContinue = () =>
+  const goToRepeatVibe = (includeReviews: boolean) =>
     navigate("/repeat-vibe", {
       state: {
         overallLabel: state?.overallLabel,
         overallRating: state?.overallRating,
         participants:
           state?.participants ?? savedParticipants,
-        participantReviews: buildParticipantReviews(
-          (state?.participants?.length ? state.participants : savedParticipants) as DemoUser[],
-          userReviews,
-        ),
+        participantReviews: includeReviews
+          ? buildParticipantReviews(
+              (state?.participants?.length ? state.participants : savedParticipants) as DemoUser[],
+              userReviews,
+            )
+          : undefined,
         plan: state?.plan,
       },
     });
+  const handleSkip = () => goToRepeatVibe(false);
+  const handleContinue = () => goToRepeatVibe(true);
 
   const toggleUserExpanded = (name: string) => {
     setUserReviews((current) => {

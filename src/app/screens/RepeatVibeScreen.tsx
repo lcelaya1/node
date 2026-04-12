@@ -236,6 +236,13 @@ export default function RepeatVibeScreen() {
     navigate("/", { replace: true });
   };
 
+  const handleSkip = async () => {
+    if (state?.plan?.id !== undefined && state?.plan?.id !== null) {
+      await markPlanCompleted(String(state.plan.id));
+    }
+    navigate("/", { replace: true });
+  };
+
   return (
     <div className="flex h-full flex-col overflow-hidden bg-surface-primary">
       <div
@@ -244,7 +251,7 @@ export default function RepeatVibeScreen() {
       >
         <FlowScreenHeader
           onBack={() => navigate(-1)}
-          onSkip={() => navigate("/", { replace: true })}
+          onSkip={() => void handleSkip()}
         />
 
         <div className="flex flex-col gap-[32px] pt-[36px]">

@@ -34,6 +34,23 @@ export default function PlanRatingScreen() {
   const location = useLocation();
   const [rating, setRating] = useState(2);
 
+  const goToPlanReviews = useCallback((includeRating: boolean) => {
+    navigate("/plan-reviews", {
+      state: {
+        ...(location.state as Record<string, unknown> | null),
+        ...(includeRating
+          ? {
+              overallLabel: ratingLabels[rating],
+              overallRating: rating,
+            }
+          : {
+              overallLabel: undefined,
+              overallRating: undefined,
+            }),
+      },
+    });
+  }, [location.state, navigate, rating]);
+
   const progressWidth = useMemo(() => `${(rating / 4) * 100}%`, [rating]);
 
   // Two-phase animation: snap wrapping emoji to bottom, then let it rise to its slot
@@ -73,7 +90,7 @@ export default function PlanRatingScreen() {
     <div className="flex size-full flex-col gap-[36px] bg-surface-primary px-[20px] pb-[16px] pt-[32px]">
       <FlowScreenHeader
         onBack={() => navigate(-1)}
-        onSkip={() => navigate("/", { replace: true })}
+        onSkip={() => goToPlanReviews(false)}
       />
 
       <div className="flex min-h-0 flex-1 items-start justify-center">
@@ -123,15 +140,15 @@ export default function PlanRatingScreen() {
               <p className="text-[12px] leading-[16px] text-primary-token">{ratingLabels[rating]}</p>
             </div>
 
-            <div className="relative w-full pt-[9px]">
-              <div className="h-[8px] w-full rounded-[999px] bg-surface-secondary" />
+            <div className="relative w-full pt-[12px]">
+              <div className="h-[10px] w-full rounded-[999px] bg-surface-secondary" />
               <div
-                className="absolute left-0 top-[9px] h-[8px] rounded-[999px] bg-button-secondary transition-all duration-300"
+                className="absolute left-0 top-[12px] h-[10px] rounded-[999px] bg-button-secondary transition-all duration-300"
                 style={{ width: progressWidth }}
               />
               <div
-                className="absolute top-0 size-[26px] -translate-x-1/2 rounded-full border border-card-token bg-surface-primary shadow-sm transition-all duration-300"
-                style={{ left: `calc(${progressWidth} + ${13 - (rating / 4) * 26}px)` }}
+                className="absolute top-0 size-[34px] -translate-x-1/2 rounded-full border border-card-token bg-surface-primary shadow-sm transition-all duration-300"
+                style={{ left: `calc(${progressWidth} + ${17 - (rating / 4) * 34}px)` }}
               />
               <input
                 type="range"
@@ -140,8 +157,9 @@ export default function PlanRatingScreen() {
                 step={1}
                 value={rating}
                 onChange={(event) => updateRating(Number(event.target.value))}
-                className="absolute inset-0 z-10 h-[26px] w-full cursor-pointer opacity-0"
+                className="absolute inset-x-0 top-0 z-10 h-[44px] w-full cursor-pointer opacity-0"
                 aria-label="Rate the plan"
+                style={{ touchAction: "pan-x" }}
               />
             </div>
           </div>
@@ -151,15 +169,7 @@ export default function PlanRatingScreen() {
 
       <button
         type="button"
-        onClick={() =>
-          navigate("/plan-reviews", {
-            state: {
-              ...(location.state as Record<string, unknown> | null),
-              overallLabel: ratingLabels[rating],
-              overallRating: rating,
-            },
-          })
-        }
+        onClick={() => goToPlanReviews(true)}
         className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-primary"
       >
         <span className="type-body-m text-invert-token">Continue</span>
