@@ -11,7 +11,6 @@ import PlanRatingScreen from "./screens/PlanRatingScreen";
 import PlanReviewsScreen from "./screens/PlanReviewsScreen";
 import RepeatVibeScreen from "./screens/RepeatVibeScreen";
 import GroupsScreen from "./screens/GroupsScreen";
-import VibeMatchedScreen from "./screens/VibeMatchedScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 
 export const router = createBrowserRouter([
@@ -62,10 +61,6 @@ export const router = createBrowserRouter([
   {
     path: "/repeat-vibe",
     Component: RepeatVibeScreen,
-  },
-  {
-    path: "/vibe-matched",
-    Component: VibeMatchedScreen,
   },
   {
     path: "/profile",

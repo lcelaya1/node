@@ -209,14 +209,7 @@ export default function RepeatVibeScreen() {
       title: groupTitle || "Repeat vibe",
     });
 
-    navigate("/vibe-matched", {
-      state: {
-        groupId,
-        groupTitle: groupTitle || "Repeat vibe",
-        participants: participantSource,
-        selectedUsers: selectedUsersArray,
-      },
-    });
+    navigate("/groups", { replace: true });
   };
 
   const handleJustForToday = async () => {
