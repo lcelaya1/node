@@ -302,8 +302,8 @@ export default function PlanReviewsScreen() {
     });
   }, [participants]);
 
-  const goToRepeatVibe = (includeReviews: boolean) =>
-    navigate("/repeat-vibe", {
+  const goToAddMemories = (includeReviews: boolean) =>
+    navigate("/add-memories", {
       state: {
         overallLabel: state?.overallLabel,
         overallRating: state?.overallRating,
@@ -318,8 +318,8 @@ export default function PlanReviewsScreen() {
         plan: state?.plan,
       },
     });
-  const handleSkip = () => goToRepeatVibe(false);
-  const handleContinue = () => goToRepeatVibe(true);
+  const handleSkip = () => goToAddMemories(false);
+  const handleContinue = () => goToAddMemories(true);
 
   const toggleUserExpanded = (name: string) => {
     setUserReviews((current) => {

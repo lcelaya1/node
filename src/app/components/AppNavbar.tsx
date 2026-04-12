@@ -172,7 +172,6 @@ export function AppNavbar({
         <NavItem
           active={activeTab === "diary"}
           activeClassName={activeClass}
-          disabled
           icon="Camera"
           label="Diary"
           onClick={() => onTabClick?.("diary")}

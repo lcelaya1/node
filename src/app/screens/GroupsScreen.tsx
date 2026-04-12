@@ -162,6 +162,7 @@ export default function GroupsScreen() {
           onTabClick={(tab) => {
             if (tab === "home") navigate("/");
             if (tab === "groups") navigate("/groups");
+            if (tab === "diary") navigate("/diary");
             if (tab === "profile") navigate("/profile");
           }}
         />
