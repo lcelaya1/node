@@ -28,6 +28,7 @@ async function getCurrentUserId() {
 
 export async function loadSavedGroups(): Promise<SavedGroup[]> {
   const userId = await getCurrentUserId();
+  const groupsById = new Map<string, SavedGroup>();
 
   if (supabase && userId) {
     const { data, error } = await supabase
@@ -48,40 +49,50 @@ export async function loadSavedGroups(): Promise<SavedGroup[]> {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      return data.map((group) => ({
-        createdAt: group.created_at,
-        id: group.id,
-        participants: [...(group.repeat_group_members ?? [])]
-          .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0))
-          .map((member) => ({
-            age: member.participant_age ?? 0,
-            avatarUrl: member.participant_avatar_url ?? "",
-            bio: "",
-            city: "",
-            interests: [],
-            name: member.participant_name,
-            plansCreated: 0,
-            plansDone: 0,
-            seedUserId: member.participant_seed_user_id ?? 0,
-          })),
-        title: group.title,
-      }));
+      data.forEach((group) => {
+        groupsById.set(group.id, {
+          createdAt: group.created_at,
+          id: group.id,
+          participants: [...(group.repeat_group_members ?? [])]
+            .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0))
+            .map((member) => ({
+              age: member.participant_age ?? 0,
+              avatarUrl: member.participant_avatar_url ?? "",
+              bio: "",
+              city: "",
+              interests: [],
+              name: member.participant_name,
+              plansCreated: 0,
+              plansDone: 0,
+              seedUserId: member.participant_seed_user_id ?? 0,
+            })),
+          title: group.title,
+        });
+      });
     }
   }
 
-  if (!canUseStorage()) return [];
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw) as SavedGroup[];
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  } catch {
-    return [];
+  if (canUseStorage()) {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as SavedGroup[];
+        if (Array.isArray(parsed)) {
+          parsed.forEach((group) => {
+            if (!groupsById.has(group.id)) {
+              groupsById.set(group.id, group);
+            }
+          });
+        }
+      }
+    } catch {
+      // Ignore malformed local cache and continue with any groups already loaded.
+    }
   }
+
+  return [...groupsById.values()].sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt),
+  );
 }
 
 export async function saveGroup(group: SavedGroup): Promise<SavedGroup[]> {
@@ -112,6 +123,27 @@ export async function saveGroup(group: SavedGroup): Promise<SavedGroup[]> {
         })),
       );
     }
+  }
+
+  if (canUseStorage()) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextGroups));
+  }
+
+  return nextGroups;
+}
+
+export async function deleteGroup(groupId: string): Promise<SavedGroup[]> {
+  const groups = await loadSavedGroups();
+  const nextGroups = groups.filter((group) => group.id !== groupId);
+
+  const userId = await getCurrentUserId();
+
+  if (supabase && userId) {
+    await supabase
+      .from("repeat_groups")
+      .delete()
+      .eq("id", groupId)
+      .eq("user_id", userId);
   }
 
   if (canUseStorage()) {

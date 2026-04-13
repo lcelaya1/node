@@ -233,15 +233,17 @@ export default function AddMemoriesScreen() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => void goToRepeatVibe()}
-            className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-primary"
-          >
-            <span className="type-body-m text-invert-token">
-              {isSaving ? "Saving..." : "Continue"}
-            </span>
-          </button>
+          {selectedImages.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => void goToRepeatVibe()}
+              className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-primary"
+            >
+              <span className="type-body-m text-invert-token">
+                {isSaving ? "Saving..." : "Continue"}
+              </span>
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

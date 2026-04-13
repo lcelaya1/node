@@ -215,7 +215,7 @@ function UserReview({
               value={customVibe}
               onChange={(event) => onCustomVibeChange(event.target.value)}
               onClick={(event) => event.stopPropagation()}
-              placeholder="Add a specific vibe..."
+              placeholder="Add a custom comment..."
               className="w-full bg-transparent text-[14px] leading-[18px] text-primary-token outline-none placeholder:text-[#9a9a9a]"
             />
           </div>

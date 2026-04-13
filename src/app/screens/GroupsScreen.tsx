@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { GroupCard } from "../components/GroupCard";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
@@ -8,10 +8,78 @@ import imageLeft from "../../assets/V2 APP (25/Rectangle 13.png";
 import imageBottom from "../../assets/V2 APP (25/Rectangle 14.png";
 import imageRight from "../../assets/V2 APP (25/Rectangle 15.png";
 
+type GroupsLocationState = {
+  acceptedParticipantNames?: string[];
+  newCircleTitle?: string;
+};
+
+function CircleAcceptedModal({
+  description,
+  isOpen,
+  onClose,
+}: {
+  description: string;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40"
+        style={{ backgroundColor: "var(--color-overlay-scrim)" }}
+        onClick={onClose}
+      />
+      <div className="fixed inset-x-[20px] bottom-[110px] z-50 mx-auto max-w-[353px] rounded-[8px] bg-surface-primary px-[20px] py-[12px] shadow-[0px_8px_24px_rgba(9,9,11,0.16)]">
+        <p className="type-body-m text-secondary-token">{description}</p>
+      </div>
+    </>
+  );
+}
+
 export default function GroupsScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = (location.state as GroupsLocationState | null) ?? null;
   const [groups, setGroups] = useState<SavedGroup[]>([]);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [isAcceptedModalOpen, setIsAcceptedModalOpen] = useState(
+    Boolean(locationState?.acceptedParticipantNames?.length),
+  );
+
+  const acceptedDescription = useMemo(() => {
+    const names = locationState?.acceptedParticipantNames ?? [];
+    if (names.length === 0) return "";
+    if (names.length === 1) {
+      return `${names[0]} accepted your request and your circle is now active.`;
+    }
+
+    if (names.length === 2) {
+      return `${names[0]} and ${names[1]} accepted your request and your circle is now active.`;
+    }
+
+    return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]} accepted your request and your circle is now active.`;
+  }, [locationState?.acceptedParticipantNames]);
+
+  const closeAcceptedModal = () => {
+    setIsAcceptedModalOpen(false);
+    navigate("/groups", { replace: true });
+  };
+
+  useEffect(() => {
+    if (!isAcceptedModalOpen || !locationState?.acceptedParticipantNames?.length) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      closeAcceptedModal();
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isAcceptedModalOpen, locationState?.acceptedParticipantNames?.length]);
 
   useEffect(() => {
     let active = true;
@@ -152,6 +220,12 @@ export default function GroupsScreen() {
           )}
         </div>
       </div>
+
+      <CircleAcceptedModal
+        isOpen={isAcceptedModalOpen}
+        onClose={closeAcceptedModal}
+        description={acceptedDescription}
+      />
 
       <div className="absolute inset-x-0 bottom-0 z-20 border-t border-card-token bg-surface-primary">
         <AppNavbar

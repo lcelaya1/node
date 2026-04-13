@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { FlowScreenHeader } from "../components/FlowScreenHeader";
-import { IconButton } from "../components/IconButton";
 import type { DemoUser } from "../lib/demoUsers";
+import { saveGroup } from "../lib/groups";
 import { savePlanFeedback, type ParticipantReviewInput } from "../lib/planFeedback";
 import { loadSavedPlan, markPlanCompleted } from "../lib/plans";
-import { saveGroup } from "../lib/groups";
 
 type RepeatVibeState = {
   overallLabel?: string;
@@ -77,13 +76,7 @@ function UserRepeatCard({
   onToggle: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`w-full rounded-[8px] border bg-surface-primary p-[16px] text-left ${
-        isSelected ? "border-selected-token" : "border-card-token"
-      }`}
-    >
+    <div className="w-full rounded-[8px] border border-card-token bg-surface-primary p-[16px] text-left">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[8px]">
           <Avatar imageUrl={imageUrl} name={name} />
@@ -93,31 +86,23 @@ function UserRepeatCard({
           </p>
         </div>
 
-        {isSelected ? (
-          <IconButton
-            icon="Done"
-            hierarchy="Secondary"
-            size="Small"
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggle();
-            }}
-            aria-label={`Remove ${name} from meet again`}
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggle();
-            }}
-            className="type-body-s text-secondary-token"
-          >
-            Meet again
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`relative inline-flex w-[80px] shrink-0 cursor-pointer items-center justify-center rounded-[50px] py-[8px] transition-colors outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 ${
+            isSelected ? "bg-[#f9f9f9] text-black" : "bg-[#fc312e] text-[#fefefe]"
+          }`}
+          style={{
+            border: `1px solid ${isSelected ? "#e6e6e6" : "#fc312e"}`,
+          }}
+          aria-label={isSelected ? `Pending friend request for ${name}` : `Add ${name} as a friend`}
+        >
+          <span className="relative shrink-0 whitespace-nowrap font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] text-[12px] leading-[16px] not-italic text-center">
+            {isSelected ? "Pending..." : "Add friend"}
+          </span>
+        </button>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -159,13 +144,12 @@ export default function RepeatVibeScreen() {
 
   const toggleUser = (name: string) => {
     setSelectedUsers((current) => {
-      const next = new Set(current);
-
-      if (next.has(name)) {
-        next.delete(name);
-      } else {
-        next.add(name);
+      if (current.has(name)) {
+        return current;
       }
+
+      const next = new Set(current);
+      next.add(name);
 
       return next;
     });
@@ -209,24 +193,13 @@ export default function RepeatVibeScreen() {
       title: groupTitle || "Repeat vibe",
     });
 
-    navigate("/groups", { replace: true });
-  };
-
-  const handleJustForToday = async () => {
-    if (state?.plan?.id !== undefined && state?.plan?.id !== null && state?.overallLabel !== undefined && state?.overallRating !== undefined) {
-      await savePlanFeedback({
-        overallLabel: state.overallLabel,
-        overallRating: state.overallRating,
-        participantReviews: state.participantReviews ?? [],
-        planId: String(state.plan.id),
-        planTitle: state.plan.title,
-      });
-    }
-
-    if (state?.plan?.id !== undefined && state?.plan?.id !== null) {
-      await markPlanCompleted(String(state.plan.id));
-    }
-    navigate("/", { replace: true });
+    navigate("/groups", {
+      replace: true,
+      state: {
+        acceptedParticipantNames: selectedUsersArray,
+        newCircleTitle: groupTitle || "Repeat vibe",
+      },
+    });
   };
 
   const handleSkip = async () => {
@@ -240,7 +213,11 @@ export default function RepeatVibeScreen() {
     <div className="flex h-full flex-col overflow-hidden bg-surface-primary">
       <div
         className="flex flex-1 flex-col overflow-y-auto px-[20px] pt-[32px]"
-        style={{ paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}
+        style={{
+          paddingBottom: hasSelections
+            ? "calc(140px + env(safe-area-inset-bottom))"
+            : "calc(32px + env(safe-area-inset-bottom))",
+        }}
       >
         <FlowScreenHeader
           onBack={() => navigate(-1)}
@@ -262,28 +239,23 @@ export default function RepeatVibeScreen() {
               />
             ))}
           </div>
-
-          <div className="flex flex-col gap-[12px]">
-            <button
-              type="button"
-              onClick={() => void handleConfirm()}
-              className={`flex h-[45px] w-full items-center justify-center rounded-[999px] ${
-                hasSelections ? "bg-button-primary" : "bg-[#71717a]"
-              }`}
-            >
-              <span className="type-body-m text-invert-token">Confirm</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => void handleJustForToday()}
-              className="flex h-[45px] w-full items-center justify-center rounded-[999px] border border-selected-token bg-surface-primary"
-            >
-              <span className="type-body-m text-primary-token">Just for today</span>
-            </button>
-          </div>
         </div>
       </div>
+
+      {hasSelections ? (
+        <div
+          className="shrink-0 px-[20px] pb-[32px] pt-[12px]"
+          style={{ paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}
+        >
+          <button
+            type="button"
+            onClick={() => void handleConfirm()}
+            className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-primary"
+          >
+            <span className="type-body-m text-invert-token">Complete</span>
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import sendIcon from "../../assets/svg/Send.svg";
 import { IconButton } from "../components/IconButton";
 import { BubbleChip } from "../components/SpeechBubbleChip";
+import { deleteGroup } from "../lib/groups";
 import {
   getChatParticipants,
   loadDemoUsers,
@@ -132,11 +133,67 @@ type ConversationBlock =
       messages: Array<{ text: string; time: string; showTail?: boolean }>;
     };
 
+type ConfirmCircleActionModalProps = {
+  cancelLabel: string;
+  confirmLabel: string;
+  description: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+};
+
+function ConfirmCircleActionModal({
+  cancelLabel,
+  confirmLabel,
+  description,
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+}: ConfirmCircleActionModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40"
+        style={{ backgroundColor: "var(--color-overlay-scrim)" }}
+        onClick={onClose}
+      />
+      <div className="fixed inset-x-[20px] bottom-[32px] z-50 mx-auto flex max-w-[353px] flex-col gap-[20px] rounded-[16px] bg-surface-primary p-[20px] shadow-[0px_12px_32px_rgba(9,9,11,0.16)]">
+        <div className="flex flex-col gap-[8px]">
+          <p className="type-heading-l text-primary-token">{title}</p>
+          <p className="type-body-m text-secondary-token">{description}</p>
+        </div>
+
+        <div className="flex flex-col gap-[12px]">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-secondary"
+          >
+            <span className="type-body-m text-invert-token">{confirmLabel}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-[45px] w-full items-center justify-center rounded-[999px] border border-card-token bg-surface-primary"
+          >
+            <span className="type-body-m text-primary-token">{cancelLabel}</span>
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function ChatScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as ChatState | null) ?? null;
   const [draft, setDraft] = useState("");
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [participants, setParticipants] = useState<DemoUser[]>(state?.participants ?? []);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isRepeatGroup = state?.isRepeatGroup === true;
@@ -333,6 +390,14 @@ export default function ChatScreen() {
     return () => window.clearTimeout(timeoutId);
   }, [displayTitle, isRepeatGroup, navigate, participants, plan.id, plan.source, state?.plan]);
 
+  const handleLeaveCircle = async () => {
+    if (typeof state?.groupId === "string" && state.groupId.trim()) {
+      await deleteGroup(state.groupId);
+    }
+
+    navigate("/groups", { replace: true });
+  };
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
       <div className="flex items-center justify-between border-b border-card-token px-[20px] py-[12px] pt-[32px]">
@@ -425,24 +490,46 @@ export default function ChatScreen() {
         className="absolute inset-x-0 bottom-0 z-10 bg-surface-primary px-[20px] pt-[12px] pb-[32px]"
         style={{ paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}
       >
-        <div className="rounded-[999px] border border-card-token bg-surface-primary px-[17px] py-[11px]">
-          <div className="flex items-center gap-[8px]">
-            <input
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Type a message..."
-              className="type-body-m min-w-0 flex-1 bg-transparent text-primary-token outline-none placeholder:text-tertiary-token"
-            />
+        <div className="flex flex-col gap-[12px]">
+          <div className="rounded-[999px] border border-card-token bg-surface-primary px-[17px] py-[11px]">
+            <div className="flex items-center gap-[8px]">
+              <input
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Type a message..."
+                className="type-body-m min-w-0 flex-1 bg-transparent text-primary-token outline-none placeholder:text-tertiary-token"
+              />
+              <button
+                type="button"
+                className="inline-flex size-[21px] items-center justify-center text-primary-token"
+                aria-label="Send message"
+              >
+                <img alt="" aria-hidden="true" className="size-[21px]" src={sendIcon} />
+              </button>
+            </div>
+          </div>
+
+          {isRepeatGroup ? (
             <button
               type="button"
-              className="inline-flex size-[21px] items-center justify-center text-primary-token"
-              aria-label="Send message"
+              onClick={() => setIsLeaveModalOpen(true)}
+              className="type-body-s self-center text-secondary-token underline underline-offset-[6px]"
             >
-              <img alt="" aria-hidden="true" className="size-[21px]" src={sendIcon} />
+              Leave circle
             </button>
-          </div>
+          ) : null}
         </div>
       </div>
+
+      <ConfirmCircleActionModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        onConfirm={() => void handleLeaveCircle()}
+        confirmLabel="Leave circle"
+        title="Leave this circle?"
+        description="You’ll leave this circle and it will disappear from your circles list."
+        cancelLabel="Keep circle"
+      />
     </div>
   );
 }
