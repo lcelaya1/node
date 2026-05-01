@@ -1,36 +1,32 @@
-import stackImageLeft from "../../assets/Rectangle 7.png";
-import stackImageCenter from "../../assets/Rectangle 8.png";
-import stackImageRight from "../../assets/Rectangle 9.png";
+import imgRectangle5 from "../../imports/HomeEmptyState-1/013450d245e5fec3448a756985226df66b4c9636.png";
+import imgRectangle6 from "../../imports/HomeEmptyState-1/8a0e19358e2f5bd5028be349081fbeb730f40d74.png";
+import imgRectangle7 from "../../imports/HomeEmptyState-1/e5383d30c3fc2901cd6298c589af694ae7c9981f.png";
 import { useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { HomeHeader } from "../components/HomeHeader";
 
-type StackCardProps = {
-  className?: string;
-  rotation: string;
-  style?: React.CSSProperties;
-};
-
-function StackCard({ className = "", rotation, style }: StackCardProps) {
+function Frame7() {
   return (
-    <div
-      className={`absolute h-[186px] w-[138px] overflow-hidden rounded-[8px] border border-card-token bg-surface-primary ${className}`}
-      style={{ transform: rotation, ...style }}
-    >
-      <img
-        alt=""
-        className="size-full object-cover"
-        decoding="async"
-        fetchPriority="high"
-        loading="eager"
-        src={
-          className.includes("center-card")
-            ? stackImageRight
-            : className.includes("right-card")
-              ? stackImageCenter
-              : stackImageLeft
-        }
-      />
+    <div className="h-[125.435px] relative shrink-0 w-[170.871px]">
+      <div className="absolute h-[107.551px] left-0 rounded-[8px] top-[8.94px] w-[78.402px]">
+        <div className="absolute inset-0 opacity-50 overflow-hidden pointer-events-none rounded-[8px]">
+          <img alt="" className="absolute h-[104.3%] left-[0.02%] max-w-none top-[-4.34%] w-[105.93%]" src={imgRectangle5} />
+        </div>
+      </div>
+      <div className="absolute h-[107.551px] left-[92.47px] rounded-[8px] top-[8.94px] w-[78.402px]">
+        <img alt="" className="absolute inset-0 max-w-none object-cover opacity-50 pointer-events-none rounded-[8px] size-full" src={imgRectangle6} />
+      </div>
+      <div className="absolute h-[125.435px] left-[39.72px] rounded-[8px] top-0 w-[91.439px]">
+        <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[8px] size-full" src={imgRectangle7} />
+      </div>
+    </div>
+  );
+}
+
+function Frame4() {
+  return (
+    <div className="content-stretch flex flex-col items-center justify-center relative shrink-0 w-full">
+      <Frame7 />
     </div>
   );
 }
@@ -48,11 +44,7 @@ export default function NoPlansScreen() {
 
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-[32px]">
-            <div className="relative h-[258px] w-[330px]">
-              <StackCard className="left-card" rotation="rotate(-5.92deg)" style={{ left: "52px", top: "10px" }} />
-              <StackCard className="right-card" rotation="rotate(4.74deg)" style={{ left: "148px", top: "0px" }} />
-              <StackCard className="center-card" rotation="rotate(-1.13deg)" style={{ left: "118px", top: "60px" }} />
-            </div>
+            <Frame4 />
 
             <div className="flex flex-col items-center gap-[20px] text-center">
               <div className="flex w-full flex-col items-center gap-[8px]">

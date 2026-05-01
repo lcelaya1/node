@@ -6,7 +6,9 @@ import CreateProfileInterestsScreen from "./screens/CreateProfileInterestsScreen
 import CreateProfileNameScreen from "./screens/CreateProfileNameScreen";
 import CreateProfileLocationScreen from "./screens/CreateProfileLocationScreen";
 import CreateProfilePictureScreen from "./screens/CreateProfilePictureScreen";
-import OnboardingScreen from "./screens/OnboardingScreen";
+import OnboardingPeopleScreen from "./screens/OnboardingPeopleScreen";
+import OnboardingMemoriesScreen from "./screens/OnboardingMemoriesScreen";
+import OnboardingPlansScreen from "./screens/OnboardingPlansScreen";
 import SplashScreen, { SPLASH_DURATION_MS } from "./screens/SplashScreen";
 import { supabase } from "./lib/supabase";
 import { router } from "./routes";
@@ -14,7 +16,7 @@ import type { Session } from "@supabase/supabase-js";
 
 export default function App() {
   const [phase, setPhase] = useState<
-    "splash" | "onboarding" | "auth" | "create-profile" | "create-profile-birthday" | "create-profile-interests" | "create-profile-picture" | "create-profile-location" | "app"
+    "splash" | "onboarding-people" | "onboarding-memories" | "onboarding-plans" | "auth" | "create-profile" | "create-profile-birthday" | "create-profile-interests" | "create-profile-picture" | "create-profile-location" | "app"
   >("splash");
   const [profileDraftName, setProfileDraftName] = useState("");
   const [profileDraftBirthDate, setProfileDraftBirthDate] = useState("");
@@ -96,12 +98,12 @@ export default function App() {
         }
 
         timeoutId = window.setTimeout(() => {
-          setPhase("onboarding");
+          setPhase("onboarding-people");
         }, SPLASH_DURATION_MS);
       });
     } else {
       timeoutId = window.setTimeout(() => {
-        setPhase("onboarding");
+        setPhase("onboarding-people");
       }, SPLASH_DURATION_MS);
     }
 
@@ -141,7 +143,9 @@ export default function App() {
       <div className="app-device">
         <div className="app-content">
           {phase === "splash" ? <SplashScreen /> : null}
-          {phase === "onboarding" ? <OnboardingScreen onNext={() => {
+          {phase === "onboarding-people" ? <OnboardingPeopleScreen onNext={() => setPhase("onboarding-memories")} /> : null}
+          {phase === "onboarding-memories" ? <OnboardingMemoriesScreen onNext={() => setPhase("onboarding-plans")} /> : null}
+          {phase === "onboarding-plans" ? <OnboardingPlansScreen onNext={() => {
             window.localStorage.setItem("node-onboarding-complete", "true");
             setPhase("auth");
           }} /> : null}
