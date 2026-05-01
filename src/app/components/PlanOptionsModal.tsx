@@ -7,6 +7,8 @@ interface PlanOptionsModalProps {
   onJoinPlan: () => void;
 }
 
+const APP_NAVBAR_HEIGHT_PX = 72;
+
 function Button({ onClick }: { onClick: () => void }) {
   return (
     <div className="bg-[#09090b] relative rounded-[999px] shrink-0 w-full cursor-pointer" data-name="Button" onClick={onClick}>
@@ -90,8 +92,12 @@ export default function PlanOptionsModal({ isOpen, onClose, onCreatePlan, onJoin
 
   return (
     <>
-      <div className="absolute inset-0 bg-[rgba(0,0,0,0.26)] z-40" onClick={onClose} />
-      <div className="absolute bottom-[92px] left-0 right-0 bg-[#fefefe] rounded-tl-[24px] rounded-tr-[24px] z-50 max-w-[393px] mx-auto" data-name="Bottom Sheet">
+      <div className="fixed inset-0 bg-[#00000042] z-40" onClick={onClose} />
+      <div
+        className="fixed left-0 right-0 bg-[#fefefe] rounded-tl-[24px] rounded-tr-[24px] z-50 max-w-[393px] mx-auto"
+        style={{ bottom: `calc(${APP_NAVBAR_HEIGHT_PX}px + env(safe-area-inset-bottom))` }}
+        data-name="Bottom Sheet"
+      >
         <div className="content-stretch flex flex-col gap-[14px] items-center justify-center overflow-clip px-[20px] py-[32px] relative rounded-[inherit] size-full">
           <Button onClick={onCreatePlan} />
           <Button1 onClick={onJoinPlan} />
