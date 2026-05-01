@@ -54,10 +54,10 @@ function Levels() {
 
 function InfoContent() {
   return (
-    <div className="content-stretch flex flex-col gap-[8px] items-start not-italic relative shrink-0 w-[345px]" data-name="Info Content">
-      <p className="font-['ABC_Monument_Grotesk_Unlicensed_Trial:Medium',sans-serif] leading-[24px] relative shrink-0 text-[20px] text-black w-full">Save and share your experiences.</p>
-      <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] relative shrink-0 text-[#71717a] text-[14px] w-full">
-        <p className="leading-[18px]">{`Every time you say 'yes' to a plan, it becomes part of your story. Keep a beautiful archive of your life offline.`}</p>
+    <div className="content-stretch flex flex-col gap-[12px] items-start not-italic relative shrink-0 w-[345px]" data-name="Info Content">
+      <p className="type-heading-l relative shrink-0 text-primary-token w-full">Save and share your experiences.</p>
+      <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
+        <p className="type-body-m text-secondary-token">{`Every time you say 'yes' to a plan, it becomes part of your story. Keep a beautiful archive of your life offline.`}</p>
       </div>
     </div>
   );
@@ -65,7 +65,7 @@ function InfoContent() {
 
 function ContentSignUp1() {
   return (
-    <div className="content-stretch flex flex-col h-[68px] items-start relative shrink-0 w-[345px]" data-name="Content Sign Up">
+    <div className="content-stretch flex flex-col items-start relative shrink-0 w-[345px]" data-name="Content Sign Up">
       <InfoContent />
     </div>
   );
@@ -81,7 +81,7 @@ function ContentSignUp() {
 
 function Frame6() {
   return (
-    <div className="h-[119.162px] relative rounded-[4.525px] w-full">
+    <div className="h-full relative rounded-[4.525px] w-full">
       <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[4.525px] size-full" src={imgFrame195} />
     </div>
   );
@@ -120,7 +120,7 @@ function Frame4() {
           <img alt="" className="absolute max-w-none object-cover rounded-[7.542px] size-full" src={imgRectangle3} />
           <img alt="" className="absolute max-w-none object-cover rounded-[7.542px] size-full" src={imgRectangle4} />
           <div className="absolute inset-0 overflow-hidden rounded-[7.542px]">
-            <img alt="" className="absolute h-[104.3%] left-[0.02%] max-w-none top-[-4.34%] w-[105.93%]" src={imgRectangle6} />
+            <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={imgRectangle6} />
           </div>
         </div>
       </div>
@@ -139,10 +139,8 @@ function Frame4() {
 function Frame1() {
   return (
     <div className="content-stretch flex gap-[6.034px] h-[126.704px] items-start relative shrink-0">
-      <div className="flex h-full items-center justify-center relative shrink-0 w-[119.162px]" style={{ containerType: "size", "--transform-inner-width": "1200", "--transform-inner-height": "19" } as React.CSSProperties}>
-        <div className="-rotate-90 flex-none w-[100cqh]">
-          <Frame6 />
-        </div>
+      <div className="h-[126.704px] relative shrink-0 w-[119.162px]">
+        <Frame6 />
       </div>
       <Frame4 />
     </div>
@@ -151,12 +149,12 @@ function Frame1() {
 
 function Frame5() {
   return (
-    <div className="content-stretch flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] gap-[6.034px] items-start justify-center leading-[0] not-italic relative shrink-0 w-[248.128px]">
-      <div className="flex flex-col justify-center min-w-full relative shrink-0 text-[#09090b] text-[10.559px] w-[min-content]">
-        <p className="leading-[13.575px]">{`This is a small text that anyone can add to describe how their experience was and save it. `}</p>
+    <div className="content-stretch flex flex-col gap-[6.034px] items-start justify-center leading-[0] relative shrink-0 w-[248.128px]">
+      <div className="flex flex-col justify-center min-w-full relative shrink-0 w-[min-content]">
+        <p className="type-body-xs text-primary-token">{`This is a small text that anyone can add to describe how their experience was and save it. `}</p>
       </div>
-      <div className="flex flex-col justify-center relative shrink-0 text-[#71717a] text-[9.05px] whitespace-nowrap">
-        <p className="leading-[12.067px]">13 de Junio 2026</p>
+      <div className="flex flex-col justify-center relative shrink-0 whitespace-nowrap">
+        <p className="type-body-xs text-secondary-token">13 de Junio 2026</p>
       </div>
     </div>
   );
@@ -165,8 +163,8 @@ function Frame5() {
 function Frame2() {
   return (
     <div className="bg-white content-stretch flex flex-col gap-[12.067px] items-start justify-end overflow-clip px-[9.05px] py-[12.067px] rounded-[6.034px] shadow-[0px_3.017px_21.117px_0px_rgba(0,0,0,0.15)]">
-      <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Medium',sans-serif] justify-center leading-[0] min-w-full not-italic relative shrink-0 text-[#09090b] text-[12.067px] w-[min-content]">
-        <p className="leading-[15.838px]">Picnic y Cartas en la Playa</p>
+      <div className="flex flex-col justify-center leading-[0] min-w-full relative shrink-0 w-[min-content]">
+        <p className="type-heading-m text-primary-token">Picnic and cards on the beach</p>
       </div>
       <Frame1 />
       <Frame5 />
@@ -180,7 +178,7 @@ function Content() {
       <div className="flex flex-1 items-center justify-center min-h-0 px-[24px]">
         <Frame2 />
       </div>
-      <div className="flex flex-col gap-[24px] px-[24px]">
+      <div className="flex flex-col gap-[28px] px-[24px]">
         <ContentSignUp />
         <div className="bg-[#fc312e] content-stretch flex gap-[4px] h-[45px] items-center justify-center px-[32px] py-[12px] rounded-[999px]" data-name="Button">
           <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#fefefe] text-[16px] text-center whitespace-nowrap">

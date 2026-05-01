@@ -98,12 +98,12 @@ export default function App() {
         }
 
         timeoutId = window.setTimeout(() => {
-          setPhase("onboarding-people");
+          setPhase("onboarding-plans");
         }, SPLASH_DURATION_MS);
       });
     } else {
       timeoutId = window.setTimeout(() => {
-        setPhase("onboarding-people");
+        setPhase("onboarding-plans");
       }, SPLASH_DURATION_MS);
     }
 
@@ -143,9 +143,9 @@ export default function App() {
       <div className="app-device">
         <div className="app-content">
           {phase === "splash" ? <SplashScreen /> : null}
+          {phase === "onboarding-plans" ? <OnboardingPlansScreen onNext={() => setPhase("onboarding-people")} /> : null}
           {phase === "onboarding-people" ? <OnboardingPeopleScreen onNext={() => setPhase("onboarding-memories")} /> : null}
-          {phase === "onboarding-memories" ? <OnboardingMemoriesScreen onNext={() => setPhase("onboarding-plans")} /> : null}
-          {phase === "onboarding-plans" ? <OnboardingPlansScreen onNext={() => {
+          {phase === "onboarding-memories" ? <OnboardingMemoriesScreen onNext={() => {
             window.localStorage.setItem("node-onboarding-complete", "true");
             setPhase("auth");
           }} /> : null}

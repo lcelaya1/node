@@ -68,8 +68,8 @@ function Date() {
           </div>
         </div>
       </div>
-      <div className="flex flex-[1_0_0] flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#09090b] text-[9.33px]">
-        <p className="leading-[12px]">May 12 - 6pm</p>
+      <div className="flex flex-[1_0_0] flex-col justify-center leading-[0] min-w-px relative">
+        <p className="type-body-xs text-primary-token">Apr 20 - 11am</p>
       </div>
     </div>
   );
@@ -92,8 +92,8 @@ function Location() {
   return (
     <div className="content-stretch flex gap-[2.667px] items-center relative shrink-0 w-full" data-name="location">
       <EpLocation />
-      <div className="flex flex-[1_0_0] flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#09090b] text-[9.33px]">
-        <p className="leading-[12px]">Location (1.2km)</p>
+      <div className="flex flex-[1_0_0] flex-col justify-center leading-[0] min-w-px relative">
+        <p className="type-body-xs text-primary-token">Montserrat (3.4km)</p>
       </div>
     </div>
   );
@@ -112,8 +112,8 @@ function Frame1() {
   return (
     <div className="relative shrink-0 w-full">
       <div className="content-stretch flex flex-col gap-[8px] items-start pb-[10.667px] pt-[14.667px] px-[14.667px] relative size-full">
-        <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Medium',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#09090b] text-[13.33px] w-full">
-          <p className="leading-[16px]">Title of the plan will be displayed like this</p>
+        <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
+          <p className="type-heading-m text-primary-token">Book Finding in Madrid</p>
         </div>
         <Info />
       </div>
@@ -140,8 +140,8 @@ function Date1() {
           </div>
         </div>
       </div>
-      <div className="flex flex-[1_0_0] flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#09090b] text-[9.33px]">
-        <p className="leading-[12px]">May 12 - 6pm</p>
+      <div className="flex flex-[1_0_0] flex-col justify-center leading-[0] min-w-px relative">
+        <p className="type-body-xs text-primary-token">May 18 - 5pm</p>
       </div>
     </div>
   );
@@ -164,8 +164,8 @@ function Location1() {
   return (
     <div className="content-stretch flex gap-[2.667px] items-center relative shrink-0 w-full" data-name="location">
       <EpLocation1 />
-      <div className="flex flex-[1_0_0] flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#09090b] text-[9.33px]">
-        <p className="leading-[12px]">Location (1.2km)</p>
+      <div className="flex flex-[1_0_0] flex-col justify-center leading-[0] min-w-px relative">
+        <p className="type-body-xs text-primary-token">Madrid Center (1.1km)</p>
       </div>
     </div>
   );
@@ -184,8 +184,8 @@ function Frame2() {
   return (
     <div className="relative shrink-0 w-full">
       <div className="content-stretch flex flex-col gap-[8px] items-start pb-[10.667px] pt-[14.667px] px-[14.667px] relative size-full">
-        <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Medium',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#09090b] text-[13.33px] w-full">
-          <p className="leading-[16px]">Title of the plan will be displayed like this</p>
+        <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
+          <p className="type-heading-m text-primary-token">Going to a Montserrat viewpoint</p>
         </div>
         <Info1 />
       </div>
@@ -212,8 +212,8 @@ function Date2() {
           </div>
         </div>
       </div>
-      <div className="flex flex-[1_0_0] flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#09090b] text-[11.98px]">
-        <p className="leading-[15.401px]">May 12 - 6pm</p>
+      <div className="flex flex-[1_0_0] flex-col justify-center leading-[0] min-w-px relative">
+        <p className="type-body-xs text-primary-token">May 12 - 6pm</p>
       </div>
     </div>
   );
@@ -236,8 +236,8 @@ function Location2() {
   return (
     <div className="content-stretch flex gap-[3.423px] items-center relative shrink-0 w-full" data-name="location">
       <EpLocation2 />
-      <div className="flex flex-[1_0_0] flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#09090b] text-[11.98px]">
-        <p className="leading-[15.401px]">Playa Almadrava</p>
+      <div className="flex flex-[1_0_0] flex-col justify-center leading-[0] min-w-px relative">
+        <p className="type-body-xs text-primary-token">Playa Almadrava</p>
       </div>
     </div>
   );
@@ -256,8 +256,8 @@ function Frame3() {
   return (
     <div className="relative shrink-0 w-full">
       <div className="content-stretch flex flex-col gap-[10.268px] items-start pb-[13.69px] pt-[18.824px] px-[18.824px] relative size-full">
-        <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Medium',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#09090b] text-[17.11px] w-full">
-          <p className="leading-[20.535px]">Picnic y Cartas en la Playa</p>
+        <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
+          <p className="type-heading-m text-primary-token">Picnic and cards on the beach</p>
         </div>
         <Info2 />
       </div>
@@ -267,10 +267,10 @@ function Frame3() {
 
 function InfoContent() {
   return (
-    <div className="content-stretch flex flex-col gap-[8px] items-start not-italic relative shrink-0 w-[345px]" data-name="Info Content">
-      <p className="font-['ABC_Monument_Grotesk_Unlicensed_Trial:Medium',sans-serif] leading-[24px] relative shrink-0 text-[20px] text-black w-full">It’s all here for you.</p>
-      <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] relative shrink-0 text-[#71717a] text-[14px] w-full">
-        <p className="leading-[18px]">Answer a few questions and Node builds your perfect plan. Every plan is made for you, not anyone else and is filtered to your mood, budget and distance.</p>
+    <div className="content-stretch flex flex-col gap-[12px] items-start not-italic relative shrink-0 w-[345px]" data-name="Info Content">
+      <p className="type-heading-l relative shrink-0 text-primary-token w-full">It’s all here for you.</p>
+      <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
+        <p className="type-body-m text-secondary-token">Answer a few questions and Node builds your perfect plan. Every plan is made for you, not anyone else and is filtered to your mood, budget and distance.</p>
       </div>
     </div>
   );
@@ -329,7 +329,7 @@ function Content() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-[24px] px-[24px]">
+      <div className="flex flex-col gap-[28px] px-[24px]">
         <Frame4 />
         <div className="bg-[#09090b] content-stretch flex gap-[4px] h-[45px] items-center justify-center px-[32px] py-[12px] rounded-[999px]" data-name="Button">
           <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#fefefe] text-[16px] text-center whitespace-nowrap">

@@ -54,10 +54,10 @@ function Levels() {
 
 function InfoContent() {
   return (
-    <div className="content-stretch flex flex-col gap-[8px] items-start not-italic relative shrink-0 w-[345px]" data-name="Info Content">
-      <p className="font-['ABC_Monument_Grotesk_Unlicensed_Trial:Medium',sans-serif] leading-[24px] relative shrink-0 text-[20px] text-black w-full">Find your people</p>
-      <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] relative shrink-0 text-[#71717a] text-[14px] w-full">
-        <p className="leading-[18px]">Meet people who match your vibe and energy. No random connections, just people who are up for the same things as you.</p>
+    <div className="content-stretch flex flex-col gap-[12px] items-start not-italic relative shrink-0 w-[345px]" data-name="Info Content">
+      <p className="type-heading-l relative shrink-0 text-primary-token w-full">Find your people</p>
+      <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
+        <p className="type-body-m text-secondary-token">Meet people who match your vibe and energy. No random connections, just people who are up for the same things as you.</p>
       </div>
     </div>
   );
@@ -102,7 +102,7 @@ function Content() {
       <div className="flex flex-1 items-center justify-center min-h-0">
         <Group />
       </div>
-      <div className="flex flex-col gap-[24px] px-[24px]">
+      <div className="flex flex-col gap-[28px] px-[24px]">
         <ContentSignUp />
         <div className="bg-[#09090b] content-stretch flex gap-[4px] h-[45px] items-center justify-center px-[32px] py-[12px] rounded-[999px]" data-name="Button">
           <div className="flex flex-col font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#fefefe] text-[16px] text-center whitespace-nowrap">
