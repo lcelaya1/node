@@ -1,7 +1,6 @@
 import { useState } from "react";
-import squarePenIcon from "../../assets/svg/Square Pen.svg";
-import usersIcon from "../../assets/svg/Users.svg";
 import { AppIcon } from "./AppIcon";
+import PlanOptionsModal from "./PlanOptionsModal";
 import { cn } from "./ui/utils";
 
 type AppNavbarTab = "home" | "groups" | "diary" | "profile";
@@ -89,45 +88,15 @@ export function AppNavbar({
       aria-label="Primary"
       className={cn("relative z-20 w-full", className)}
     >
-      {actionsOpen ? (
-        <>
-          <button
-            type="button"
-            aria-label="Close actions"
-            className="fixed inset-0 z-10"
-            style={{ backgroundColor: "rgba(254, 254, 254, 0.6)" }}
-            onClick={() => setActionsOpen(false)}
-          />
-          <div className="pointer-events-none absolute inset-x-0 bottom-full z-20 flex justify-center px-[20px] pb-[20px]">
-            <div className="pointer-events-auto flex items-end gap-[32px]">
-              <button
-                type="button"
-                onClick={handleCreatePlan}
-                className="flex size-[104px] items-center justify-center"
-              >
-                <div className="flex size-[104px] flex-col items-center justify-center gap-[8px] rounded-full bg-button-primary text-invert-token">
-                  <img alt="" aria-hidden="true" className="size-[24px] invert" src={squarePenIcon} />
-                  <span className="type-body-xs text-invert-token">Create</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleJoinPlan}
-                className="flex size-[104px] items-center justify-center"
-              >
-                <div className="flex size-[104px] flex-col items-center justify-center gap-[8px] rounded-full bg-button-primary text-invert-token">
-                  <img alt="" aria-hidden="true" className="size-[24px] invert" src={usersIcon} />
-                  <span className="type-body-xs text-invert-token">Join</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </>
-      ) : null}
+      <PlanOptionsModal
+        isOpen={actionsOpen}
+        onClose={() => setActionsOpen(false)}
+        onCreatePlan={handleCreatePlan}
+        onJoinPlan={handleJoinPlan}
+      />
 
       <div
-        className="flex w-full items-center justify-center pb-[16px] pt-[12px]"
+        className="relative z-50 bg-surface-primary flex w-full items-center justify-center pb-[16px] pt-[12px]"
         style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
       >
         <NavItem
