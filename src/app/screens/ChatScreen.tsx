@@ -4,6 +4,10 @@ import sendIcon from "../../assets/svg/Send.svg";
 import { IconButton } from "../components/IconButton";
 import { deleteGroup } from "../lib/groups";
 import {
+  loadRepeatGroupPlans,
+  type RepeatGroupPlan,
+} from "../lib/repeatGroupPlans";
+import {
   getChatParticipants,
   loadDemoUsers,
   type DemoUser,
@@ -203,6 +207,7 @@ type ConfirmCircleActionModalProps = {
   title: string;
 };
 
+
 type ProfileBottomSheetProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -323,6 +328,7 @@ export default function ChatScreen() {
   const location = useLocation();
   const state = (location.state as ChatState | null) ?? null;
   const [draft, setDraft] = useState("");
+  const [groupPlans, setGroupPlans] = useState<RepeatGroupPlan[]>([]);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState<DemoUser | null>(null);
@@ -359,13 +365,31 @@ export default function ChatScreen() {
     };
   }, [plan.creator, state?.participants]);
 
+  useEffect(() => {
+    let active = true;
+    const groupId = typeof state?.groupId === "string" ? state.groupId.trim() : "";
+    if (!isRepeatGroup || !groupId) return;
+
+    const run = async () => {
+      const plans = await loadRepeatGroupPlans(groupId);
+      if (!active) return;
+      setGroupPlans(plans);
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [isRepeatGroup, state?.groupId]);
+
   const primaryParticipant = participants[0];
   const secondaryParticipant = participants[1];
   const tertiaryParticipant = participants[2];
 
   const conversation = useMemo<ConversationBlock[]>(() => {
     if (isRepeatGroup) {
-      return [
+      const baseConversation: ConversationBlock[] = [
         ...participants.flatMap((participant, index) => [
           {
             type: "other" as const,
@@ -396,6 +420,23 @@ export default function ChatScreen() {
           },
         ]),
       ];
+
+      const groupPlanMessages: ConversationBlock[] = groupPlans.map((groupPlan) => ({
+        type: "me",
+        messages: [
+          {
+            text: `Created group plan: ${groupPlan.title}${groupPlan.when ? ` · ${groupPlan.when}` : ""}${groupPlan.where ? ` · ${groupPlan.where}` : ""}`,
+            time: new Date(groupPlan.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            }),
+            showTail: true,
+          },
+        ],
+      }));
+
+      return [...baseConversation, ...groupPlanMessages];
     }
 
     return [
@@ -496,13 +537,13 @@ export default function ChatScreen() {
         ],
       },
     ];
-  }, [isRepeatGroup, participants, primaryParticipant?.name, secondaryParticipant?.name, tertiaryParticipant?.name]);
+  }, [groupPlans, isRepeatGroup, participants, primaryParticipant?.name, secondaryParticipant?.name, tertiaryParticipant?.name]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
     container.scrollTop = container.scrollHeight;
-  }, []);
+  }, [conversation]);
 
   useEffect(() => {
     if (!state?.plan || !plan.source || isRepeatGroup) return;
@@ -622,23 +663,69 @@ export default function ChatScreen() {
         style={{ paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}
       >
         <div className="flex flex-col gap-[12px]">
-          <div className="rounded-[999px] border border-card-token bg-surface-primary px-[17px] py-[11px]">
-            <div className="flex items-center gap-[8px]">
-              <input
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder="Type a message..."
-                className="type-body-m min-w-0 flex-1 bg-transparent text-primary-token outline-none placeholder:text-tertiary-token"
-              />
+          {isRepeatGroup ? (
+            <div className="flex w-full items-start gap-[12px]">
               <button
                 type="button"
-                className="inline-flex size-[21px] items-center justify-center text-primary-token"
-                aria-label="Send message"
+                className="flex shrink-0 items-center justify-center rounded-[999px] bg-[#09090b] p-[10px]"
+                aria-label="Add"
+                onClick={() =>
+                  navigate("/add-specs", {
+                    state: {
+                      groupPlanContext: {
+                        groupId: state?.groupId,
+                        imageSrc: state?.imageSrc,
+                        participants,
+                        plan,
+                        selectedIndex: state?.selectedIndex ?? 0,
+                      },
+                    },
+                  })
+                }
               >
-                <img alt="" aria-hidden="true" className="size-[21px]" src={sendIcon} />
+                <span aria-hidden="true" className="relative block size-[24px]">
+                  <span className="absolute left-1/2 top-1/2 h-[12px] w-[1.5px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#fefefe]" />
+                  <span className="absolute left-1/2 top-1/2 h-[1.5px] w-[12px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#fefefe]" />
+                </span>
               </button>
+
+              <div className="min-w-0 flex-1 rounded-[999px] border border-card-token bg-surface-primary px-[17px] py-[11px]">
+                <div className="flex items-center gap-[8px]">
+                  <input
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    placeholder="Type a message..."
+                    className="type-body-m min-w-0 flex-1 bg-transparent text-primary-token outline-none placeholder:text-tertiary-token"
+                  />
+                  <button
+                    type="button"
+                    className="inline-flex size-[21px] items-center justify-center text-primary-token"
+                    aria-label="Send message"
+                  >
+                    <img alt="" aria-hidden="true" className="size-[21px]" src={sendIcon} />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-[999px] border border-card-token bg-surface-primary px-[17px] py-[11px]">
+              <div className="flex items-center gap-[8px]">
+                <input
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  placeholder="Type a message..."
+                  className="type-body-m min-w-0 flex-1 bg-transparent text-primary-token outline-none placeholder:text-tertiary-token"
+                />
+                <button
+                  type="button"
+                  className="inline-flex size-[21px] items-center justify-center text-primary-token"
+                  aria-label="Send message"
+                >
+                  <img alt="" aria-hidden="true" className="size-[21px]" src={sendIcon} />
+                </button>
+              </div>
+            </div>
+          )}
 
           {isRepeatGroup ? (
             <button

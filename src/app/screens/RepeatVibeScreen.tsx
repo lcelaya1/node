@@ -5,6 +5,7 @@ import type { DemoUser } from "../lib/demoUsers";
 import { saveGroup } from "../lib/groups";
 import { savePlanFeedback, type ParticipantReviewInput } from "../lib/planFeedback";
 import { loadSavedPlan, markPlanCompleted } from "../lib/plans";
+import { supabase } from "../lib/supabase";
 
 type RepeatVibeState = {
   overallLabel?: string;
@@ -21,6 +22,11 @@ type ParticipantCard = {
   age?: number;
   imageUrl?: string;
   name: string;
+};
+
+type Frame16Props = {
+  currentUserAvatar?: string | null;
+  participants: ParticipantCard[];
 };
 
 function InfoContent() {
@@ -58,6 +64,59 @@ function Avatar({
       <span className="text-[14px] leading-[18px] text-primary-token">
         {name.charAt(0)}
       </span>
+    </div>
+  );
+}
+
+function Frame16({ currentUserAvatar, participants }: Frame16Props) {
+  const clusteredParticipants: Array<{ imageUrl?: string; name: string }> = [
+    { imageUrl: currentUserAvatar ?? undefined, name: "You" },
+    ...participants.slice(0, 3),
+  ];
+
+  const avatarSlots = [
+    { left: 128, rotateClass: "-rotate-10", top: 27 },
+    { left: 171, rotateClass: "rotate-2", top: 30 },
+    { left: 170, rotateClass: "-rotate-4", top: 67 },
+    { left: 129, rotateClass: "rotate-8", top: 66 },
+  ];
+
+  return (
+    <div className="relative h-[150px] w-full shrink-0 rounded-[8px] bg-[#e4e4e7]">
+      {avatarSlots.map((slot, index) => {
+        const participant = clusteredParticipants[index];
+        const imageUrl = participant?.imageUrl;
+        const name = participant?.name ?? "";
+
+        return (
+          <div
+            key={`${name}-${index}`}
+            className="absolute flex items-center justify-center"
+            style={{
+              left: `${slot.left}px`,
+              top: `${slot.top}px`,
+              width: "57.92px",
+              height: "57.92px",
+            }}
+          >
+            <div className={`${slot.rotateClass} flex-none`}>
+              {imageUrl ? (
+                <img
+                  alt={name}
+                  className="size-[50px] rounded-full border border-white object-cover"
+                  src={imageUrl}
+                />
+              ) : (
+                <div className="flex size-[50px] items-center justify-center rounded-full border border-white bg-surface-primary">
+                  <span className="text-[14px] leading-[18px] text-primary-token">
+                    {name ? name.charAt(0) : "?"}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -111,6 +170,7 @@ export default function RepeatVibeScreen() {
   const location = useLocation();
   const state = (location.state as RepeatVibeState | null) ?? null;
   const [savedParticipants, setSavedParticipants] = useState<DemoUser[]>([]);
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
   const participants = useMemo<ParticipantCard[]>(
     () =>
       (state?.participants?.length ? state.participants : savedParticipants).map((participant) => ({
@@ -141,6 +201,40 @@ export default function RepeatVibeScreen() {
       active = false;
     };
   }, [state?.participants, state?.plan?.id]);
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      if (!supabase) return;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || !active) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!active || error) return;
+
+      setCurrentUserAvatar(
+        typeof data?.avatar_url === "string" && data.avatar_url.trim()
+          ? data.avatar_url
+          : null,
+      );
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const toggleUser = (name: string) => {
     setSelectedUsers((current) => {
@@ -226,6 +320,7 @@ export default function RepeatVibeScreen() {
 
         <div className="flex flex-col gap-[32px] pt-[36px]">
           <InfoContent />
+          <Frame16 currentUserAvatar={currentUserAvatar} participants={participants} />
 
           <div className="flex flex-col gap-[12px]">
             {participants.map((participant) => (

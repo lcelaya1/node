@@ -58,6 +58,17 @@ create table if not exists public.repeat_group_members (
   unique (group_id, participant_name)
 );
 
+create table if not exists public.repeat_group_plans (
+  id text primary key,
+  group_id text not null references public.repeat_groups(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  when_text text not null default '',
+  where_text text not null default '',
+  created_by_name text not null default 'You',
+  created_at timestamptz not null default now()
+);
+
 drop trigger if exists set_plan_feedback_updated_at on public.plan_feedback;
 create trigger set_plan_feedback_updated_at
 before update on public.plan_feedback
@@ -74,6 +85,7 @@ alter table public.plan_feedback enable row level security;
 alter table public.plan_feedback_reviews enable row level security;
 alter table public.repeat_groups enable row level security;
 alter table public.repeat_group_members enable row level security;
+alter table public.repeat_group_plans enable row level security;
 
 drop policy if exists "Users manage their own plan feedback" on public.plan_feedback;
 create policy "Users manage their own plan feedback"
@@ -131,6 +143,30 @@ with check (
     select 1
     from public.repeat_groups
     where public.repeat_groups.id = repeat_group_members.group_id
+      and public.repeat_groups.user_id = auth.uid()
+  )
+);
+
+drop policy if exists "Users manage their own repeat group plans" on public.repeat_group_plans;
+create policy "Users manage their own repeat group plans"
+on public.repeat_group_plans
+for all
+to authenticated
+using (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.repeat_groups
+    where public.repeat_groups.id = repeat_group_plans.group_id
+      and public.repeat_groups.user_id = auth.uid()
+  )
+)
+with check (
+  auth.uid() = user_id
+  and exists (
+    select 1
+    from public.repeat_groups
+    where public.repeat_groups.id = repeat_group_plans.group_id
       and public.repeat_groups.user_id = auth.uid()
   )
 );

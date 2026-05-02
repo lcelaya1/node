@@ -6,6 +6,8 @@ import { SpeechBubbleChip } from "../components/SpeechBubbleChip";
 import { WhereModal } from "../components/WhereModal";
 import { ExplainModal } from "../components/ExplainModal";
 import { deletePlan, loadSavedPlan, savePlan } from "../lib/plans";
+import { createRepeatGroupPlan } from "../lib/repeatGroupPlans";
+import type { DemoUser } from "../lib/demoUsers";
 
 type PlanData = {
   title: string;
@@ -13,6 +15,23 @@ type PlanData = {
   hour: string;
   location: string;
   description: string;
+};
+
+type AddSpecsLocationState = {
+  planId?: string;
+  groupPlanContext?: {
+    groupId?: string;
+    imageSrc?: string;
+    participants?: DemoUser[];
+    plan?: {
+      id?: string | number;
+      title?: string;
+      when?: string;
+      where?: string;
+      source?: "created" | "joined";
+    };
+    selectedIndex?: number;
+  };
 };
 
 function getTomorrow(): string {
@@ -27,7 +46,9 @@ function getTomorrow(): string {
 export default function AddSpecsScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const planId = (location.state as { planId?: string } | null)?.planId ?? null;
+  const locationState = (location.state as AddSpecsLocationState | null) ?? null;
+  const planId = locationState?.planId ?? null;
+  const groupPlanContext = locationState?.groupPlanContext ?? null;
   const isEditing = planId !== null;
 
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +116,34 @@ export default function AddSpecsScreen() {
         picturePreview: coverImage ?? "",
         source: "created",
       });
+
+      if (groupPlanContext?.groupId) {
+        await createRepeatGroupPlan({
+          createdByName: "You",
+          groupId: groupPlanContext.groupId,
+          title: planData.title,
+          when,
+          where: planData.location,
+        });
+
+        navigate("/chat", {
+          replace: true,
+          state: {
+            groupId: groupPlanContext.groupId,
+            imageSrc: groupPlanContext.imageSrc,
+            isRepeatGroup: true,
+            participants: groupPlanContext.participants ?? [],
+            plan: groupPlanContext.plan ?? {
+              id: groupPlanContext.groupId,
+              title: "My circle",
+              when: when || "Today",
+              where: planData.location,
+            },
+            selectedIndex: groupPlanContext.selectedIndex ?? 0,
+          },
+        });
+        return;
+      }
 
       navigate("/", { state: { planId: id } });
     } catch (err) {

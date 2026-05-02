@@ -36,6 +36,7 @@ const avatarImage =
   "https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb";
 const memberAvatarImage =
   "https://www.figma.com/api/mcp/asset/3427220d-ce13-4d46-ba86-8b64004386b7";
+const unreadStorageKey = "plans-home-unread-counts-v1";
 
 function MemberDivider() {
   return (
@@ -221,6 +222,7 @@ export default function ChatInfoPlanScreen() {
   const [selectedParticipant, setSelectedParticipant] = useState<DemoUser | null>(null);
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
   const [catalogLocation, setCatalogLocation] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const plan = state?.plan ?? {
     id: 1,
@@ -245,6 +247,7 @@ export default function ChatInfoPlanScreen() {
         ? false
         : true;
   const isCreatedPlan = state?.isCreatedByUser === true || plan.source === "created";
+  const planId = String(plan.id ?? "");
   const displayParticipants =
     participants.length > 0
       ? participants
@@ -350,9 +353,43 @@ export default function ChatInfoPlanScreen() {
     };
   }, [isJoinedPlan, plan.id, rawPlanLocation]);
 
+  useEffect(() => {
+    if (!planId) return;
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(unreadStorageKey) || "{}") as Record<string, number>;
+      const value = stored[planId];
+      setUnreadCount(typeof value === "number" ? value : 0);
+    } catch {
+      setUnreadCount(0);
+    }
+  }, [planId]);
+
   const handleConfirmCancel = async () => {
     await deletePlan(String(plan.id));
     navigate("/", { replace: true });
+  };
+  const handleOpenChat = () => {
+    if (planId) {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(unreadStorageKey) || "{}") as Record<string, number>;
+        if (typeof stored[planId] === "number" && stored[planId] > 0) {
+          const next = { ...stored, [planId]: 0 };
+          window.localStorage.setItem(unreadStorageKey, JSON.stringify(next));
+        }
+      } catch {
+        // No-op: chat navigation should not fail if localStorage cannot be parsed.
+      }
+      setUnreadCount(0);
+    }
+
+    navigate("/chat", {
+      state: {
+        imageSrc,
+        participants,
+        plan,
+        selectedIndex: state?.selectedIndex ?? 0,
+      },
+    });
   };
   return (
     <>
@@ -379,6 +416,20 @@ export default function ChatInfoPlanScreen() {
             onClick={() => navigate(-1)}
             size="Mid"
           />
+          <div className="relative">
+            <IconButton
+              aria-label="Open chat"
+              hierarchy="Primary Light"
+              icon="Comment"
+              onClick={handleOpenChat}
+              size="Mid"
+            />
+            {unreadCount > 0 ? (
+              <span className="pointer-events-none absolute -right-[6px] -top-[6px] flex size-[20px] items-center justify-center rounded-full bg-[#fc312e] text-[10px] leading-[12px] text-[#fefefe]">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="absolute bottom-[16px] left-[20px] right-[20px]">

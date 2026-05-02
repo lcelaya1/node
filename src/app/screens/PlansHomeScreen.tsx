@@ -324,6 +324,18 @@ export default function PlansHomeScreen() {
     });
   };
 
+  const openPlanInfo = (plan: SavedPlan, selectedIndex: number) => {
+    navigate("/chat-info", {
+      state: {
+        imageSrc: plan.picturePreview || fallbackPlanImage,
+        isCreatedByUser: plan.source === "created",
+        participants: plan.participants ?? [],
+        plan,
+        selectedIndex,
+      },
+    });
+  };
+
   if (savedPlans.length === 0) {
     return <NoPlansScreen />;
   }
@@ -384,7 +396,7 @@ export default function PlansHomeScreen() {
                   key={plan.id}
                   imageSrc={plan.picturePreview || fallbackPlanImage}
                   isCreatedByUser={plan.source === "created"}
-                  onClick={() => openPlanChat(plan, index)}
+                  onClick={() => openPlanInfo(plan, index)}
                   title={plan.title || "Title of the plan"}
                 />
               ))
