@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState, type PointerEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { FlowScreenHeader } from "../components/FlowScreenHeader";
 
@@ -15,11 +15,19 @@ const arcSlots: Record<number, { x: number; top: number; size: number; opacity: 
   [2]:  { x: 175,    top: 113, size: 50, opacity: 0.4 },
 };
 
+const sliderArc = {
+  startX: 4,
+  endX: 348,
+  edgeY: arcSlots[-2].top + arcSlots[-2].size / 2, // align with emoji edge centers
+  controlX: 176,
+  controlY: arcSlots[0].top + arcSlots[0].size / 2, // align with selected emoji center
+};
+
 
 function InfoContent() {
   return (
     <div className="flex w-full flex-col items-start gap-[8px]">
-      <p className="w-full font-primary text-[24px] leading-[28px] text-primary-token">
+      <p className="w-full type-heading-xl text-primary-token">
         Did we nail it?
       </p>
       <p className="w-full type-body-s text-secondary-token">
@@ -51,7 +59,21 @@ export default function PlanRatingScreen() {
     });
   }, [location.state, navigate, rating]);
 
-  const progressWidth = useMemo(() => `${(rating / 4) * 100}%`, [rating]);
+  const ratingProgress = rating / 4;
+
+  const getArcPoint = useCallback((t: number) => {
+    // Quadratic Bezier from left to right with a top-center control point
+    const p0 = { x: sliderArc.startX, y: sliderArc.edgeY };
+    const p1 = { x: sliderArc.controlX, y: sliderArc.controlY };
+    const p2 = { x: sliderArc.endX, y: sliderArc.edgeY };
+    const oneMinusT = 1 - t;
+
+    return {
+      x: oneMinusT * oneMinusT * p0.x + 2 * oneMinusT * t * p1.x + t * t * p2.x,
+      y: oneMinusT * oneMinusT * p0.y + 2 * oneMinusT * t * p1.y + t * t * p2.y,
+    };
+  }, []);
+  const knobPoint = getArcPoint(ratingProgress);
 
   // Two-phase animation: snap wrapping emoji to bottom, then let it rise to its slot
   const prevRatingRef = useRef(rating);
@@ -85,6 +107,16 @@ export default function PlanRatingScreen() {
       setRating(newRating);
     }
   }, []);
+
+  const handleArcInput = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const relativeX = (event.clientX - bounds.left) / bounds.width;
+      const clamped = Math.min(1, Math.max(0, relativeX));
+      updateRating(Math.round(clamped * 4));
+    },
+    [updateRating],
+  );
 
   return (
     <div className="flex size-full flex-col gap-[36px] bg-surface-primary px-[20px] pb-[16px] pt-[32px]">
@@ -135,21 +167,58 @@ export default function PlanRatingScreen() {
             })}
           </div>
 
-          <div className="-mt-[40px] flex w-full flex-col items-center gap-[24px]">
+          <div className="-mt-[40px] flex w-full flex-col items-center gap-[8px]">
             <div className="rounded-[999px] border border-card-token px-[16px] py-[8px]">
               <p className="text-[12px] leading-[16px] text-primary-token">{ratingLabels[rating]}</p>
             </div>
 
-            <div className="relative w-full pt-[12px]">
-              <div className="h-[10px] w-full rounded-[999px] bg-surface-secondary" />
+            <div
+              className="relative -mt-[64px] w-full"
+              style={{ height: "188px" }}
+              onPointerDown={handleArcInput}
+            >
+              <svg
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full"
+                viewBox="0 0 352 188"
+                fill="none"
+              >
+                <path
+                  d={`M${sliderArc.startX} ${sliderArc.edgeY} Q${sliderArc.controlX} ${sliderArc.controlY} ${sliderArc.endX} ${sliderArc.edgeY}`}
+                  stroke="var(--color-button-secondary)"
+                  strokeOpacity="0.6"
+                  strokeWidth="8"
+                  strokeDasharray="1 21"
+                  strokeLinecap="round"
+                />
+                <path
+                  d={`M${sliderArc.startX} ${sliderArc.edgeY} Q${sliderArc.controlX} ${sliderArc.controlY} ${sliderArc.endX} ${sliderArc.edgeY}`}
+                  stroke="var(--color-button-secondary)"
+                  strokeOpacity="0.14"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  pathLength={1}
+                  style={{ strokeDasharray: `${ratingProgress} 1`, transition: "stroke-dasharray 300ms ease-out" }}
+                />
+                <path
+                  d={`M${sliderArc.startX} ${sliderArc.edgeY} Q${sliderArc.controlX} ${sliderArc.controlY} ${sliderArc.endX} ${sliderArc.edgeY}`}
+                  stroke="var(--color-button-secondary)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  pathLength={1}
+                  style={{ strokeDasharray: `${ratingProgress} 1`, transition: "stroke-dasharray 300ms ease-out" }}
+                />
+              </svg>
+
               <div
-                className="absolute left-0 top-[12px] h-[10px] rounded-[999px] bg-button-secondary transition-all duration-300"
-                style={{ width: progressWidth }}
+                className="absolute size-[32px] -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0px_6px_16px_color-mix(in_srgb,var(--color-button-secondary)_26%,transparent)] transition-all duration-300"
+                style={{
+                  left: `${knobPoint.x}px`,
+                  top: `${knobPoint.y}px`,
+                  backgroundColor: "var(--color-button-secondary)",
+                }}
               />
-              <div
-                className="absolute top-0 size-[34px] -translate-x-1/2 rounded-full border border-card-token bg-surface-primary shadow-sm transition-all duration-300"
-                style={{ left: `calc(${progressWidth} + ${17 - (rating / 4) * 34}px)` }}
-              />
+
               <input
                 type="range"
                 min={0}
@@ -157,7 +226,7 @@ export default function PlanRatingScreen() {
                 step={1}
                 value={rating}
                 onChange={(event) => updateRating(Number(event.target.value))}
-                className="absolute inset-x-0 top-0 z-10 h-[44px] w-full cursor-pointer opacity-0"
+                className="absolute inset-0 z-20 h-full w-full cursor-pointer opacity-0"
                 aria-label="Rate the plan"
                 style={{ touchAction: "pan-x" }}
               />

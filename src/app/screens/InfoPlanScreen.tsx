@@ -28,12 +28,76 @@ type InfoPlanState = {
 };
 
 const FALLBACK_IMAGE = "https://www.figma.com/api/mcp/asset/cfc93208-7871-4ba9-b2ac-70ad12a5380f";
+const memberAvatarImage =
+  "https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb";
+
+type ProfileBottomSheetProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  user: DemoUser | null;
+};
+
+function ProfileBottomSheet({ isOpen, onClose, user }: ProfileBottomSheetProps) {
+  if (!isOpen || !user) return null;
+
+  const traitChips =
+    user.interests.slice(0, 3).length > 0
+      ? user.interests.slice(0, 3)
+      : ["Good listener", "Punctual", "Funny"];
+  const friendsCount = Number.isFinite(user.friendsCount) ? user.friendsCount : 0;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-[rgba(0,0,0,0.26)]" onClick={onClose} />
+      <div className="fixed bottom-0 left-1/2 z-50 w-[393px] max-w-full -translate-x-1/2 rounded-tl-[24px] rounded-tr-[24px] bg-[#fefefe]">
+        <div className="relative flex size-full flex-col items-center gap-[40px] overflow-clip rounded-[inherit] px-[20px] pb-[32px] pt-[48px]">
+          <div className="absolute left-1/2 top-[10px] h-[3px] w-[34px] -translate-x-1/2 rounded-[999px] bg-[#969696]" />
+          <div className="flex w-full flex-col items-center gap-[12px] px-[20px]">
+            <img
+              alt={user.name}
+              className="size-[102px] shrink-0 rounded-[51px] object-cover"
+              src={user.avatarUrl || memberAvatarImage}
+            />
+            <div className="flex w-full flex-col items-center gap-[4px]">
+              <p className="text-[28px] leading-[36px] text-[#09090b]">
+                {user.name}
+                {user.age > 0 ? `, ${user.age}` : ""}
+              </p>
+              <div className="flex items-center gap-[8px] text-[14px] leading-[18px] text-[#71717a]">
+                <span>{friendsCount} friends</span>
+                <span>·</span>
+                <span>{user.plansCreated} plans created</span>
+                <span>·</span>
+                <span>{user.plansDone} plans done</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-[6px]">
+              {traitChips.map((interest) => (
+                <span
+                  key={interest}
+                  className="rounded-[50px] bg-[#f6f6f6] px-[16px] py-[8px] text-[12px] leading-[16px] text-black"
+                >
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-tl-[24px] rounded-tr-[24px] border border-card-token"
+        />
+      </div>
+    </>
+  );
+}
 
 export default function InfoPlanScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as InfoPlanState | null) ?? null;
   const [fallbackCreator, setFallbackCreator] = useState<DemoUser | null>(null);
+  const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
 
   const plan = state?.plan ?? {
     id: 1,
@@ -166,7 +230,7 @@ export default function InfoPlanScreen() {
               <button
                 onClick={() => {
                   if (!creator) return;
-                  navigate("/profile", { state: { demoProfile: creator } });
+                  setIsProfileSheetOpen(true);
                 }}
                 className="border-b border-[var(--color-text-secondary)] type-body-s text-secondary-token"
                 type="button"
@@ -223,6 +287,11 @@ export default function InfoPlanScreen() {
           <span className="type-body-m text-invert-token">Join Plan</span>
         </button>
       </div>
+      <ProfileBottomSheet
+        isOpen={isProfileSheetOpen}
+        onClose={() => setIsProfileSheetOpen(false)}
+        user={creator}
+      />
     </div>
   );
 }

@@ -53,13 +53,8 @@ type MemberRowProps = {
 };
 
 function MemberRow({ label, imageSrc = null, onClick }: MemberRowProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center justify-between"
-      aria-label={`Open ${label} profile`}
-    >
+  const rowContent = (
+    <>
       <div className="flex items-center gap-[8px]">
         {imageSrc ? (
           <img
@@ -73,9 +68,26 @@ function MemberRow({ label, imageSrc = null, onClick }: MemberRowProps) {
         <p className="type-body-s text-primary-token">{label}</p>
       </div>
 
-      <div className="inline-flex items-center justify-center p-[4px] text-primary-token">
-        <AppIcon name="Left" size={20} className="rotate-180" />
-      </div>
+      {onClick ? (
+        <div className="inline-flex items-center justify-center p-[4px] text-primary-token">
+          <AppIcon name="Left" size={20} className="rotate-180" />
+        </div>
+      ) : null}
+    </>
+  );
+
+  if (!onClick) {
+    return <div className="flex w-full items-center justify-between">{rowContent}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-between"
+      aria-label={`Open ${label} profile`}
+    >
+      {rowContent}
     </button>
   );
 }
@@ -89,6 +101,68 @@ type ConfirmPlanActionModalProps = {
   description: string;
   cancelLabel: string;
 };
+
+type ProfileBottomSheetProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  user: DemoUser | null;
+};
+
+function ProfileBottomSheet({ isOpen, onClose, user }: ProfileBottomSheetProps) {
+  if (!isOpen || !user) return null;
+
+  const traitChips =
+    user.interests.slice(0, 3).length > 0
+      ? user.interests.slice(0, 3)
+      : ["Good listener", "Punctual", "Funny"];
+  const friendsCount = Number.isFinite(user.friendsCount) ? user.friendsCount : 0;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-[rgba(0,0,0,0.26)]" onClick={onClose} />
+      <div className="fixed bottom-0 left-1/2 z-50 w-[393px] max-w-full -translate-x-1/2 rounded-tl-[24px] rounded-tr-[24px] bg-[#fefefe]">
+        <div className="relative flex size-full flex-col items-center gap-[40px] overflow-clip rounded-[inherit] px-[20px] pb-[32px] pt-[48px]">
+          <div className="absolute left-1/2 top-[10px] h-[3px] w-[34px] -translate-x-1/2 rounded-[999px] bg-[#969696]" />
+
+          <div className="flex w-full flex-col items-center gap-[12px] px-[20px]">
+            <img
+              alt={user.name}
+              className="size-[102px] shrink-0 rounded-[51px] object-cover"
+              src={user.avatarUrl || memberAvatarImage}
+            />
+            <div className="flex w-full flex-col items-center gap-[4px]">
+              <p className="text-[28px] leading-[36px] text-[#09090b]">
+                {user.name}
+                {user.age > 0 ? `, ${user.age}` : ""}
+              </p>
+              <div className="flex items-center gap-[8px] text-[14px] leading-[18px] text-[#71717a]">
+                <span>{friendsCount} friends</span>
+                <span>·</span>
+                <span>{user.plansCreated} plans created</span>
+                <span>·</span>
+                <span>{user.plansDone} plans done</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-[6px]">
+              {traitChips.map((interest) => (
+                <span
+                  key={interest}
+                  className="rounded-[50px] bg-[#f6f6f6] px-[16px] py-[8px] text-[12px] leading-[16px] text-black"
+                >
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-tl-[24px] rounded-tr-[24px] border border-card-token"
+        />
+      </div>
+    </>
+  );
+}
 
 function ConfirmPlanActionModal({
   isOpen,
@@ -143,6 +217,8 @@ export default function ChatInfoPlanScreen() {
     state?.participants ?? [],
   );
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<DemoUser | null>(null);
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
   const [catalogLocation, setCatalogLocation] = useState<string | null>(null);
 
@@ -278,7 +354,6 @@ export default function ChatInfoPlanScreen() {
     await deletePlan(String(plan.id));
     navigate("/", { replace: true });
   };
-
   return (
     <>
       <div className="relative size-full overflow-y-auto bg-surface-primary">
@@ -342,7 +417,6 @@ export default function ChatInfoPlanScreen() {
           <MemberRow
             label="You"
             imageSrc={currentUserAvatar ?? memberAvatarImage}
-            onClick={() => navigate("/profile")}
           />
           {displayParticipants.map((participant) => (
             <div key={participant.seedUserId} className="flex w-full flex-col gap-[8px]">
@@ -350,13 +424,10 @@ export default function ChatInfoPlanScreen() {
               <MemberRow
                 label={participant.name}
                 imageSrc={participant.avatarUrl}
-                onClick={() =>
-                  navigate("/profile", {
-                    state: {
-                      demoProfile: participant,
-                    },
-                  })
-                }
+                onClick={() => {
+                  setSelectedParticipant(participant);
+                  setIsProfileSheetOpen(true);
+                }}
               />
             </div>
           ))}
@@ -420,6 +491,14 @@ export default function ChatInfoPlanScreen() {
         }
         confirmLabel={isCreatedPlan ? "Yes, delete" : "Yes, cancel"}
         cancelLabel={isCreatedPlan ? "Keep plan" : "Keep plan"}
+      />
+      <ProfileBottomSheet
+        isOpen={isProfileSheetOpen}
+        onClose={() => {
+          setIsProfileSheetOpen(false);
+          setSelectedParticipant(null);
+        }}
+        user={selectedParticipant}
       />
     </>
   );

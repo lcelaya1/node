@@ -184,11 +184,9 @@ function UserReview({
 
       {isExpanded ? (
         <div
-          className="mt-[16px] flex flex-col gap-[16px]"
+          className="mt-[16px] flex flex-col gap-[16px] border-t border-card-token pt-[16px]"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="h-px w-full bg-card-token" />
-
           <div className="flex flex-col gap-[8px]">
             <p className="text-[12px] leading-[16px] text-primary-token">
               Choose {name}&apos;s vibes
