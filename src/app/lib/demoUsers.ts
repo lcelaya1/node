@@ -5,6 +5,7 @@ export type DemoUser = {
   avatarUrl: string;
   bio: string;
   city: string;
+  friendsCount: number;
   interests: string[];
   name: string;
   plansCreated: number;
@@ -20,6 +21,10 @@ function normalizeDemoUser(row: Record<string, unknown>): DemoUser | null {
     avatarUrl: typeof row.avatar_url === "string" ? row.avatar_url : "",
     bio: typeof row.bio === "string" ? row.bio : "",
     city: typeof row.city === "string" ? row.city : "",
+    friendsCount:
+      typeof row.friends_count === "number"
+        ? row.friends_count
+        : Number(row.friends_count ?? 0),
     interests: Array.isArray(row.demo_user_interests)
       ? row.demo_user_interests
           .map((item) => {
@@ -62,7 +67,7 @@ export async function loadDemoUsers(): Promise<DemoUser[]> {
   const { data, error } = await supabase
     .from("demo_users")
     .select(
-      "seed_user_id, name, age, city, bio, plans_created, plans_done, avatar_url, demo_user_interests(interest_catalog(name))",
+      "seed_user_id, name, age, city, bio, friends_count, plans_created, plans_done, avatar_url, demo_user_interests(interest_catalog(name))",
     )
     .order("seed_user_id", { ascending: true });
 

@@ -5,6 +5,7 @@ create table if not exists public.demo_users (
   age integer not null,
   city text not null,
   bio text not null,
+  friends_count integer not null default 0,
   plans_created integer not null default 0,
   plans_done integer not null default 0,
   avatar_url text not null,

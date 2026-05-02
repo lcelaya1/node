@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import logoutIcon from "../../assets/svg/Log In.svg";
-import { AppIcon } from "../components/AppIcon";
 import { IconButton } from "../components/IconButton";
-import { InterestTile } from "../components/InterestTile";
 import { AppNavbar } from "../components/AppNavbar";
 import { loadInterestCatalogMap } from "../lib/interestCatalog";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
+import { loadSavedGroups, type SavedGroup } from "../lib/groups";
 import { supabase } from "../lib/supabase";
 import { cn } from "../components/ui/utils";
 import type { DemoUser } from "../lib/demoUsers";
@@ -23,6 +22,7 @@ type ProfileData = {
   avatarUrl: string;
   bio: string;
   birthDate: string;
+  friendsCount?: number;
   fullName: string;
   interests: string[];
   plansCreated?: number;
@@ -41,14 +41,15 @@ function ProfileChip({ active = false, label, onClick }: ProfileChipProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-px min-w-0 flex-1 items-start justify-center rounded-[50px] px-[16px] py-[8px]",
-        active
-          ? "bg-button-primary text-invert-token"
-          : "bg-surface-primary text-primary-token",
+        "relative flex min-h-px min-w-0 items-start justify-center rounded-[999px] px-[16px] py-[6px]",
+        active ? "bg-[#e4e4e7] text-primary-token" : "bg-surface-primary text-primary-token",
       )}
-      style={{ border: "0.5px solid var(--color-border-selected)" }}
     >
-      <span className="type-body-xs whitespace-nowrap">{label}</span>
+      <span className="type-body-s whitespace-nowrap">{label}</span>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-[999px] border border-card-token"
+      />
     </button>
   );
 }
@@ -61,52 +62,57 @@ type CreatedPlanCardProps = {
 };
 
 function CreatedPlanCard({ imageSrc, location, title, when }: CreatedPlanCardProps) {
+  const titleRef = useRef<HTMLParagraphElement>(null);
+  const [descriptionLineClamp, setDescriptionLineClamp] = useState(2);
+
+  useEffect(() => {
+    const node = titleRef.current;
+    if (!node) return;
+
+    const computed = window.getComputedStyle(node);
+    const lineHeight = Number.parseFloat(computed.lineHeight || "0");
+    if (!lineHeight) return;
+
+    const measuredTitleLines = Math.max(1, Math.round(node.clientHeight / lineHeight));
+    const titleLines = Math.min(measuredTitleLines, 2);
+    const remainingLines = Math.max(1, 3 - titleLines);
+    setDescriptionLineClamp(remainingLines);
+  }, [title]);
+
   return (
-    <div className="flex h-[120px] items-start overflow-hidden rounded-[4px] border border-card-token bg-surface-primary">
-      <div className="flex h-full min-w-0 flex-1 flex-col items-start px-[12px] py-[16px]">
-        <div className="flex w-full flex-col gap-[8px]">
-          <p className="type-body-m-medium text-primary-token">{title}</p>
-
-          <div className="flex flex-col gap-[4px]">
-            <div className="flex items-center gap-[4px]">
-              <AppIcon
-                name="Calendar"
-                size={12}
-                className="shrink-0 text-secondary-token"
-              />
-              <span className="type-body-xs text-secondary-token">{when}</span>
-            </div>
-
-            <div className="flex items-center gap-[4px]">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="shrink-0 text-secondary-token"
-              >
-                <path
-                  d="M8.25 5.08333C8.25 6.9375 6 9.58333 6 9.58333C6 9.58333 3.75 6.9375 3.75 5.08333C3.75 3.84069 4.75736 2.83333 6 2.83333C7.24264 2.83333 8.25 3.84069 8.25 5.08333Z"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M6 5.83333C6.41421 5.83333 6.75 5.49755 6.75 5.08333C6.75 4.66912 6.41421 4.33333 6 4.33333C5.58579 4.33333 5.25 4.66912 5.25 5.08333C5.25 5.49755 5.58579 5.83333 6 5.83333Z"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="type-body-xs text-secondary-token">{location}</span>
-            </div>
-          </div>
+    <div className="relative flex h-[104px] min-h-[104px] max-h-[104px] w-full items-stretch rounded-[8px] bg-surface-primary">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-[8px] border border-card-token"
+      />
+      <div className="min-h-px min-w-0 flex-1 self-stretch">
+        <div className="flex size-full flex-col items-start justify-center gap-[4px] p-[16px]">
+          <p
+            ref={titleRef}
+            className="type-body-m-medium w-full overflow-hidden text-ellipsis text-primary-token"
+            style={{
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+              display: "-webkit-box",
+            }}
+          >
+            {title}
+          </p>
+          <p
+            className="type-body-xs w-full overflow-hidden text-secondary-token"
+            style={{
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: descriptionLineClamp,
+              display: "-webkit-box",
+            }}
+          >
+            {when} at {location}
+          </p>
         </div>
       </div>
 
-      <div className="h-full w-[120px] shrink-0 overflow-hidden rounded-[4px]">
-        <img alt={title} className="size-full object-cover" src={imageSrc} />
+      <div className="relative h-[104px] min-h-[104px] max-h-[104px] w-[142px] shrink-0 overflow-hidden rounded-[8px]">
+        <img alt={title} className="absolute inset-0 size-full object-cover" src={imageSrc} />
       </div>
     </div>
   );
@@ -167,6 +173,17 @@ function getInterestImage(label: string) {
   }
 }
 
+function isUsableAvatarUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  return (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("/")
+  );
+}
+
 export default function ProfileScreen() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -179,10 +196,12 @@ export default function ProfileScreen() {
     birthDate: "",
     fullName: "",
     interests: [],
+    friendsCount: 0,
     plansCreated: 0,
     plansDone: 0,
   });
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
+  const [savedGroups, setSavedGroups] = useState<SavedGroup[]>([]);
   const [interestImageMap, setInterestImageMap] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -194,6 +213,7 @@ export default function ProfileScreen() {
           avatarUrl: demoProfile.avatarUrl,
           bio: demoProfile.bio,
           birthDate: "",
+          friendsCount: demoProfile.friendsCount,
           fullName: demoProfile.name,
           interests: demoProfile.interests,
           plansCreated: demoProfile.plansCreated,
@@ -218,18 +238,61 @@ export default function ProfileScreen() {
 
       if (error || !data || !isMounted) return;
 
+      const metadataName =
+        typeof user.user_metadata?.full_name === "string"
+          ? user.user_metadata.full_name
+          : typeof user.user_metadata?.name === "string"
+            ? user.user_metadata.name
+            : "";
+      const metadataAvatar =
+        typeof user.user_metadata?.avatar_url === "string"
+          ? user.user_metadata.avatar_url
+          : "";
+
       setProfile({
-        avatarUrl: typeof data.avatar_url === "string" ? data.avatar_url : "",
+        avatarUrl:
+          typeof data.avatar_url === "string" && isUsableAvatarUrl(data.avatar_url)
+            ? data.avatar_url
+            : isUsableAvatarUrl(metadataAvatar)
+              ? metadataAvatar
+              : "",
         bio: typeof data.bio === "string" ? data.bio : "",
         birthDate: typeof data.birth_date === "string" ? data.birth_date : "",
-        fullName: typeof data.full_name === "string" ? data.full_name : "",
+        fullName:
+          typeof data.full_name === "string" && data.full_name.trim()
+            ? data.full_name
+            : metadataName,
         interests: Array.isArray(data.interests) ? data.interests : [],
+        friendsCount: 0,
         plansCreated: 0,
         plansDone: 0,
       });
     };
 
     void loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [demoProfile]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const run = async () => {
+      if (demoProfile) return;
+
+      try {
+        const groups = await loadSavedGroups();
+        if (!isMounted) return;
+        setSavedGroups(groups);
+      } catch {
+        if (!isMounted) return;
+        setSavedGroups([]);
+      }
+    };
+
+    void run();
 
     return () => {
       isMounted = false;
@@ -297,13 +360,32 @@ export default function ProfileScreen() {
       return now >= availableAt;
     });
   }, [joinedPlans]);
+  const myFriendsCount = useMemo(() => {
+    const seen = new Set<string>();
+
+    savedGroups.forEach((group) => {
+      group.participants.forEach((participant) => {
+        const key = participant.seedUserId
+          ? `seed:${participant.seedUserId}`
+          : `name:${participant.name.trim().toLowerCase()}`;
+        if (key !== "name:") {
+          seen.add(key);
+        }
+      });
+    });
+
+    return seen.size;
+  }, [savedGroups]);
   const displayAge = demoProfile?.age ?? age;
-  const displayName = profile.fullName.trim() || "Profile";
+  const displayName = profile.fullName.trim() || "My profile";
   const displayTitle = displayAge !== null ? `${displayName}, ${displayAge}` : displayName;
   const displayBio =
     profile.bio.trim() || "Tell us a bit about yourself to complete your profile.";
   const displayAvatar = profile.avatarUrl.trim() || avatarImage;
-  const displayInterests = profile.interests.slice(0, 4);
+  const displayInterests = profile.interests.slice(0, 3);
+  const displayFriends = demoProfile?.friendsCount ?? myFriendsCount;
+  const displayPlansCreated = demoProfile ? profile.plansCreated ?? 0 : createdPlans.length;
+  const displayPlansDone = demoProfile ? profile.plansDone ?? 0 : pastJoinedPlans.length;
 
   const handleLogout = async () => {
     if (supabase) {
@@ -319,15 +401,16 @@ export default function ProfileScreen() {
       className={cn(
         "relative grid h-full overflow-hidden",
         demoProfile
-          ? "grid-rows-[auto_minmax(0,1fr)]"
-          : "grid-rows-[auto_minmax(0,1fr)_auto]",
+          ? "grid-rows-[minmax(0,1fr)]"
+          : "grid-rows-[minmax(0,1fr)_auto]",
       )}
       style={{ backgroundColor: "var(--color-surface-bg-primary)" }}
     >
-      <div className="shrink-0 border-b border-card-token bg-surface-primary px-[20px] pt-[16px]">
-        <div className="flex items-center justify-between pb-[12px] pt-[0px]">
+
+      <div className="min-h-0 overflow-x-hidden px-[20px] pt-[24px]">
+        <div className="flex h-full min-h-0 flex-col items-center gap-[32px]">
           {demoProfile ? (
-            <>
+            <div className="flex w-full items-center justify-between">
               <IconButton
                 icon="Left"
                 hierarchy="Link"
@@ -337,64 +420,63 @@ export default function ProfileScreen() {
               />
               <h1 className="type-heading-m text-primary-token">Profile</h1>
               <div className="size-[44px]" />
-            </>
+            </div>
           ) : (
-            <>
-              <h1 className="type-heading-m text-primary-token">Profile</h1>
+            <div className="flex w-full items-center justify-between">
+                <p className="type-heading-2xl text-primary-token">My profile</p>
               <button
                 type="button"
+                onClick={() => void handleLogout()}
+                className="inline-flex size-[24px] items-center justify-center"
                 aria-label="Log out"
-                className="flex size-[44px] items-center justify-center"
-                onClick={handleLogout}
               >
                 <img alt="" aria-hidden="true" className="size-[24px]" src={logoutIcon} />
               </button>
-            </>
+            </div>
           )}
-        </div>
-      </div>
 
-      <div
-        className="min-h-0 overflow-y-scroll px-[20px] pt-[24px]"
-        style={{
-          WebkitOverflowScrolling: "touch",
-          overscrollBehaviorY: "contain",
-          paddingBottom: demoProfile
-            ? "calc(24px + env(safe-area-inset-bottom))"
-            : "calc(24px + env(safe-area-inset-bottom))",
-        }}
-      >
-        <div className="flex flex-col items-center gap-[32px]">
-          <div className="flex w-full flex-col items-center gap-[20px]">
-            <div className="flex w-full flex-col items-center gap-[13px]">
-              <div className="size-[102px] overflow-hidden rounded-full bg-surface-secondary">
+          <div className="flex w-full flex-col items-center gap-[12px] px-[20px]">
+            <div className="flex w-full flex-col items-center gap-[8px]">
+              <div className="size-[102px] overflow-hidden rounded-[51px] bg-surface-secondary">
                 <img alt={displayName} className="size-full object-cover" src={displayAvatar} />
               </div>
 
               <div className="flex w-full flex-col items-center gap-[4px] text-center">
-                <p className="type-heading-xl text-primary-token">{displayTitle}</p>
-                <div className="flex items-center gap-[8px] text-secondary-token">
-                  <span className="type-body-s">
-                    {demoProfile ? profile.plansCreated ?? 0 : createdPlans.length} plans created
-                  </span>
-                  <span className="type-body-s">·</span>
-                  <span className="type-body-s">
-                    {demoProfile ? profile.plansDone ?? 0 : pastJoinedPlans.length} plans done
-                  </span>
+                <p className="type-heading-2xl text-primary-token">{displayTitle}</p>
+                <div className="flex flex-wrap items-center justify-center gap-[8px] text-[14px] leading-[18px] text-secondary-token">
+                  <span>{displayFriends} friends</span>
+                  <span>·</span>
+                  <span>{displayPlansCreated} plans created</span>
+                  <span>·</span>
+                  <span>{displayPlansDone} plans done</span>
                 </div>
               </div>
             </div>
 
-            {demoProfile ? null : (
-              <div className="flex w-full items-start justify-center gap-[12px]">
+            <div className="flex flex-wrap items-center justify-center gap-[6px]">
+              {(displayInterests.length > 0 ? displayInterests : ["Good listener", "Punctual", "Funny"]).map((interest) => (
+                <span
+                  key={interest}
+                  className="rounded-[50px] bg-[#f6f6f6] px-[16px] py-[8px] text-[12px] leading-[16px] text-black"
+                >
+                  {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex min-h-0 w-full flex-1 flex-col gap-[16px]">
+            <div className="flex w-full flex-col gap-[8px]">
+              <h2 className="text-[20px] leading-[24px] text-primary-token">My plans</h2>
+              <div className="flex w-full items-start gap-[6px] overflow-x-auto">
                 <ProfileChip
                   active={activeTab === "about"}
-                  label="About"
+                  label="All"
                   onClick={() => setActiveTab("about")}
                 />
                 <ProfileChip
                   active={activeTab === "created"}
-                  label="Created by you"
+                  label="Created by me"
                   onClick={() => setActiveTab("created")}
                 />
                 <ProfileChip
@@ -403,83 +485,30 @@ export default function ProfileScreen() {
                   onClick={() => setActiveTab("past")}
                 />
               </div>
-            )}
+            </div>
+
+            <div
+              className="flex min-h-0 w-full flex-1 flex-col gap-[12px] overflow-y-auto pr-[2px]"
+              style={{
+                WebkitOverflowScrolling: "touch",
+                overscrollBehaviorY: "contain",
+                paddingBottom: "calc(24px + env(safe-area-inset-bottom))",
+              }}
+            >
+              {(activeTab === "about" ? savedPlans : activeTab === "created" ? createdPlans : pastJoinedPlans).map((plan) => (
+                <CreatedPlanCard
+                  key={plan.id}
+                  imageSrc={plan.picturePreview}
+                  location={plan.where}
+                  title={plan.title}
+                  when={plan.when}
+                />
+              ))}
+              {(activeTab === "about" ? savedPlans : activeTab === "created" ? createdPlans : pastJoinedPlans).length === 0 ? (
+                <p className="type-body-s text-secondary-token">No plans to show.</p>
+              ) : null}
+            </div>
           </div>
-
-          {demoProfile || activeTab === "about" ? (
-            <div className="flex w-full flex-col gap-[24px]">
-              <div className="flex flex-col gap-[8px]">
-                <h2 className="type-body-m-medium text-primary-token">Interests</h2>
-                <div className="grid grid-cols-2 gap-x-[8px] gap-y-[7px]">
-                  {displayInterests.length > 0 ? (
-                    displayInterests.map((interest) => (
-                      <InterestTile
-                        key={interest}
-                        imageSrc={
-                          interestImageMap.get(interest.trim().toLowerCase()) ??
-                          getInterestImage(interest)
-                        }
-                        label={interest}
-                      />
-                    ))
-                  ) : (
-                    <>
-                      <InterestTile imageSrc={coffeeImage} label="Coffee" />
-                      <InterestTile imageSrc={hikesImage} label="Hikes" />
-                      <InterestTile imageSrc={yogaImage} label="Yoga" />
-                      <InterestTile imageSrc={festivalImage} label="Festival" />
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {activeTab === "created" ? (
-            <div className="flex w-full flex-col gap-[16px]">
-              <h2 className="type-body-m-medium text-primary-token">Created by you</h2>
-              {createdPlans.length > 0 ? (
-                <div className="flex w-full flex-col gap-[8px]">
-                  {createdPlans.map((plan) => (
-                    <CreatedPlanCard
-                      key={plan.id}
-                      imageSrc={plan.picturePreview}
-                      location={plan.where}
-                      title={plan.title}
-                      when={plan.when}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="type-body-s text-secondary-token">
-                  You haven&apos;t created any plans yet.
-                </p>
-              )}
-            </div>
-          ) : null}
-
-          {activeTab === "past" ? (
-            <div className="flex w-full flex-col gap-[16px]">
-              <h2 className="type-body-m-medium text-primary-token">Past plans</h2>
-              {pastJoinedPlans.length > 0 ? (
-                <div className="flex w-full flex-col gap-[8px]">
-                  {pastJoinedPlans.map((plan) => (
-                    <CreatedPlanCard
-                      key={plan.id}
-                      imageSrc={plan.picturePreview}
-                      location={plan.where}
-                      title={plan.title}
-                      when={plan.when}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="type-body-s text-secondary-token">
-                  You don&apos;t have any past plans yet.
-                </p>
-              )}
-            </div>
-          ) : null}
         </div>
       </div>
 

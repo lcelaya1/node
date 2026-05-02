@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import sendIcon from "../../assets/svg/Send.svg";
 import { IconButton } from "../components/IconButton";
-import { BubbleChip } from "../components/SpeechBubbleChip";
 import { deleteGroup } from "../lib/groups";
 import {
   getChatParticipants,
@@ -10,11 +9,15 @@ import {
   type DemoUser,
 } from "../lib/demoUsers";
 
+const punteroPath =
+  "M22.5439 18.9805H1.5C0.671573 18.9805 0 18.3089 0 17.4805V1.50274C0 0.262595 1.41935 -0.441857 2.40706 0.308072L23.4509 16.2858C24.5954 17.1548 23.9809 18.9805 22.5439 18.9805Z";
+
 type ChatPlan = {
   budget?: string;
   creator?: DemoUser | null;
   description?: string;
   id?: string | number;
+  picturePreview?: string;
   title?: string;
   date?: string;
   when?: string;
@@ -39,6 +42,44 @@ type MessageBubbleProps = {
   showTail?: boolean;
 };
 
+function measureTextWidth(text: string, font: string): number {
+  if (typeof document === "undefined") return text.length * 8;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) return text.length * 8;
+  context.font = font;
+  return context.measureText(text).width;
+}
+
+type BubblePointerProps = {
+  fill: string;
+  who: "me" | "other";
+};
+
+function BubblePointer({ fill, who }: BubblePointerProps) {
+  if (who === "me") {
+    return (
+      <div className="absolute bottom-0 right-[-0.05px] h-[18.98px] w-[24.047px]">
+        <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24.0468 18.9805">
+          <path d={punteroPath} fill={fill} />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute bottom-0 left-[-0.05px] flex h-[18.98px] w-[24.047px] items-center justify-center">
+      <div className="-scale-y-100 rotate-180">
+        <div className="relative h-[18.98px] w-[24.047px]">
+          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24.0468 18.9805">
+            <path d={punteroPath} fill={fill} />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MessageBubble({
   text,
   time,
@@ -46,30 +87,49 @@ function MessageBubble({
   showTail = true,
 }: MessageBubbleProps) {
   const isMe = who === "me";
-  const bubbleBackground = isMe
-    ? "var(--color-surface-fill)"
-    : "var(--color-surface-bg-secondary)";
+  const textWidthEstimate = measureTextWidth(
+    text,
+    "400 16px 'ABC Monument Grotesk Unlicensed Trial', sans-serif",
+  );
+  const timeWidthEstimate = measureTextWidth(
+    time,
+    "400 10px 'ABC Monument Grotesk Unlicensed Trial', sans-serif",
+  );
+  const chromeWidth = 52; // paddings (40) + gap (12)
+  const contentWidthEstimate = textWidthEstimate + timeWidthEstimate + chromeWidth;
+  const singleLineTextLimit = 228 - chromeWidth - timeWidthEstimate;
+  const wrapsToTwoLines = textWidthEstimate > singleLineTextLimit;
+  const isBig = contentWidthEstimate > 228 || wrapsToTwoLines;
+  const isSmall = !isBig;
+  const bubbleBackground = isMe ? "#A1A1AA" : "#E4E4E7";
+  const bubbleWidthClassName = isBig ? "w-[228px]" : "w-fit max-w-[228px]";
+  const fillClassName = isBig
+    ? showTail
+      ? isMe
+        ? "inset-[0_4px_0_0] rounded-[12px]"
+        : "inset-[0_0_0_4px] rounded-[12px]"
+      : "inset-0 rounded-[12px]"
+    : "inset-0 rounded-[64px]";
 
   return (
     <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-      <BubbleChip
-        direction={isMe ? "Right" : "Left"}
-        backgroundColor={bubbleBackground}
-        horizontalPaddingClassName="px-[12px]"
-        multiline
-        showPointer={showTail}
-        className="relative"
-        textClassName="text-primary-token"
-      >
-        <div className="relative z-[1] flex max-w-[260px] items-end gap-[12px]">
-          <p className="type-body-m min-w-0 flex-1 break-words text-left text-primary-token">
+      <div className={`relative ${bubbleWidthClassName}`}>
+        <div className="relative flex items-end justify-end gap-[12px] px-[20px] py-[8px]">
+          <div
+            className={`absolute ${fillClassName}`}
+            style={{ backgroundColor: bubbleBackground }}
+          />
+          {showTail ? <BubblePointer fill={bubbleBackground} who={who} /> : null}
+          <p className="type-body-m relative z-[1] min-w-0 flex-1 break-words text-left text-primary-token">
             {text}
           </p>
-          <span className="shrink-0 text-[10px] leading-[12px] text-primary-token">
+          <span
+            className={`shrink-0 text-[10px] leading-[12px] text-primary-token ${isSmall ? "mb-[1px]" : ""} relative z-[1]`}
+          >
             {time}
           </span>
         </div>
-      </BubbleChip>
+      </div>
     </div>
   );
 }
@@ -143,6 +203,76 @@ type ConfirmCircleActionModalProps = {
   title: string;
 };
 
+type ProfileBottomSheetProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  user: DemoUser | null;
+};
+
+function ProfileBottomSheet({
+  isOpen,
+  onClose,
+  user,
+}: ProfileBottomSheetProps) {
+  if (!isOpen || !user) return null;
+
+  const traitChips =
+    user.interests.slice(0, 3).length > 0
+      ? user.interests.slice(0, 3)
+      : ["Good listener", "Punctual", "Funny"];
+  const friendsCount = Number.isFinite(user.friendsCount) ? user.friendsCount : 0;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-[rgba(0,0,0,0.26)]" onClick={onClose} />
+      <div className="fixed bottom-0 left-1/2 z-50 w-[393px] max-w-full -translate-x-1/2 rounded-tl-[24px] rounded-tr-[24px] bg-[#fefefe]">
+        <div className="relative flex size-full flex-col items-center gap-[40px] overflow-clip rounded-[inherit] px-[20px] pb-[32px] pt-[48px]">
+          <div className="absolute left-1/2 top-[10px] h-[3px] w-[34px] -translate-x-1/2 rounded-[999px] bg-[#969696]" />
+
+          <div className="flex w-full flex-col items-center gap-[12px] px-[20px]">
+            <img
+              alt={user.name}
+              className="size-[102px] shrink-0 rounded-[51px] object-cover"
+              src={
+                user.avatarUrl ||
+                "https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb"
+              }
+            />
+            <div className="flex w-full flex-col items-center gap-[4px]">
+              <p className="text-[28px] leading-[36px] text-[#09090b]">
+                {user.name}
+                {user.age > 0 ? `, ${user.age}` : ""}
+              </p>
+              <div className="flex items-center gap-[8px] text-[14px] leading-[18px] text-[#71717a]">
+                <span>{friendsCount} friends</span>
+                <span>·</span>
+                <span>{user.plansCreated} plans created</span>
+                <span>·</span>
+                <span>{user.plansDone} plans done</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-[6px]">
+              {traitChips.map((interest) => (
+                <span
+                  key={interest}
+                  className="rounded-[50px] bg-[#f6f6f6] px-[16px] py-[8px] text-[12px] leading-[16px] text-black"
+                >
+                {interest}
+                </span>
+              ))}
+            </div>
+          </div>
+
+        </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-tl-[24px] rounded-tr-[24px] border border-card-token"
+        />
+      </div>
+    </>
+  );
+}
+
 function ConfirmCircleActionModal({
   cancelLabel,
   confirmLabel,
@@ -194,6 +324,8 @@ export default function ChatScreen() {
   const state = (location.state as ChatState | null) ?? null;
   const [draft, setDraft] = useState("");
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isProfileSheetOpen, setIsProfileSheetOpen] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<DemoUser | null>(null);
   const [participants, setParticipants] = useState<DemoUser[]>(state?.participants ?? []);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isRepeatGroup = state?.isRepeatGroup === true;
@@ -208,6 +340,7 @@ export default function ChatScreen() {
   const headerSubtitle = `${participants.length + 1} members active`;
   const dayLabel = plan.when ?? "Today · 19:17h";
   const displayTitle = plan.title ?? "Title of the plan";
+  const confirmationImageSrc = state?.imageSrc ?? plan.picturePreview ?? "";
 
   useEffect(() => {
     let active = true;
@@ -378,6 +511,7 @@ export default function ChatScreen() {
       navigate("/plan-confirmation", {
         replace: true,
         state: {
+          imageSrc: confirmationImageSrc,
           plan: {
             id: plan.id,
             title: displayTitle,
@@ -388,7 +522,7 @@ export default function ChatScreen() {
     }, 5000);
 
     return () => window.clearTimeout(timeoutId);
-  }, [displayTitle, isRepeatGroup, navigate, participants, plan.id, plan.source, state?.plan]);
+  }, [confirmationImageSrc, displayTitle, isRepeatGroup, navigate, participants, plan.id, plan.source, state?.plan]);
 
   const handleLeaveCircle = async () => {
     if (typeof state?.groupId === "string" && state.groupId.trim()) {
@@ -446,7 +580,7 @@ export default function ChatScreen() {
       >
         <p className="type-body-xs text-center text-secondary-token">{dayLabel}</p>
 
-        <div className="mt-[24px] flex flex-col gap-[20px]">
+        <div className="mt-[24px] flex flex-col gap-[24px]">
           {conversation.map((block, blockIndex) =>
             block.type === "other" ? (
               <ParticipantBlock
@@ -462,11 +596,8 @@ export default function ChatScreen() {
                     (entry) => entry.name === block.name,
                   );
                   if (!participant) return;
-                  navigate("/profile", {
-                    state: {
-                      demoProfile: participant,
-                    },
-                  });
+                  setSelectedParticipant(participant);
+                  setIsProfileSheetOpen(true);
                 }}
               />
             ) : (
@@ -529,6 +660,12 @@ export default function ChatScreen() {
         title="Leave this circle?"
         description="You’ll leave this circle and it will disappear from your circles list."
         cancelLabel="Keep circle"
+      />
+
+      <ProfileBottomSheet
+        isOpen={isProfileSheetOpen}
+        onClose={() => setIsProfileSheetOpen(false)}
+        user={selectedParticipant}
       />
     </div>
   );
