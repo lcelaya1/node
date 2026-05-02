@@ -41,6 +41,22 @@ type MatchPlanCatalogRow = {
   title: string | null;
 };
 
+export const ONBOARDING_PLAN_IDS = [
+  "68e9d3ca-5155-40c9-a475-7ca3afbecb83",
+  "2c5b2095-64eb-435e-86d0-03b9013d9047",
+  "2775d28d-520a-4865-bbbe-23d4f2588554",
+  "03f7b2ef-aa1b-4b6a-8010-b1289d0e3372",
+  "96c021c6-29c0-49cb-8292-4d308194600f",
+];
+
+export const ONBOARDING_PLAN_INTEREST_MAP: Record<string, string[]> = {
+  "68e9d3ca-5155-40c9-a475-7ca3afbecb83": ["Sports", "Outdoors"],
+  "2c5b2095-64eb-435e-86d0-03b9013d9047": ["Cooking", "Food"],
+  "2775d28d-520a-4865-bbbe-23d4f2588554": ["Art"],
+  "03f7b2ef-aa1b-4b6a-8010-b1289d0e3372": ["Cocktails"],
+  "96c021c6-29c0-49cb-8292-4d308194600f": ["Coffee", "Literature"],
+};
+
 const DISTANCE_MAP: Record<JoinFilterState["distance"], "close-by" | "short-ride" | "further-out"> = {
   anywhere: "further-out",
   close: "close-by",
@@ -224,6 +240,7 @@ export async function loadMatchedCatalogPlans(filters: JoinFilterState): Promise
   }
 
   return ((data as MatchPlanCatalogRow[] | null) ?? [])
+    .filter((row) => !ONBOARDING_PLAN_IDS.includes(row.id))
     .map(mapCatalogRow)
     .map((plan) => {
       const interestMatches = countInterestMatches(plan, userInterests);
@@ -246,6 +263,22 @@ export async function loadMatchedCatalogPlans(filters: JoinFilterState): Promise
       return left.startTime.localeCompare(right.startTime);
     })
     .slice(0, 3);
+}
+
+export async function loadOnboardingPlans(): Promise<CatalogPlan[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("plan_catalog")
+    .select("id, title, description, event_date, start_time, place_name, address, photo_url, seed_plan_id, budget")
+    .in("id", ONBOARDING_PLAN_IDS);
+
+  if (error || !data) return [];
+
+  const mapped = (data as MatchPlanCatalogRow[]).map(mapCatalogRow);
+  return ONBOARDING_PLAN_IDS
+    .map((id) => mapped.find((p) => p.id === id))
+    .filter((p): p is CatalogPlan => p !== undefined);
 }
 
 export async function loadCatalogPlanById(planId: string | number): Promise<CatalogPlan | null> {
