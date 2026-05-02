@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RouterProvider } from "react-router";
 import AuthScreen from "./screens/AuthScreen";
 import CreateProfileBirthdayScreen from "./screens/CreateProfileBirthdayScreen";
@@ -23,6 +23,11 @@ export default function App() {
   const [profileDraftBio, setProfileDraftBio] = useState("");
   const [profileDraftInterests, setProfileDraftInterests] = useState<string[]>([]);
   const [profileDraftAvatarUrl, setProfileDraftAvatarUrl] = useState("");
+  const phaseRef = useRef(phase);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const resetProfileDrafts = () => {
     setProfileDraftName("");
@@ -120,6 +125,9 @@ export default function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
+        if (phaseRef.current.startsWith("create-profile")) {
+          return;
+        }
         void resolveSignedInPhase(session);
         return;
       }
