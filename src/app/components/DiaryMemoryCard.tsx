@@ -10,20 +10,20 @@ export type DiaryMemoryGroup = {
   title: string;
 };
 
+/** Misma idea que la fila “Upcoming Plans” en `PlansHomeScreen`: alto fijo + overflow-x-auto overflow-y-hidden + bleed derecho. */
 function MemoryCarousel({ images }: { images: PlanMemoryImage[] }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const node = scrollRef.current;
     if (!node) return;
-    // Always start from the beginning when feed mounts/remounts.
     node.scrollLeft = 0;
   }, [images]);
 
   return (
     <div
       ref={scrollRef}
-      className="-mx-[12px] flex w-auto gap-[12px] overflow-x-scroll overscroll-x-contain px-[12px] pb-[2px] touch-pan-x"
+      className="-mr-[16px] flex h-[168px] min-w-0 w-auto items-start gap-[12px] overflow-x-auto overflow-y-hidden pb-[2px] pr-[16px]"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
       {images.map((image) => (
@@ -31,12 +31,7 @@ function MemoryCarousel({ images }: { images: PlanMemoryImage[] }) {
           key={image.id}
           className="h-[168px] w-[150px] shrink-0 overflow-hidden rounded-[16px] bg-surface-secondary"
         >
-          <img
-            alt={image.name}
-            className="pointer-events-none size-full select-none object-cover"
-            draggable={false}
-            src={image.url}
-          />
+          <img alt={image.name} className="size-full object-cover" draggable={false} src={image.url} />
         </div>
       ))}
     </div>
@@ -99,26 +94,22 @@ export function DiaryMemoryCard({
     });
   };
 
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={`Open memory: ${group.title}`}
-      className="block w-full shrink-0 cursor-pointer overflow-hidden rounded-[16px] border border-card-token bg-surface-primary p-[16px] text-left outline-none transition-opacity active:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      onClick={goToDetail}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          goToDetail();
-        }
-      }}
-    >
-      <div className="flex flex-col gap-[20px]">
-        <p className="type-heading-m text-primary-token">{group.title}</p>
+  const tapBtn =
+    "w-full rounded-none border-0 bg-transparent p-0 text-left outline-none transition-opacity active:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer";
 
+  return (
+    <div className="block w-full min-w-0 shrink-0 overflow-hidden rounded-[16px] border border-card-token bg-surface-primary p-[16px]">
+      <div className="flex flex-col gap-[20px]">
+        <button type="button" className={tapBtn} onClick={goToDetail} aria-label={`Open memory: ${group.title}`}>
+          <p className="type-heading-m text-primary-token">{group.title}</p>
+        </button>
+
+        {/* Fuera de cualquier botón / role=button: Safari no gestiona bien overflow-x dentro */}
         <MemoryCarousel images={group.images} />
 
-        <MemoryCaptionBlock createdAt={group.createdAt} description={group.description} />
+        <button type="button" className={tapBtn} onClick={goToDetail} aria-label={`Open memory details: ${group.title}`}>
+          <MemoryCaptionBlock createdAt={group.createdAt} description={group.description} />
+        </button>
       </div>
     </div>
   );

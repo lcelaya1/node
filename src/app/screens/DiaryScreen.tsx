@@ -375,14 +375,14 @@ function CalendarView({
 
           {/* Outer solo scrollea; inner flex para gap. Si el outer fuera flex-col, los planes heredan flex-shrink y se aplastan. */}
           <div
-            className="-mr-1 min-h-0 w-full shrink-0 overflow-y-auto overscroll-y-contain pb-1 pr-1 touch-pan-y"
+            className="-mr-1 min-h-0 w-full min-w-0 shrink-0 overflow-y-auto overscroll-y-contain pb-1 pr-1"
             style={{
               WebkitOverflowScrolling: "touch",
               maxHeight:
                 "calc(468px - 12px - 20px - env(safe-area-inset-bottom, 0px) - 5.75rem)",
             }}
           >
-            <div className="flex flex-col gap-5">
+            <div className="flex min-w-0 flex-col gap-5">
               {dayModal && dayModal.items.length === 0 ? (
                 <p className="text-center type-body-s text-secondary-token">
                   No memories on this date.
@@ -591,7 +591,7 @@ export default function DiaryScreen() {
       </div>
 
       <div
-        className="flex flex-1 min-h-0 flex-col overflow-y-auto px-[20px] pt-[24px]"
+        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-[20px] pt-[24px]"
         style={{
           paddingBottom: "calc(108px + env(safe-area-inset-bottom))",
           WebkitOverflowScrolling: "touch",
@@ -607,7 +607,7 @@ export default function DiaryScreen() {
               setDayModal={setDayModal}
             />
           ) : (
-            <div className="flex flex-col gap-[20px]">
+            <div className="flex min-w-0 flex-col gap-[20px]">
               {memoryGroups.map((group) => (
                 <DiaryMemoryCard key={group.planId} group={group} />
               ))}
