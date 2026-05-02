@@ -173,37 +173,39 @@ export default function GroupsScreen() {
             ))
           ) : (
             <div className="flex min-h-[calc(100dvh-238px)] w-full items-center justify-center">
-              <div className="flex w-full max-w-[353px] flex-col items-center gap-[40px]">
-                <div className="relative h-[125px] w-[257.5px]">
-                  <div
-                    className="absolute left-0 top-[0.46px] flex size-[100px] items-center justify-center"
-                    style={{ transform: "rotate(-12deg)" }}
-                  >
-                    <img
-                      alt=""
-                      className="size-[100px] rounded-full border-[2.5px] object-cover"
-                      style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
-                      src={imageLeft}
-                    />
-                  </div>
-                  <div
-                    className="absolute right-0 top-0 flex size-[100px] items-center justify-center"
-                    style={{ transform: "rotate(10deg)" }}
-                  >
-                    <img
-                      alt=""
-                      className="size-[100px] rounded-full border-[2.5px] object-cover"
-                      style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
-                      src={imageRight}
-                    />
-                  </div>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                    <img
-                      alt=""
-                      className="size-[100px] rounded-full border-[2.5px] object-cover"
-                      style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
-                      src={imageBottom}
-                    />
+              <div className="flex w-full max-w-[353px] flex-col items-center gap-[32px]">
+                <div className="relative w-[172px] overflow-visible" style={{ aspectRatio: "257.5 / 125" }}>
+                  <div className="absolute left-0 top-0 h-[125px] w-[257.5px] origin-top-left scale-[0.667961]">
+                    <div
+                      className="absolute left-0 top-[0.46px] flex size-[100px] items-center justify-center"
+                      style={{ transform: "rotate(-12deg)" }}
+                    >
+                      <img
+                        alt=""
+                        className="size-[100px] rounded-full border-[2.5px] object-cover"
+                        style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
+                        src={imageLeft}
+                      />
+                    </div>
+                    <div
+                      className="absolute right-0 top-0 flex size-[100px] items-center justify-center"
+                      style={{ transform: "rotate(10deg)" }}
+                    >
+                      <img
+                        alt=""
+                        className="size-[100px] rounded-full border-[2.5px] object-cover"
+                        style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
+                        src={imageRight}
+                      />
+                    </div>
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
+                      <img
+                        alt=""
+                        className="size-[100px] rounded-full border-[2.5px] object-cover"
+                        style={{ borderColor: "var(--color-surface-surface-bg-primary, #FEFEFE)" }}
+                        src={imageBottom}
+                      />
+                    </div>
                   </div>
                 </div>
 
