@@ -9,11 +9,15 @@ create table if not exists public.plan_memories (
   user_id uuid not null references auth.users(id) on delete cascade,
   plan_id text not null,
   file_name text,
+  memory_note text,
   storage_path text not null,
   public_url text not null,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
+
+alter table public.plan_memories
+add column if not exists memory_note text;
 
 create index if not exists plan_memories_user_plan_idx
 on public.plan_memories (user_id, plan_id, sort_order);

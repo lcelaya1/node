@@ -1,17 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import { useLocation, useNavigate } from "react-router";
+import { AppIcon } from "../components/AppIcon";
 import { AppNavbar } from "../components/AppNavbar";
 import { DiaryMemoryCard, type DiaryMemoryGroup } from "../components/DiaryMemoryCard";
+import { Sheet, SheetContent, SheetTitle } from "../components/ui/sheet";
+import { cn } from "../components/ui/utils";
 import { loadPlanMemories, type PlanMemoryImage } from "../lib/planMemories";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 import { supabase } from "../lib/supabase";
 import feedIcon from "../../assets/svg/Feed.svg";
 import calendarIcon from "../../assets/svg/Calendar.svg";
-import emptyTallImage from "../../assets/V2 APP (12/Memory 1.png";
-import emptyTopLeftImage from "../../assets/V2 APP (12/Memory 2.png";
-import emptyTopRightImage from "../../assets/V2 APP (12/Memory 3.png";
-import emptyBottomLeftImage from "../../assets/V2 APP (12/Memory 4.png";
-import emptyBottomRightImage from "../../assets/V2 APP (12/Memory 5.png";
+import emptyMemoryLeft from "../../assets/diary-empty/empty-collage-left.png";
+import emptyMemoryRight from "../../assets/diary-empty/empty-collage-right.png";
 
 type DiaryViewMode = "grid" | "calendar";
 
@@ -26,7 +33,7 @@ function DiaryViewSwitch({
     "flex items-center justify-center rounded-[999px] p-[8px] transition-colors";
 
   return (
-    <div className="flex h-[44px] items-center gap-[4px] rounded-[222px] bg-surface-secondary px-[6px]">
+    <div className="flex h-[44px] shrink-0 items-center gap-[4px] rounded-[222px] bg-surface-secondary px-[6px]">
       <button
         type="button"
         onClick={() => onChange("grid")}
@@ -71,40 +78,56 @@ function DiaryViewSwitch({
 }
 
 function Header({
+  onAddMemoryClick,
   onViewModeChange,
   viewMode,
 }: {
+  onAddMemoryClick: () => void;
   onViewModeChange: (value: DiaryViewMode) => void;
   viewMode: DiaryViewMode;
 }) {
   return (
-    <div className="flex items-center justify-between pt-[32px]">
+    <div className="flex w-full shrink-0 flex-col gap-[24px] pt-[32px]">
       <h1 className="type-heading-2xl text-primary-token">Diary</h1>
-      <DiaryViewSwitch onChange={onViewModeChange} value={viewMode} />
+
+      <div className="flex w-full shrink-0 items-center justify-between">
+        <button
+          type="button"
+          onClick={onAddMemoryClick}
+          aria-label="Add memory"
+          className="relative flex shrink-0 items-center justify-center gap-[4px] rounded-[888px] bg-button-primary px-[16px] py-[8px] transition-opacity active:opacity-90"
+        >
+          <span className="whitespace-nowrap text-center text-[14px] font-normal leading-[18px] text-invert-token">
+            Add memory
+          </span>
+          <span className="inline-flex shrink-0 text-invert-token" aria-hidden>
+            <AppIcon name="Add" size={19} className="shrink-0 text-invert-token" />
+          </span>
+        </button>
+
+        <DiaryViewSwitch onChange={onViewModeChange} value={viewMode} />
+      </div>
     </div>
   );
 }
 
 function EmptyCollage() {
   return (
-    <div className="flex h-[168px] gap-[8px]">
-      <div className="h-full w-[177px] overflow-hidden rounded-[6px]">
-        <img alt="" className="size-full object-cover" src={emptyTallImage} />
+    <div className="flex h-[85.509px] shrink-0 items-start gap-[8px]">
+      <div className="relative h-full w-[85.509px] shrink-0 overflow-hidden rounded-[3.054px] bg-surface-secondary">
+        <img
+          alt=""
+          className="pointer-events-none absolute inset-0 max-w-none size-full rounded-[3.054px] object-cover"
+          src={emptyMemoryLeft}
+        />
       </div>
 
-      <div className="grid h-full w-[168px] grid-cols-[80px_80px] grid-rows-[80px_80px] gap-[8px]">
-        <div className="overflow-hidden rounded-[10px]">
-          <img alt="" className="size-full object-cover" src={emptyTopLeftImage} />
-        </div>
-        <div className="overflow-hidden rounded-[10px]">
-          <img alt="" className="size-full object-cover" src={emptyTopRightImage} />
-        </div>
-        <div className="overflow-hidden rounded-[10px]">
-          <img alt="" className="size-full object-cover" src={emptyBottomLeftImage} />
-        </div>
-        <div className="overflow-hidden rounded-[10px]">
-          <img alt="" className="size-full object-cover" src={emptyBottomRightImage} />
-        </div>
+      <div className="relative h-full w-[85.509px] shrink-0 overflow-hidden rounded-[3.054px] bg-surface-secondary">
+        <img
+          alt=""
+          className="pointer-events-none absolute inset-0 max-w-none size-full rounded-[3.054px] object-cover"
+          src={emptyMemoryRight}
+        />
       </div>
     </div>
   );
@@ -113,7 +136,7 @@ function EmptyCollage() {
 function EmptyState() {
   return (
     <div className="flex min-h-[calc(100dvh-238px)] w-full items-center justify-center">
-      <div className="flex w-full max-w-[353px] flex-col items-center gap-[40px]">
+      <div className="flex w-full max-w-[353px] flex-col items-center gap-[24px]">
         <EmptyCollage />
 
         <div className="flex w-full flex-col items-center gap-[8px] text-center">
@@ -184,27 +207,108 @@ function formatMonthKey(date: Date) {
   ].join("-");
 }
 
+function formatDayHeading(date: Date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 function addMonths(date: Date, offset: number) {
   return new Date(date.getFullYear(), date.getMonth() + offset, 1);
 }
 
+/** Una entrada por plan con solo las fotos añadidas en ese día (para el modal del calendario). */
+function buildGroupsForCalendarDay(
+  dayItems: PlanMemoryImage[],
+  memoryGroups: DiaryMemoryGroup[],
+): DiaryMemoryGroup[] {
+  const fullByPlan = new Map(memoryGroups.map((g) => [g.planId, g]));
+  const byPlan = new Map<string, PlanMemoryImage[]>();
+
+  dayItems.forEach((memory) => {
+    const list = byPlan.get(memory.planId) ?? [];
+    list.push(memory);
+    byPlan.set(memory.planId, list);
+  });
+
+  const rows: DiaryMemoryGroup[] = [];
+
+  byPlan.forEach((images, planId) => {
+    images.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    const full = fullByPlan.get(planId);
+    let description: string | undefined;
+    images.some((img) => {
+      const trimmed = img.note?.trim();
+      if (trimmed) {
+        description = trimmed;
+        return true;
+      }
+      return false;
+    });
+    if (!description?.trim() && full?.description?.trim()) {
+      description = full.description.trim();
+    }
+
+    rows.push({
+      createdAt: images[images.length - 1]?.createdAt ?? images[0].createdAt,
+      description,
+      images,
+      planId,
+      title: full?.title?.trim() || "Plan Title",
+    });
+  });
+
+  return rows.sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
+
 function CalendarView({
+  dayModal,
+  dayModalGroups,
   memories,
+  memoryGroups,
+  setDayModal,
 }: {
+  dayModal: { date: Date; items: PlanMemoryImage[] } | null;
+  dayModalGroups: DiaryMemoryGroup[];
   memories: PlanMemoryImage[];
+  memoryGroups: DiaryMemoryGroup[];
+  setDayModal: Dispatch<SetStateAction<{ date: Date; items: PlanMemoryImage[] } | null>>;
 }) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const groupByPlanId = useMemo(() => {
+    const map = new Map<string, DiaryMemoryGroup>();
+    memoryGroups.forEach((g) => map.set(g.planId, g));
+    return map;
+  }, [memoryGroups]);
+
   const memoriesByDay = useMemo(() => {
-    const map = new Map<string, PlanMemoryImage>();
+    const map = new Map<string, PlanMemoryImage[]>();
 
     memories.forEach((memory) => {
       const date = new Date(memory.createdAt);
       if (Number.isNaN(date.getTime())) return;
 
       const key = formatDayKey(date);
-      if (!map.has(key)) {
-        map.set(key, memory);
-      }
+      const list = map.get(key) ?? [];
+      list.push(memory);
+      map.set(key, list);
+    });
+
+    map.forEach((list) => {
+      list.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
     });
 
     return map;
@@ -248,66 +352,138 @@ function CalendarView({
   }, [memories]);
 
   return (
-    <div ref={scrollContainerRef} className="flex flex-1 min-h-0 flex-col gap-[28px] overflow-y-auto pr-[2px]">
-      {months.map((month) => (
-        <section
-          key={month.key}
-          className="flex flex-col gap-[16px]"
+    <>
+      <Sheet open={dayModal !== null} onOpenChange={(open) => !open && setDayModal(null)}>
+        <SheetContent
+          side="bottom"
+          className={cn(
+            // Como máximo 468px; con pocos planes el sheet encoge al contenido; si hay muchos, scroll en la lista.
+            "flex max-h-[468px] min-h-0 w-full flex-col gap-0 overflow-hidden rounded-t-[36px] border-0 bg-surface-primary px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_40px_rgba(9,9,11,0.12)]",
+            "[&>button.absolute]:hidden",
+          )}
         >
-          <h2 className="type-body-m-medium text-primary-token">{month.label}</h2>
+          <div className="shrink-0">
+            <div
+              aria-hidden
+              className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#09090b]/15"
+            />
 
-          <div className="grid grid-cols-7 gap-x-[8px] gap-y-[12px]">
-            {weekLabels.map((label) => (
-              <div key={label} className="flex items-center justify-center">
-                <span className="type-body-xs text-secondary-token">{label}</span>
-              </div>
-            ))}
-
-            {month.weeks.flat().map((date, index) => {
-              if (!date) {
-                return <div key={`${month.key}-empty-${index}`} className="h-[44px]" />;
-              }
-
-              const dayKey = formatDayKey(date);
-              const memory = memoriesByDay.get(dayKey);
-
-              return (
-                <div key={dayKey} className="flex h-[44px] items-center justify-center">
-                  {memory ? (
-                    <div className="relative flex size-[40px] items-center justify-center overflow-hidden rounded-full">
-                      <img
-                        alt={memory.name}
-                        className="absolute inset-0 size-full object-cover"
-                        src={memory.url}
-                      />
-                      <div className="absolute inset-0 bg-[rgba(9,9,11,0.12)]" />
-                      <span className="relative type-body-xs text-invert-token">
-                        {date.getDate()}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="type-body-s text-primary-token">
-                      {date.getDate()}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+            <SheetTitle className="mb-4 px-2 text-center font-primary text-[22px] font-medium leading-[26px] text-primary-token">
+              {dayModal ? formatDayHeading(dayModal.date) : ""}
+            </SheetTitle>
           </div>
-        </section>
-      ))}
-    </div>
+
+          {/* Outer solo scrollea; inner flex para gap. Si el outer fuera flex-col, los planes heredan flex-shrink y se aplastan. */}
+          <div
+            className="-mr-1 min-h-0 w-full shrink-0 overflow-y-auto overscroll-y-contain pb-1 pr-1 touch-pan-y"
+            style={{
+              WebkitOverflowScrolling: "touch",
+              maxHeight:
+                "calc(468px - 12px - 20px - env(safe-area-inset-bottom, 0px) - 5.75rem)",
+            }}
+          >
+            <div className="flex flex-col gap-5">
+              {dayModal && dayModal.items.length === 0 ? (
+                <p className="text-center type-body-s text-secondary-token">
+                  No memories on this date.
+                </p>
+              ) : null}
+
+              {dayModalGroups.map((g) => (
+                <DiaryMemoryCard
+                  key={g.planId}
+                  calendarReturnDayKey={dayModal ? formatDayKey(dayModal.date) : undefined}
+                  group={g}
+                  routerState={groupByPlanId.get(g.planId)}
+                />
+              ))}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <div ref={scrollContainerRef} className="flex flex-1 min-h-0 flex-col gap-[28px] overflow-y-auto pr-[2px]">
+        {months.map((month) => (
+          <section
+            key={month.key}
+            className="flex flex-col gap-[16px]"
+          >
+            <h2 className="type-body-m-medium text-primary-token">{month.label}</h2>
+
+            <div className="grid grid-cols-7 gap-x-[8px] gap-y-[12px]">
+              {weekLabels.map((label) => (
+                <div key={label} className="flex items-center justify-center">
+                  <span className="type-body-xs text-secondary-token">{label}</span>
+                </div>
+              ))}
+
+              {month.weeks.flat().map((date, index) => {
+                if (!date) {
+                  return <div key={`${month.key}-empty-${index}`} className="h-[44px]" />;
+                }
+
+                const dayKey = formatDayKey(date);
+                const dayMemories = memoriesByDay.get(dayKey) ?? [];
+                const thumbnail = dayMemories[0];
+                const count = dayMemories.length;
+
+                return (
+                  <div key={dayKey} className="flex h-[44px] items-center justify-center">
+                    <button
+                      type="button"
+                      aria-label={
+                        thumbnail
+                          ? `View memories, ${formatDayHeading(date)}, ${count} photo${count === 1 ? "" : "s"}`
+                          : `No memories on ${formatDayHeading(date)}`
+                      }
+                      className={cn(
+                        "flex size-[44px] items-center justify-center rounded-[12px] outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring",
+                        thumbnail ? "p-[2px]" : "hover:bg-surface-secondary/80",
+                      )}
+                      onClick={() => setDayModal({ date: new Date(date), items: dayMemories })}
+                    >
+                      {thumbnail ? (
+                        <div className="relative flex size-[40px] items-center justify-center overflow-hidden rounded-full">
+                          <img
+                            alt=""
+                            aria-hidden
+                            className="absolute inset-0 size-full object-cover"
+                            src={thumbnail.url}
+                          />
+                          <div className="absolute inset-0 bg-[rgba(9,9,11,0.12)]" />
+                          <span className="relative type-body-xs font-medium tabular-nums text-invert-token">
+                            {date.getDate()}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="type-body-s tabular-nums text-primary-token">
+                          {date.getDate()}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </>
   );
 }
 
 export default function DiaryScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [viewMode, setViewMode] = useState<DiaryViewMode>("grid");
   const [memories, setMemories] = useState<PlanMemoryImage[]>([]);
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
+  const [memoriesReady, setMemoriesReady] = useState(false);
+  const [dayModal, setDayModal] = useState<{ date: Date; items: PlanMemoryImage[] } | null>(null);
 
   useEffect(() => {
     let active = true;
+    setMemoriesReady(false);
 
     const run = async () => {
       const [nextMemories, nextPlans] = await Promise.all([
@@ -319,6 +495,7 @@ export default function DiaryScreen() {
 
       setMemories(nextMemories);
       setSavedPlans(nextPlans);
+      setMemoriesReady(true);
     };
 
     void run();
@@ -326,7 +503,7 @@ export default function DiaryScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [location.key]);
 
 
   const memoryGroups = useMemo(() => {
@@ -336,33 +513,78 @@ export default function DiaryScreen() {
     memories.forEach((memory) => {
       const existing = groups.get(memory.planId);
       const plan = planMap.get(memory.planId);
-      const description =
-        plan?.description?.trim() ||
-        "Photos saved from this plan so you can come back to the experience whenever you want.";
+      const note = memory.note?.trim();
 
       if (existing) {
+        if (!existing.description && note) {
+          existing.description = note;
+        }
         existing.images.push(memory);
         return;
       }
 
       groups.set(memory.planId, {
         createdAt: memory.createdAt,
-        description,
+        description: note || undefined,
         images: [memory],
         planId: memory.planId,
         title: plan?.title?.trim() || "Plan Title",
       });
     });
 
-    return Array.from(groups.values()).sort((left, right) =>
-      right.createdAt.localeCompare(left.createdAt),
-    );
+    return Array.from(groups.values())
+      .map((group) => ({
+        ...group,
+        images: [...group.images].sort(
+          (left, right) =>
+            new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+        ),
+      }))
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   }, [memories, savedPlans]);
+
+  const dayModalGroups = useMemo(() => {
+    if (!dayModal) return [];
+    return buildGroupsForCalendarDay(dayModal.items, memoryGroups);
+  }, [dayModal, memoryGroups]);
+
+  useEffect(() => {
+    const reopen = (location.state as { diaryReopenCalendarDay?: string } | null)
+      ?.diaryReopenCalendarDay;
+    if (!reopen || !memoriesReady) return;
+
+    const parts = reopen.split("-");
+    const y = Number(parts[0]);
+    const mo = Number(parts[1]);
+    const da = Number(parts[2]);
+    if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(da)) {
+      navigate(location.pathname, { replace: true, state: {} });
+      return;
+    }
+
+    const items = memories
+      .filter((memory) => {
+        const d = new Date(memory.createdAt);
+        if (Number.isNaN(d.getTime())) return false;
+        return formatDayKey(d) === reopen;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+
+    setViewMode("calendar");
+    setDayModal({ date: new Date(y, mo - 1, da), items });
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state, location.pathname, memories, memoriesReady, navigate]);
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface-primary">
       <div className="shrink-0 px-[20px]">
         <Header
+          onAddMemoryClick={() =>
+            navigate("/add-memories", { state: { hideSkip: true } })
+          }
           onViewModeChange={setViewMode}
           viewMode={viewMode}
         />
@@ -377,7 +599,13 @@ export default function DiaryScreen() {
       >
         {memoryGroups.length > 0 ? (
           viewMode === "calendar" ? (
-            <CalendarView memories={memories} />
+            <CalendarView
+              dayModal={dayModal}
+              dayModalGroups={dayModalGroups}
+              memories={memories}
+              memoryGroups={memoryGroups}
+              setDayModal={setDayModal}
+            />
           ) : (
             <div className="flex flex-col gap-[20px]">
               {memoryGroups.map((group) => (

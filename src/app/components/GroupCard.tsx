@@ -21,12 +21,14 @@ const collageSlotsByCount: Record<number, Array<{ left: string; rotation: number
 type GroupCardProps = {
   currentUserAvatar?: string;
   group: SavedGroup;
+  hasNewPlanProposal?: boolean;
   onClick: () => void;
 };
 
 export function GroupCard({
   currentUserAvatar,
   group,
+  hasNewPlanProposal = false,
   onClick,
 }: GroupCardProps) {
   const peopleCount = group.participants.length + 1;
@@ -46,7 +48,9 @@ export function GroupCard({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-[168px] shrink-0 flex-col rounded-[8px] border border-card-token bg-surface-primary text-left"
+      className={`flex w-[168px] shrink-0 flex-col rounded-[8px] border bg-surface-primary text-left ${
+        hasNewPlanProposal ? "border-[#FC312E]" : "border-card-token"
+      }`}
     >
       <div className="relative h-[144px] w-full rounded-[8px] bg-surface-secondary">
         {collageParticipants.map((participant, index) => {

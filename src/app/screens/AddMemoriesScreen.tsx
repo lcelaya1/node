@@ -6,13 +6,18 @@ import { IconButton } from "../components/IconButton";
 import type { DemoUser } from "../lib/demoUsers";
 import type { ParticipantReviewInput } from "../lib/planFeedback";
 import { savePlanMemories } from "../lib/planMemories";
+import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 
 type AddMemoriesState = {
+  /** Diary “Add memory” entry: no Skip (user returns with back). */
+  hideSkip?: boolean;
   memoryImages?: MemoryPreviewState[];
+  memoryNote?: string;
   overallLabel?: string;
   overallRating?: number;
   participantReviews?: ParticipantReviewInput[];
   participants?: DemoUser[];
+  selectedPlanId?: string;
   plan?: {
     id?: string | number;
     title?: string;
@@ -27,12 +32,10 @@ type MemoryPreviewState = {
 
 type MemoryPreview = MemoryPreviewState;
 
-function InfoContent() {
+function PostPlanIntro() {
   return (
     <div className="flex w-full flex-col items-start gap-[8px]">
-      <p className="w-full font-primary text-[24px] leading-[28px] text-primary-token">
-        Keep the memories
-      </p>
+      <p className="w-full font-primary text-[24px] leading-[28px] text-primary-token">Keep the memories</p>
       <p className="w-full type-body-s text-secondary-token">
         We know that a picture is worth a thousand words, so store the pictures of the plan so you can go back to them.
       </p>
@@ -45,9 +48,19 @@ export default function AddMemoriesScreen() {
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const state = (location.state as AddMemoriesState | null) ?? null;
+
+  /** Fixed for this mount — preserved across `replace` state updates. */
+  const [hideSkipFromDiary] = useState(() => Boolean(state?.hideSkip));
+  const isDiaryFlow = hideSkipFromDiary;
   const [selectedImages, setSelectedImages] = useState<MemoryPreview[]>(
     state?.memoryImages ?? [],
   );
+  const [memoryNote, setMemoryNote] = useState(() =>
+    state?.hideSkip ? "" : (state?.memoryNote ?? ""),
+  );
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState(() => state?.selectedPlanId ?? "");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const baseFlowState = useMemo(
     () => ({
@@ -65,6 +78,79 @@ export default function AddMemoriesScreen() {
       state?.plan,
     ],
   );
+
+  const pastPlanChoices = useMemo(() => {
+    const preset =
+      state?.plan?.id !== undefined && state?.plan?.id !== null
+        ? String(state.plan.id)
+        : null;
+
+    const list = savedPlans.filter((plan) =>
+      preset !== null && String(plan.id) === preset
+        ? true
+        : Boolean(plan.completedAt),
+    );
+
+    return list.sort((a, b) => {
+      const aT = new Date(a.completedAt ?? a.createdAt).getTime();
+      const bT = new Date(b.completedAt ?? b.createdAt).getTime();
+      return bT - aT;
+    });
+  }, [savedPlans, state?.plan?.id]);
+
+  useEffect(() => {
+    if (!isDiaryFlow) return;
+    void loadSavedPlans()
+      .then(setSavedPlans)
+      .catch(() => setSavedPlans([]));
+  }, [isDiaryFlow]);
+
+  /** Post-plan flow: plan comes from navigation state, not the picker. */
+  useEffect(() => {
+    if (isDiaryFlow) return;
+    if (state?.plan?.id === undefined || state?.plan?.id === null) return;
+    const id = String(state.plan.id);
+    if (id !== selectedPlanId) setSelectedPlanId(id);
+  }, [isDiaryFlow, selectedPlanId, state?.plan?.id]);
+
+  /** Diary flow: sync plan picker when choices load or current id is stale. */
+  useEffect(() => {
+    if (!isDiaryFlow) return;
+    if (pastPlanChoices.length === 0) return;
+
+    const preset =
+      state?.plan?.id !== undefined && state?.plan?.id !== null
+        ? String(state.plan.id)
+        : null;
+
+    const presetPick =
+      preset && pastPlanChoices.some((p) => String(p.id) === preset) ? preset : null;
+
+    const hasValidPick =
+      selectedPlanId !== "" &&
+      pastPlanChoices.some((p) => String(p.id) === selectedPlanId);
+
+    const nextPick = hasValidPick
+      ? selectedPlanId
+      : presetPick ?? String(pastPlanChoices[0].id);
+
+    if (nextPick !== selectedPlanId) setSelectedPlanId(nextPick);
+  }, [isDiaryFlow, pastPlanChoices, selectedPlanId, state?.plan?.id]);
+
+  const selectedPlan = useMemo(
+    () =>
+      isDiaryFlow
+        ? (pastPlanChoices.find((p) => String(p.id) === selectedPlanId) ?? null)
+        : null,
+    [isDiaryFlow, pastPlanChoices, selectedPlanId],
+  );
+
+  const canPickPhotos = isDiaryFlow ? pastPlanChoices.length > 0 : Boolean(selectedPlanId);
+
+  const primaryActionDisabled =
+    isDiaryFlow
+      ? pastPlanChoices.length === 0 || !selectedPlanId || isSaving
+      : !selectedPlanId || isSaving;
 
   const selectedCountLabel = useMemo(() => {
     if (selectedImages.length === 0) return "Select one or more photos";
@@ -122,27 +208,63 @@ export default function AddMemoriesScreen() {
       state: {
         ...baseFlowState,
         memoryImages: selectedImages,
+        ...(selectedPlanId ? { selectedPlanId } : {}),
+        ...(!isDiaryFlow ? { memoryNote } : {}),
+        ...(hideSkipFromDiary ? { hideSkip: true } : {}),
       },
     });
-  }, [baseFlowState, navigate, selectedImages]);
+  }, [
+    baseFlowState,
+    hideSkipFromDiary,
+    isDiaryFlow,
+    memoryNote,
+    navigate,
+    selectedImages,
+    selectedPlanId,
+  ]);
 
-  const goToRepeatVibe = async () => {
+  const finalizeAddMemories = async (destination: "diary" | "repeat-vibe") => {
     if (isSaving) return;
 
+    setSaveError(null);
     setIsSaving(true);
 
     try {
-      if (state?.plan?.id !== undefined && state?.plan?.id !== null && selectedImages.length > 0) {
-        await savePlanMemories({
+      if (selectedPlanId && selectedImages.length > 0) {
+        const { rows, error } = await savePlanMemories({
           images: selectedImages,
-          planId: String(state.plan.id),
+          note: isDiaryFlow ? undefined : memoryNote,
+          planId: selectedPlanId,
+          mergeWithExisting: destination === "diary",
         });
+
+        if (error) {
+          setSaveError(error);
+          return;
+        }
+
+        if (rows.length === 0) {
+          setSaveError("Nothing was saved. Check Supabase tables and bucket setup.");
+          return;
+        }
       }
+
+      if (destination === "diary") {
+        navigate("/diary", { replace: true });
+        return;
+      }
+
+      const planPayload =
+        selectedPlan != null
+          ? { id: selectedPlan.id, title: selectedPlan.title }
+          : baseFlowState.plan;
 
       navigate("/repeat-vibe", {
         state: {
           ...baseFlowState,
+          plan: planPayload,
           memoryImages: selectedImages,
+          memoryNote,
         },
       });
     } finally {
@@ -158,18 +280,57 @@ export default function AddMemoriesScreen() {
       >
         <FlowScreenHeader
           onBack={() => navigate(-1)}
-          onSkip={() => void goToRepeatVibe()}
+          onSkip={
+            hideSkipFromDiary
+              ? undefined
+              : () => {
+                  void finalizeAddMemories("repeat-vibe");
+                }
+          }
         />
 
         <div className="flex flex-col gap-[36px] pt-[36px]">
+          {isDiaryFlow ? (
+            <h1 className="type-heading-2xl text-primary-token">New memories</h1>
+          ) : (
+            <PostPlanIntro />
+          )}
+
           <div className="flex flex-col gap-[32px]">
-            <InfoContent />
+            {isDiaryFlow ? (
+              <div className="flex flex-col gap-[8px]">
+                <label htmlFor="add-memory-plan" className="type-body-s text-primary-token">
+                  Which plan are these memories for?
+                </label>
+
+                {pastPlanChoices.length > 0 ? (
+                  <select
+                    id="add-memory-plan"
+                    value={selectedPlanId}
+                    onChange={(event) => setSelectedPlanId(event.target.value)}
+                    className="w-full rounded-[12px] border border-card-token bg-surface-primary px-[12px] py-[10px] type-body-s text-primary-token outline-none"
+                  >
+                    {pastPlanChoices.map((plan) => (
+                      <option key={plan.id} value={String(plan.id)}>
+                        {plan.title.trim() || "Untitled plan"}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="type-body-s text-secondary-token">
+                    You don&apos;t have any finished plans yet. Complete a plan first, then add photos
+                    here.
+                  </p>
+                )}
+              </div>
+            ) : null}
 
             <div className="flex flex-col gap-[16px]">
               <button
                 type="button"
+                disabled={!canPickPhotos}
                 onClick={openPicker}
-                className="relative flex min-h-[186px] w-full flex-col items-center justify-center gap-[12px] rounded-[16px] border border-card-token bg-[#efefef] px-[24px] py-[32px] text-center"
+                className="relative flex min-h-[186px] w-full flex-col items-center justify-center gap-[12px] rounded-[16px] border border-card-token bg-[#efefef] px-[24px] py-[32px] text-center disabled:pointer-events-none disabled:opacity-40"
               >
                 <div className="flex size-[48px] items-center justify-center rounded-full bg-surface-primary">
                   <AppIcon name="Camera" size={24} />
@@ -188,7 +349,7 @@ export default function AddMemoriesScreen() {
                     size="Small"
                     onClick={(event) => {
                       event.stopPropagation();
-                      openPicker();
+                      if (canPickPhotos) openPicker();
                     }}
                     aria-label="Add photos"
                   />
@@ -204,8 +365,22 @@ export default function AddMemoriesScreen() {
                 onChange={handleFilesSelected}
               />
 
+              {!isDiaryFlow ? (
+                <div className="flex flex-col gap-[8px]">
+                  <p className="type-body-s text-primary-token">
+                    Add a note to remember this plan <span className="text-secondary-token">(Optional)</span>
+                  </p>
+                  <textarea
+                    value={memoryNote}
+                    onChange={(event) => setMemoryNote(event.target.value)}
+                    placeholder="Leave a note for future you"
+                    className="min-h-[92px] w-full resize-none rounded-[12px] border border-card-token bg-surface-primary px-[12px] py-[10px] type-body-s text-primary-token outline-none placeholder:text-secondary-token"
+                  />
+                </div>
+              ) : null}
+
               {selectedImages.length > 0 ? (
-                <div className="grid grid-cols-2 gap-[12px]">
+                <div className="grid grid-cols-3 gap-[8px]">
                   {selectedImages.map((image) => (
                     <div
                       key={image.id}
@@ -234,15 +409,29 @@ export default function AddMemoriesScreen() {
           </div>
 
           {selectedImages.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => void goToRepeatVibe()}
-              className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-primary"
-            >
-              <span className="type-body-m text-invert-token">
-                {isSaving ? "Saving..." : "Continue"}
-              </span>
-            </button>
+            <div className="flex w-full flex-col gap-[8px]">
+              {saveError ? (
+                <p className="type-body-s text-brand-token" role="alert">
+                  {saveError}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                disabled={primaryActionDisabled}
+                onClick={() =>
+                  void finalizeAddMemories(isDiaryFlow ? "diary" : "repeat-vibe")
+                }
+                className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-button-primary disabled:pointer-events-none disabled:opacity-40"
+              >
+                <span className="type-body-m text-invert-token">
+                  {isSaving
+                    ? "Saving..."
+                    : isDiaryFlow
+                      ? "Save"
+                      : "Continue"}
+                </span>
+              </button>
+            </div>
           ) : null}
         </div>
       </div>

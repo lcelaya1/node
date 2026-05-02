@@ -13,6 +13,7 @@ import AddMemoriesScreen from "./screens/AddMemoriesScreen";
 import RepeatVibeScreen from "./screens/RepeatVibeScreen";
 import GroupsScreen from "./screens/GroupsScreen";
 import DiaryScreen from "./screens/DiaryScreen";
+import DiaryMemoryDetailScreen from "./screens/DiaryMemoryDetailScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 
 export const router = createBrowserRouter([
@@ -43,6 +44,10 @@ export const router = createBrowserRouter([
   {
     path: "/groups",
     Component: GroupsScreen,
+  },
+  {
+    path: "/diary/memory/:planId",
+    Component: DiaryMemoryDetailScreen,
   },
   {
     path: "/diary",

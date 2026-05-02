@@ -78,7 +78,7 @@
   --color-icon-brand: var(--primitive-brand-500);
   --color-button-primary: var(--primitive-neutral-950);
   --color-button-secondary: var(--primitive-brand-500);
-  --color-overlay-scrim: color-mix(in srgb, var(--primitive-neutral-black) 20%, transparent);
+  --color-overlay-scrim: #00000042;
   --color-overlay-soft: color-mix(in srgb, var(--primitive-neutral-black) 4%, transparent);
   --color-white-10: color-mix(in srgb, var(--primitive-neutral-white) 10%, transparent);
   --color-white-04: color-mix(in srgb, var(--primitive-neutral-white) 4%, transparent);

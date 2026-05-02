@@ -138,15 +138,6 @@ function calculateAge(birthDate: string) {
   return age;
 }
 
-function getPlanStartDate(plan: SavedPlan) {
-  if (!plan.whenDate || !plan.whenTime) return null;
-
-  const parsedDate = new Date(`${plan.whenDate}T${plan.whenTime}`);
-  if (Number.isNaN(parsedDate.getTime())) return null;
-
-  return parsedDate;
-}
-
 function getInterestImage(label: string) {
   switch (label.trim().toLowerCase()) {
     case "coffee":
@@ -347,19 +338,10 @@ export default function ProfileScreen() {
     () => savedPlans.filter((plan) => plan.source !== "created"),
     [savedPlans],
   );
-  const pastJoinedPlans = useMemo(() => {
-    const now = new Date();
-
-    return joinedPlans.filter((plan) => {
-      if (plan.completedAt) return true;
-
-      const startDate = getPlanStartDate(plan);
-      if (!startDate) return false;
-
-      const availableAt = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
-      return now >= availableAt;
-    });
-  }, [joinedPlans]);
+  const pastJoinedPlans = useMemo(
+    () => joinedPlans.filter((plan) => Boolean(plan.completedAt)),
+    [joinedPlans],
+  );
   const myFriendsCount = useMemo(() => {
     const seen = new Set<string>();
 

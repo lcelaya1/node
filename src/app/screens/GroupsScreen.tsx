@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { GroupCard } from "../components/GroupCard";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
+import { loadRepeatGroupPlans } from "../lib/repeatGroupPlans";
 import { supabase } from "../lib/supabase";
 import imageLeft from "../../assets/V2 APP (25/Rectangle 13.png";
 import imageBottom from "../../assets/V2 APP (25/Rectangle 14.png";
@@ -38,11 +39,36 @@ function CircleAcceptedModal({
   );
 }
 
+function GroupPlansLegend() {
+  return (
+    <div className="flex items-center gap-[24px]">
+      <div className="flex items-center gap-[8px]">
+        <div className="relative size-[12px] shrink-0">
+          <svg className="absolute inset-0 block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 12 12">
+            <circle cx="6" cy="6" r="6" fill="#FC312E" />
+          </svg>
+        </div>
+        <p className="text-[12px] leading-[16px] text-secondary-token">New plan proposal</p>
+      </div>
+
+      <div className="flex items-center gap-[8px]">
+        <div className="relative size-[12px] shrink-0">
+          <svg className="absolute inset-0 block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 12 12">
+            <circle cx="6" cy="6" r="6" fill="#E4E4E7" />
+          </svg>
+        </div>
+        <p className="text-[12px] leading-[16px] text-secondary-token">No plans yet</p>
+      </div>
+    </div>
+  );
+}
+
 export default function GroupsScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = (location.state as GroupsLocationState | null) ?? null;
   const [groups, setGroups] = useState<SavedGroup[]>([]);
+  const [hasNewPlanByGroupId, setHasNewPlanByGroupId] = useState<Record<string, boolean>>({});
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isAcceptedModalOpen, setIsAcceptedModalOpen] = useState(
     Boolean(locationState?.acceptedParticipantNames?.length),
@@ -101,6 +127,36 @@ export default function GroupsScreen() {
     let active = true;
 
     const run = async () => {
+      if (groups.length === 0) {
+        if (!active) return;
+        setHasNewPlanByGroupId({});
+        return;
+      }
+
+      const entries = await Promise.all(
+        groups.map(async (group) => {
+          const plans = await loadRepeatGroupPlans(group.id);
+          return [group.id, plans.length > 0] as const;
+        }),
+      );
+
+      if (!active) return;
+      const nextMap = Object.fromEntries(entries);
+
+      setHasNewPlanByGroupId(nextMap);
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [groups]);
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
       if (!supabase) return;
 
       const {
@@ -135,18 +191,21 @@ export default function GroupsScreen() {
         className="flex flex-1 flex-col gap-[24px] overflow-y-auto px-[20px]"
         style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
       >
-        <div className="flex items-center justify-between pt-[32px]">
-          <h1 className="type-heading-2xl text-primary-token">My circles</h1>
+        <div className="flex flex-col gap-[16px] pt-[32px]">
+          <div className="flex items-center justify-between">
+            <h1 className="type-heading-2xl text-primary-token">My circles</h1>
 
-          <div className="size-[40px] overflow-hidden rounded-full bg-surface-secondary">
-            {avatarUrl ? (
-              <img
-                alt="Profile"
-                className="size-full object-cover"
-                src={avatarUrl}
-              />
-            ) : null}
+            <div className="size-[40px] overflow-hidden rounded-full bg-surface-secondary">
+              {avatarUrl ? (
+                <img
+                  alt="Profile"
+                  className="size-full object-cover"
+                  src={avatarUrl}
+                />
+              ) : null}
+            </div>
           </div>
+          <GroupPlansLegend />
         </div>
 
         <div className="flex flex-wrap gap-[14px]">
@@ -156,6 +215,7 @@ export default function GroupsScreen() {
                 key={group.id}
                 currentUserAvatar={avatarUrl || undefined}
                 group={group}
+                hasNewPlanProposal={Boolean(hasNewPlanByGroupId[group.id])}
                 onClick={() =>
                   navigate("/chat", {
                     state: {

@@ -2,7 +2,8 @@ import { IconButton } from "./IconButton";
 
 type FlowScreenHeaderProps = {
   onBack: () => void;
-  onSkip: () => void;
+  /** If omitted, the Skip action is hidden (standalone entrypoints). */
+  onSkip?: () => void;
 };
 
 export function FlowScreenHeader({ onBack, onSkip }: FlowScreenHeaderProps) {
@@ -17,13 +18,15 @@ export function FlowScreenHeader({ onBack, onSkip }: FlowScreenHeaderProps) {
         className="-ml-[10px]"
       />
 
-      <button
-        type="button"
-        onClick={onSkip}
-        className="type-body-s text-secondary-token"
-      >
-        Skip
-      </button>
+      {onSkip ? (
+        <button
+          type="button"
+          onClick={onSkip}
+          className="type-body-s text-secondary-token"
+        >
+          Skip
+        </button>
+      ) : null}
     </div>
   );
 }
