@@ -1,6 +1,11 @@
 import { useRef, useState } from "react";
 import { AppIcon } from "../components/AppIcon";
 import { CreateAccountBackButton } from "../components/CreateAccountBackButton";
+import {
+  dataUrlToBlob,
+  isProfileAvatarDisplayUrl,
+  uploadProfileAvatarToStorage,
+} from "../lib/profileAvatar";
 import { supabase } from "../lib/supabase";
 
 type CreateProfilePictureScreenProps = {
@@ -19,6 +24,8 @@ export default function CreateProfilePictureScreen({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /** Blob original para subir a Storage (la vista previa sigue siendo data URL). */
+  const pendingUploadBlobRef = useRef<Blob | null>(null);
 
   const canContinue = Boolean(value) && !isSaving;
 
@@ -120,12 +127,14 @@ export default function CreateProfilePictureScreen({
           jpegBlob = fallbackConverted;
         }
 
+        pendingUploadBlobRef.current = jpegBlob;
         const dataUrl = await fileToDataUrl(jpegBlob);
         onChange?.(dataUrl);
         setErrorMessage("");
         return;
       }
 
+      pendingUploadBlobRef.current = file;
       const dataUrl = await fileToDataUrl(file);
       onChange?.(dataUrl);
       setErrorMessage("");
@@ -158,11 +167,49 @@ export default function CreateProfilePictureScreen({
       if (userError) throw userError;
       if (!user) throw new Error("We couldn’t find your account. Please log in again.");
 
+      const trimmedPreview = value.trim();
+
+      // Volver atrás desde “Interests” con una URL ya guardada en esta sesión.
+      if (!pendingUploadBlobRef.current && isProfileAvatarDisplayUrl(trimmedPreview)) {
+        const { error } = await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            email: user.email ?? null,
+            avatar_url: trimmedPreview,
+          },
+          { onConflict: "id" },
+        );
+
+        if (error) throw error;
+
+        await supabase.auth.updateUser({
+          data: { avatar_url: trimmedPreview },
+        });
+
+        onContinue?.();
+        return;
+      }
+
+      const blob =
+        pendingUploadBlobRef.current ??
+        (trimmedPreview.startsWith("data:") ? dataUrlToBlob(trimmedPreview) : null);
+
+      if (!blob) {
+        throw new Error("Choose a photo first.");
+      }
+
+      const uploaded = await uploadProfileAvatarToStorage(supabase, user.id, blob);
+      if ("error" in uploaded) {
+        throw new Error(uploaded.error);
+      }
+
+      const publicUrl = uploaded.publicUrl;
+
       const { error } = await supabase.from("profiles").upsert(
         {
           id: user.id,
           email: user.email ?? null,
-          avatar_url: value,
+          avatar_url: publicUrl,
         },
         {
           onConflict: "id",
@@ -170,6 +217,13 @@ export default function CreateProfilePictureScreen({
       );
 
       if (error) throw error;
+
+      await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+
+      onChange?.(publicUrl);
+      pendingUploadBlobRef.current = null;
 
       onContinue?.();
     } catch (error) {

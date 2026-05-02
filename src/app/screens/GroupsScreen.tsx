@@ -192,19 +192,7 @@ export default function GroupsScreen() {
         style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
       >
         <div className="flex flex-col gap-[16px] pt-[32px]">
-          <div className="flex items-center justify-between">
-            <h1 className="type-heading-2xl text-primary-token">My circles</h1>
-
-            <div className="size-[40px] overflow-hidden rounded-full bg-surface-secondary">
-              {avatarUrl ? (
-                <img
-                  alt="Profile"
-                  className="size-full object-cover"
-                  src={avatarUrl}
-                />
-              ) : null}
-            </div>
-          </div>
+          <h1 className="type-heading-2xl text-primary-token">My circles</h1>
           <GroupPlansLegend />
         </div>
 

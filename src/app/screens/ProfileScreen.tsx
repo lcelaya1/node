@@ -6,6 +6,7 @@ import { AppNavbar } from "../components/AppNavbar";
 import { loadInterestCatalogMap } from "../lib/interestCatalog";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
+import { isProfileAvatarDisplayUrl } from "../lib/profileAvatar";
 import { supabase } from "../lib/supabase";
 import { cn } from "../components/ui/utils";
 import type { DemoUser } from "../lib/demoUsers";
@@ -164,17 +165,6 @@ function getInterestImage(label: string) {
   }
 }
 
-function isUsableAvatarUrl(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  return (
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    trimmed.startsWith("data:") ||
-    trimmed.startsWith("/")
-  );
-}
-
 export default function ProfileScreen() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -242,9 +232,9 @@ export default function ProfileScreen() {
 
       setProfile({
         avatarUrl:
-          typeof data.avatar_url === "string" && isUsableAvatarUrl(data.avatar_url)
+          typeof data.avatar_url === "string" && isProfileAvatarDisplayUrl(data.avatar_url)
             ? data.avatar_url
-            : isUsableAvatarUrl(metadataAvatar)
+            : isProfileAvatarDisplayUrl(metadataAvatar)
               ? metadataAvatar
               : "",
         bio: typeof data.bio === "string" ? data.bio : "",
