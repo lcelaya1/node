@@ -143,7 +143,12 @@ function HomePlanCard({
 
       <div className="flex w-full flex-col items-start">
         <p
-          className="type-body-s-medium w-full whitespace-normal break-words text-left text-primary-token"
+          className="type-body-s-medium w-full overflow-hidden whitespace-normal break-words text-left text-primary-token"
+          style={{
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 2,
+            display: "-webkit-box",
+          }}
         >
           {title}
         </p>
@@ -331,12 +336,12 @@ export default function PlansHomeScreen() {
 
   const filteredPlans = upcomingPlans.filter((plan) => matchesFilter(plan, selectedFilter));
   const visiblePlans = filteredPlans.slice(0, 6);
-  const chatPlans = upcomingPlans.slice(0, 3);
+  const chatPlans = upcomingPlans;
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">
       <div
-        className="flex flex-1 flex-col gap-[24px] overflow-y-auto px-[20px]"
+        className="flex flex-1 flex-col gap-[24px] overflow-hidden px-[20px]"
         style={{ paddingBottom: "calc(108px + env(safe-area-inset-bottom))" }}
       >
         <HomeHeader title="Hello, Cristina!" topPaddingClassName="pt-[32px]" />
@@ -368,7 +373,7 @@ export default function PlansHomeScreen() {
             </div>
           </div>
 
-          <div className="-mr-[20px] flex h-[135px] w-auto items-start gap-[8px] overflow-x-auto overflow-y-hidden pb-[2px] pr-[20px]">
+          <div className="-mr-[20px] flex h-[156px] w-auto items-start gap-[8px] overflow-x-auto overflow-y-hidden pb-[2px] pr-[20px]">
             {visiblePlans.length === 0 ? (
               <div className="flex h-full w-full items-center justify-center rounded-[8px] border border-card-token border-dashed">
                 <p className="type-body-s text-secondary-token">No plans for this filter</p>
@@ -387,7 +392,7 @@ export default function PlansHomeScreen() {
           </div>
         </div>
 
-        <div className="flex w-full shrink-0 flex-col items-start">
+        <div className="flex min-h-0 w-full flex-1 flex-col items-start">
           <div className="relative w-full shrink-0">
             <div className="flex size-full flex-row items-center justify-center">
               <div className="relative flex size-full items-center justify-center">
@@ -398,7 +403,7 @@ export default function PlansHomeScreen() {
             </div>
           </div>
 
-          <div className="w-full">
+          <div className="w-full min-h-0 flex-1 overflow-y-auto">
             {chatPlans.map((plan, index) => (
               <PlanChatRow
                 key={`${plan.id}-chat`}
