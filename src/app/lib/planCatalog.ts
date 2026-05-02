@@ -1,4 +1,7 @@
 import { supabase } from "./supabase";
+import fallbackOutdoor from "../../imports/Onboarding1-2/d71adbbd75a6058eb54bbe101e0aa79bcdcdb1ac.png";
+import fallbackMix from "../../imports/Onboarding1-2/b8f37e23b800ebfea321ded39d699db9bb424ab8.png";
+import fallbackSkate from "../../imports/Onboarding1-2/658312597027029fbdfa0cb56d27fd3a6b129582.png";
 
 export type JoinFilterState = {
   battery: "low" | "mid" | "full";
@@ -56,6 +59,19 @@ export const ONBOARDING_PLAN_INTEREST_MAP: Record<string, string[]> = {
   "03f7b2ef-aa1b-4b6a-8010-b1289d0e3372": ["Cocktails"],
   "96c021c6-29c0-49cb-8292-4d308194600f": ["Coffee", "Literature"],
 };
+
+/** Infer liked onboarding cards from merged interest tags (e.g. `profileDraftInterests`) when revisiting this step. */
+export function likedOnboardingPlanIdsFromInterests(tags: readonly string[]): Set<string> {
+  const chosen = new Set(tags);
+  const result = new Set<string>();
+  for (const planId of ONBOARDING_PLAN_IDS) {
+    const planTags = ONBOARDING_PLAN_INTEREST_MAP[planId] ?? [];
+    if (planTags.length > 0 && planTags.every((t) => chosen.has(t))) {
+      result.add(planId);
+    }
+  }
+  return result;
+}
 
 const DISTANCE_MAP: Record<JoinFilterState["distance"], "close-by" | "short-ride" | "further-out"> = {
   anywhere: "further-out",
@@ -265,20 +281,107 @@ export async function loadMatchedCatalogPlans(filters: JoinFilterState): Promise
     .slice(0, 3);
 }
 
+/** Local demo stack when Supabase is off, the query fails, or `plan_catalog` has no rows (dev / preview). */
+export function getFallbackOnboardingPlans(): CatalogPlan[] {
+  const imgs = [fallbackSkate, fallbackMix, fallbackOutdoor] as const;
+  type Stub = Omit<CatalogPlan, "id">;
+
+  const stubs: Record<(typeof ONBOARDING_PLAN_IDS)[number], Stub> = {
+    "68e9d3ca-5155-40c9-a475-7ca3afbecb83": {
+      address: "Pl. dels Àngels, 1, Barcelona",
+      description: "",
+      eventDate: "2026-03-21",
+      imageSrc: imgs[0],
+      location: "MACBA Skate Plaza",
+      placeName: "MACBA Skate Plaza",
+      startTime: "17:00",
+      title: "Skateboard session at the plaza",
+      when: "21 Mar · 5pm",
+    },
+    "2c5b2095-64eb-435e-86d0-03b9013d9047": {
+      address: "Carrer de Blai",
+      description: "",
+      eventDate: "2026-04-06",
+      imageSrc: imgs[1],
+      location: "Poble-sec",
+      placeName: "Tapas crawl",
+      startTime: "19:30",
+      title: "Late tapas crawl",
+      when: "6 Apr · 7:30pm",
+    },
+    "2775d28d-520a-4865-bbbe-23d4f2588554": {
+      address: "Centre",
+      description: "",
+      eventDate: "2026-03-29",
+      imageSrc: imgs[2],
+      location: "Galeria Senda",
+      placeName: "Galeria Senda",
+      startTime: "19:30",
+      title: "Art gallery opening",
+      when: "29 Mar · 7:30pm",
+    },
+    "03f7b2ef-aa1b-4b6a-8010-b1289d0e3372": {
+      address: "Eixample",
+      description: "",
+      eventDate: "2026-04-08",
+      imageSrc: imgs[1],
+      location: "Cocktail bar",
+      placeName: "Vermuteria Rosa",
+      startTime: "21:00",
+      title: "Cocktails and vinyl",
+      when: "8 Apr · 9pm",
+    },
+    "96c021c6-29c0-49cb-8292-4d308194600f": {
+      address: "Gràcia",
+      description: "",
+      eventDate: "2026-05-02",
+      imageSrc: imgs[0],
+      location: "Café Cometa",
+      placeName: "Café Cometa",
+      startTime: "10:00",
+      title: "Coffee & book at a quiet café",
+      when: "2 May · 10am",
+    },
+  };
+
+  return ONBOARDING_PLAN_IDS.map((id) => ({ id, ...stubs[id] }));
+}
+
 export async function loadOnboardingPlans(): Promise<CatalogPlan[]> {
-  if (!supabase) return [];
+  try {
+    const fallbackList = getFallbackOnboardingPlans();
+    const byFallbackId = new Map(fallbackList.map((plan) => [plan.id, plan]));
 
-  const { data, error } = await supabase
-    .from("plan_catalog")
-    .select("id, title, description, event_date, start_time, place_name, address, photo_url, seed_plan_id, budget")
-    .in("id", ONBOARDING_PLAN_IDS);
+    if (!supabase) {
+      return fallbackList;
+    }
 
-  if (error || !data) return [];
+    const { data, error } = await supabase
+      .from("plan_catalog")
+      .select("id, title, description, event_date, start_time, place_name, address, photo_url, seed_plan_id, budget")
+      .in("id", ONBOARDING_PLAN_IDS);
 
-  const mapped = (data as MatchPlanCatalogRow[]).map(mapCatalogRow);
-  return ONBOARDING_PLAN_IDS
-    .map((id) => mapped.find((p) => p.id === id))
-    .filter((p): p is CatalogPlan => p !== undefined);
+    const serverById = new Map<string, CatalogPlan>();
+    if (!error && Array.isArray(data)) {
+      for (const row of data as MatchPlanCatalogRow[]) {
+        try {
+          const plan = mapCatalogRow(row);
+          serverById.set(plan.id, plan);
+        } catch {
+          /* skip malformed row */
+        }
+      }
+    }
+
+    /** Always expose all onboarding slots: server wins per id, else local stub */
+    return ONBOARDING_PLAN_IDS.map((id) => serverById.get(id) ?? byFallbackId.get(id)!);
+  } catch {
+    try {
+      return getFallbackOnboardingPlans();
+    } catch {
+      return [];
+    }
+  }
 }
 
 export async function loadCatalogPlanById(planId: string | number): Promise<CatalogPlan | null> {

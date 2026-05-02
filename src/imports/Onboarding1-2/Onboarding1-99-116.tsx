@@ -317,13 +317,13 @@ function Content() {
               </div>
             </div>
           </div>
-          <div className="absolute bg-[#fefefe] content-stretch drop-shadow-[0px_4px_6.1px_rgba(0,0,0,0.15)] flex flex-col h-[403px] items-start justify-end left-[41px] rounded-[20.535px] top-0 w-[264.389px]" data-name="Plan Card">
-            <div aria-hidden="true" className="absolute border-[#e4e4e7] border-[0.856px] border-solid inset-0 pointer-events-none rounded-[20.535px]" />
+          <div className="absolute bg-[#fefefe] content-stretch drop-shadow-[0px_4px_6.1px_rgba(0,0,0,0.15)] flex flex-col h-[403px] items-start justify-end left-[41px] rounded-[20px] top-0 w-[264.389px]" data-name="Plan Card">
+            <div aria-hidden="true" className="absolute border-[#e4e4e7] border-[0.856px] border-solid inset-0 pointer-events-none rounded-[20px]" />
             <Frame3 />
-            <div className="flex-[1_0_0] min-h-px relative rounded-[20.535px] w-full">
-              <div aria-hidden="true" className="absolute inset-0 pointer-events-none rounded-[20.535px]">
-                <img alt="" className="absolute max-w-none object-cover rounded-[20.535px] size-full" src={imgRectangle3} />
-                <div className="absolute bg-[rgba(0,0,0,0.2)] inset-0 rounded-[20.535px]" />
+            <div className="flex-[1_0_0] min-h-px relative w-full overflow-hidden" style={{ borderRadius: 20 }}>
+              <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
+                <img alt="" className="absolute max-w-none object-cover size-full" src={imgRectangle3} />
+                <div className="absolute inset-0 bg-[rgba(0,0,0,0.2)]" />
               </div>
             </div>
           </div>
