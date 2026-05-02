@@ -23,14 +23,20 @@ function MemoryCarousel({ images }: { images: PlanMemoryImage[] }) {
   return (
     <div
       ref={scrollRef}
-      className="-mx-[12px] flex w-auto gap-[12px] overflow-x-auto px-[12px] pb-[2px]"
+      className="-mx-[12px] flex w-auto gap-[12px] overflow-x-scroll overscroll-x-contain px-[12px] pb-[2px] touch-pan-x"
+      style={{ WebkitOverflowScrolling: "touch" }}
     >
       {images.map((image) => (
         <div
           key={image.id}
           className="h-[168px] w-[150px] shrink-0 overflow-hidden rounded-[16px] bg-surface-secondary"
         >
-          <img alt={image.name} className="size-full object-cover" src={image.url} />
+          <img
+            alt={image.name}
+            className="pointer-events-none size-full select-none object-cover"
+            draggable={false}
+            src={image.url}
+          />
         </div>
       ))}
     </div>
@@ -84,18 +90,28 @@ export function DiaryMemoryCard({
 }) {
   const navigate = useNavigate();
 
+  const goToDetail = () => {
+    navigate(`/diary/memory/${encodeURIComponent(group.planId)}`, {
+      state: {
+        group: routerState ?? group,
+        ...(calendarReturnDayKey ? { diaryReopenCalendarDay: calendarReturnDayKey } : {}),
+      },
+    });
+  };
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Open memory: ${group.title}`}
       className="block w-full shrink-0 cursor-pointer overflow-hidden rounded-[16px] border border-card-token bg-surface-primary p-[16px] text-left outline-none transition-opacity active:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      onClick={() =>
-        navigate(`/diary/memory/${encodeURIComponent(group.planId)}`, {
-          state: {
-            group: routerState ?? group,
-            ...(calendarReturnDayKey ? { diaryReopenCalendarDay: calendarReturnDayKey } : {}),
-          },
-        })
-      }
+      onClick={goToDetail}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          goToDetail();
+        }
+      }}
     >
       <div className="flex flex-col gap-[20px]">
         <p className="type-heading-m text-primary-token">{group.title}</p>
@@ -104,6 +120,6 @@ export function DiaryMemoryCard({
 
         <MemoryCaptionBlock createdAt={group.createdAt} description={group.description} />
       </div>
-    </button>
+    </div>
   );
 }
