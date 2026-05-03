@@ -85,7 +85,7 @@ export function HomeHeader({
           alt={fullName || "Profile"}
           className="size-full object-cover"
           decoding="async"
-          fetchPriority="high"
+          fetchpriority="high"
           loading="eager"
           src={avatarUrl || avatarImage}
         />

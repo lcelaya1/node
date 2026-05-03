@@ -190,7 +190,16 @@ export default function ProfileScreen() {
   const [interestImageMap, setInterestImageMap] = useState<Map<string, string>>(new Map());
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  const [localAvatarPreview, setLocalAvatarPreview] = useState<string | null>(null);
+  const localAvatarPreviewRef = useRef<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Revoke blob URLs on unmount to avoid memory leaks.
+  useEffect(() => {
+    return () => {
+      if (localAvatarPreviewRef.current) URL.revokeObjectURL(localAvatarPreviewRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -356,7 +365,7 @@ export default function ProfileScreen() {
   const displayTitle = displayAge !== null ? `${displayName}, ${displayAge}` : displayName;
   const displayBio =
     profile.bio.trim() || "Tell us a bit about yourself to complete your profile.";
-  const displayAvatar = profile.avatarUrl.trim() || avatarImage;
+  const displayAvatar = (localAvatarPreview ?? profile.avatarUrl.trim()) || avatarImage;
   const displayInterests = profile.interests.slice(0, 3);
   const displayFriends = demoProfile?.friendsCount ?? myFriendsCount;
   const displayPlansCreated = demoProfile ? profile.plansCreated ?? 0 : createdPlans.length;
@@ -382,36 +391,54 @@ export default function ProfileScreen() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!supabase || !user) {
+    // Show the picked image instantly, before any upload.
+    if (localAvatarPreviewRef.current) URL.revokeObjectURL(localAvatarPreviewRef.current);
+    const localUrl = URL.createObjectURL(file);
+    localAvatarPreviewRef.current = localUrl;
+    setLocalAvatarPreview(localUrl);
+    setAvatarError("");
+
+    if (!supabase) {
+      event.target.value = "";
+      return;
+    }
+
+    // Context user may not be set yet — fall back to a direct session check.
+    const authUser = user ?? (await supabase.auth.getUser()).data.user;
+    if (!authUser) {
+      setAvatarError("Not signed in. Please refresh and try again.");
       event.target.value = "";
       return;
     }
 
     setIsUpdatingAvatar(true);
-    setAvatarError("");
 
     try {
-      const uploaded = await uploadProfileAvatarToStorage(supabase, user.id, file);
+      const uploaded = await uploadProfileAvatarToStorage(supabase, authUser.id, file);
       if ("error" in uploaded) throw new Error(uploaded.error);
 
       const publicUrl = uploaded.publicUrl;
 
+      const avatarUrlWithBuster = `${publicUrl}?t=${Date.now()}`;
+
       const { error: profileError } = await supabase.from("profiles").upsert(
         {
-          id: user.id,
-          email: user.email ?? null,
-          avatar_url: publicUrl,
+          id: authUser.id,
+          email: authUser.email ?? null,
+          avatar_url: avatarUrlWithBuster,
         },
         { onConflict: "id" },
       );
       if (profileError) throw profileError;
 
-      await supabase.auth.updateUser({
-        data: { avatar_url: publicUrl },
-      });
-
-      setProfile((prev) => ({ ...prev, avatarUrl: publicUrl }));
+      setProfile((prev) => ({ ...prev, avatarUrl: avatarUrlWithBuster }));
     } catch (err) {
+      // Revert the preview on failure.
+      if (localAvatarPreviewRef.current === localUrl) {
+        URL.revokeObjectURL(localUrl);
+        localAvatarPreviewRef.current = null;
+        setLocalAvatarPreview(null);
+      }
       setAvatarError(
         err instanceof Error ? err.message : "Couldn't update picture. Try again.",
       );
@@ -496,7 +523,7 @@ export default function ProfileScreen() {
                 ref={avatarInputRef}
                 type="file"
                 accept="image/*"
-                className="hidden"
+                style={{ position: "absolute", width: 0, height: 0, opacity: 0, overflow: "hidden" }}
                 onChange={handleAvatarFileChange}
               />
               {!demoProfile && avatarError ? (
