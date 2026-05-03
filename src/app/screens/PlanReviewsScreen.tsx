@@ -14,6 +14,12 @@ type ParticipantEntry = {
   name: string;
 };
 
+const VIBES_BY_NAME: Record<string, string[]> = {
+  Sofia: ["Adventure seeker", "Always up for plans", "Chill vibes"],
+  Marcos: ["Super reliable", "Great energy", "Never cancels"],
+  Lucía: ["Good listener", "Spontaneous", "Makes everyone laugh"],
+};
+
 const fallbackParticipants: ParticipantEntry[] = [
   { name: "Maria", imageUrl: mariaAvatar, interests: ["Great energy", "Good listener", "Funny"] },
   { name: "Jan",   imageUrl: undefined,   interests: ["Punctual", "Easy-going", "Deep talker"] },
@@ -112,7 +118,7 @@ function ReviewChip({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-[6px] rounded-[50px] border px-[16px] py-[8px] text-[12px] leading-[16px] transition-colors ${
+      className={`flex shrink-0 items-center gap-[6px] rounded-[50px] border px-[16px] py-[8px] text-[12px] leading-[16px] whitespace-nowrap transition-colors ${
         selected
           ? "border-primary-token bg-surface-secondary text-primary-token"
           : "border-primary-token bg-surface-primary text-primary-token"
@@ -248,7 +254,7 @@ function UserReview({
             >
               What people thought about {name}
             </span>
-            <div className="flex flex-wrap gap-[8px]">
+            <div className="flex flex-nowrap gap-[8px] overflow-x-auto">
               {profileTags.map((tag) => (
                 <ReviewChip
                   key={tag}
@@ -343,13 +349,13 @@ export default function PlanReviewsScreen() {
       state?.participants?.length
         ? state.participants.map((p) => ({
             imageUrl: p.avatarUrl || undefined,
-            interests: p.interests.slice(0, 3),
+            interests: (VIBES_BY_NAME[p.name] ?? p.interests).slice(0, 3),
             name: p.name,
           }))
         : savedParticipants.length
           ? savedParticipants.map((p) => ({
               imageUrl: p.avatarUrl || undefined,
-              interests: p.interests.slice(0, 3),
+              interests: (VIBES_BY_NAME[p.name] ?? p.interests).slice(0, 3),
               name: p.name,
             }))
           : fallbackParticipants,
