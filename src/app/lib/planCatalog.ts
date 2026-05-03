@@ -14,6 +14,7 @@ export type CatalogPlan = {
   address: string;
   budget?: string;
   description: string;
+  distance?: string;
   eventDate: string;
   id: string;
   imageSrc: string;
@@ -31,6 +32,7 @@ type MatchPlanCatalogRow = {
   address: string | null;
   budget?: string | null;
   description: string | null;
+  /** `close-by` | `short-ride` | `further-out` */
   distance?: string | null;
   event_date: string | null;
   id: string;
@@ -106,6 +108,7 @@ function mapCatalogRow(row: MatchPlanCatalogRow): CatalogPlan {
     address: row.address ?? "",
     budget: row.budget ?? undefined,
     description: row.description ?? "",
+    distance: row.distance ?? undefined,
     eventDate: row.event_date ?? "",
     id: row.id,
     imageSrc: row.photo_url ?? "",
@@ -117,6 +120,37 @@ function mapCatalogRow(row: MatchPlanCatalogRow): CatalogPlan {
     title: row.title ?? "Untitled plan",
     when: formatCatalogDate(row.event_date, row.start_time),
   };
+}
+
+/** Where line for proposal cards: place + rough distance from catalog bucket. */
+export function proposalWhereLabel(placeName: string, distance?: string | null): string {
+  const name = placeName.trim() || "Location";
+  const km =
+    distance === "short-ride" ? "3km" : distance === "further-out" ? "8km" : "1.2km";
+  return `${name} (${km})`;
+}
+
+/** One random row from `plan_catalog` (for demos / chat). Requires Supabase session if RLS is auth-only. */
+export async function loadRandomCatalogPlan(): Promise<CatalogPlan | null> {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("plan_catalog")
+    .select(
+      "id, title, description, event_date, start_time, place_name, address, photo_url, seed_plan_id, budget, distance",
+    )
+    .limit(120);
+
+  if (error || !Array.isArray(data) || data.length === 0) {
+    return null;
+  }
+
+  const row = data[Math.floor(Math.random() * data.length)] as MatchPlanCatalogRow;
+  try {
+    return mapCatalogRow(row);
+  } catch {
+    return null;
+  }
 }
 
 function normalizeValue(value: string) {

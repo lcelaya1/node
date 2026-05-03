@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { FlowScreenHeader } from "../components/FlowScreenHeader";
@@ -19,6 +20,15 @@ const fallbackParticipants: ParticipantEntry[] = [
   { name: "Marc",  imageUrl: undefined,   interests: ["Funny", "Great energy", "Punctual"] },
   { name: "Clara", imageUrl: undefined,   interests: ["Good listener", "Easy-going", "Funny"] },
 ];
+
+/** Same tokens as `.type-body-s-medium`; inlined so typography wins inside interactive cards (avoids `<p>` base styles). */
+const BODY_S_MEDIUM_INLINE: CSSProperties = {
+  fontFamily: "var(--body-s-bold-font-family)",
+  fontSize: "var(--body-s-bold-font-size)",
+  fontWeight: "var(--body-s-bold-font-weight)",
+  lineHeight: "var(--body-s-bold-line-height)",
+  letterSpacing: "0px",
+};
 
 type PlanReviewsState = {
   overallLabel?: string;
@@ -46,7 +56,7 @@ type UserReviewProps = {
   isExpanded: boolean;
   name: string;
   onCustomInputChange: (value: string) => void;
-  onCustomVibeAdd: (vibe: string) => void;
+  onCustomTagsCommit: (next: { customVibes: string[]; selectedVibes: string[] }) => void;
   onCustomVibeRemove: (vibe: string) => void;
   onToggle: () => void;
   onVibeToggle: (vibe: string) => void;
@@ -104,7 +114,7 @@ function ReviewChip({
       onClick={onClick}
       className={`flex items-center gap-[6px] rounded-[50px] border px-[16px] py-[8px] text-[12px] leading-[16px] transition-colors ${
         selected
-          ? "bg-button-primary border-button-primary text-invert-token"
+          ? "border-primary-token bg-surface-secondary text-primary-token"
           : "border-primary-token bg-surface-primary text-primary-token"
       }`}
     >
@@ -133,7 +143,7 @@ function UserReview({
   isExpanded,
   name,
   onCustomInputChange,
-  onCustomVibeAdd,
+  onCustomTagsCommit,
   onCustomVibeRemove,
   onToggle,
   onVibeToggle,
@@ -152,9 +162,22 @@ function UserReview({
   const showConfirmedVibes = isConfirmed && confirmedVibes.length > 0;
 
   const handleAddCustom = () => {
-    const trimmed = customInput.trim();
-    if (!trimmed || customVibes.includes(trimmed)) return;
-    onCustomVibeAdd(trimmed);
+    const raw = customInput.trim();
+    if (!raw) return;
+    const parts = raw.split(/[,;]+/).map((segment) => segment.trim()).filter(Boolean);
+    let nextCustom = [...customVibes];
+    let nextSelected = [...selectedVibes];
+    for (const part of parts) {
+      const profileMatch = profileTags.find((tag) => tag.toLowerCase() === part.toLowerCase());
+      if (profileMatch) {
+        if (!nextSelected.includes(profileMatch)) nextSelected.push(profileMatch);
+        continue;
+      }
+      if (!nextCustom.some((vibe) => vibe.toLowerCase() === part.toLowerCase())) {
+        nextCustom.push(part);
+      }
+    }
+    onCustomTagsCommit({ customVibes: nextCustom, selectedVibes: nextSelected });
     onCustomInputChange("");
     inputRef.current?.focus();
   };
@@ -183,7 +206,9 @@ function UserReview({
 
         <IconButton
           icon={showDone ? "Done" : "Add"}
-          hierarchy={showDone ? "Secondary" : "Link"}
+          hierarchy={
+            showDone ? (!isExpanded && isConfirmed ? "Secondary" : "Primary") : "Link"
+          }
           size={showDone ? "Small" : "Large"}
           onClick={(event) => {
             event.stopPropagation();
@@ -217,9 +242,12 @@ function UserReview({
         >
           {/* Profile tags — the 3 traits from their profile */}
           <div className="flex flex-col gap-[8px]">
-            <p className="text-[12px] leading-[16px] text-primary-token">
-              What did {name} transmit to you?
-            </p>
+            <span
+              className="block text-primary-token type-body-s-medium"
+              style={BODY_S_MEDIUM_INLINE}
+            >
+              What people thought about {name}
+            </span>
             <div className="flex flex-wrap gap-[8px]">
               {profileTags.map((tag) => (
                 <ReviewChip
@@ -238,6 +266,12 @@ function UserReview({
 
           {/* Custom tags adder */}
           <div className="flex flex-col gap-[8px]">
+            <span
+              className="block text-primary-token type-body-s-medium"
+              style={BODY_S_MEDIUM_INLINE}
+            >
+              Would you like to add something different?
+            </span>
             {customVibes.length > 0 && (
               <div className="flex flex-wrap gap-[8px]">
                 {customVibes.map((vibe) => (
@@ -252,7 +286,11 @@ function UserReview({
               </div>
             )}
 
-            <div className="flex items-center gap-[8px] w-full rounded-[12px] bg-[#f3f3f3] px-[12px] py-[11px]">
+            <div
+              className={`flex w-full items-center rounded-[8px] border border-card-token bg-surface-primary py-[6px] pl-[12px] ${
+                customInput.trim() ? "pr-0" : "pr-[12px]"
+              }`}
+            >
               <input
                 ref={inputRef}
                 type="text"
@@ -266,21 +304,26 @@ function UserReview({
                     handleAddCustom();
                   }
                 }}
-                placeholder="Something else you want to add?"
-                className="flex-1 min-w-0 bg-transparent text-[14px] leading-[18px] text-primary-token outline-none placeholder:text-[#9a9a9a]"
+                placeholder="Add a tag and press enter"
+                className="min-w-0 flex-1 border-none bg-transparent py-[5px] font-primary text-[14px] font-normal leading-[18px] text-primary-token outline-none placeholder:text-secondary-token"
               />
-              {customInput.trim() && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); handleAddCustom(); }}
-                  className="shrink-0 flex items-center justify-center size-[22px] rounded-full bg-button-primary"
-                  aria-label="Add tag"
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M5 1V9M1 5H9" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
-              )}
+              {customInput.trim() ? (
+                <div className="flex size-[36px] shrink-0 items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddCustom();
+                    }}
+                    className="inline-flex size-[36px] items-center justify-center text-primary-token"
+                    aria-label="Add tag"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -417,12 +460,18 @@ export default function PlanReviewsScreen() {
     });
   };
 
-  const addCustomVibe = (userName: string, vibe: string) => {
-    setUserReviews((current) => {
-      const review = current[userName] ?? reviewsByName[userName];
-      if (review.customVibes.includes(vibe)) return current;
-      return { ...current, [userName]: { ...review, customVibes: [...review.customVibes, vibe] } };
-    });
+  const commitCustomTags = (
+    userName: string,
+    next: { customVibes: string[]; selectedVibes: string[] },
+  ) => {
+    setUserReviews((current) => ({
+      ...current,
+      [userName]: {
+        ...(current[userName] ?? reviewsByName[userName]),
+        customVibes: next.customVibes,
+        selectedVibes: next.selectedVibes,
+      },
+    }));
   };
 
   const removeCustomVibe = (userName: string, vibe: string) => {
@@ -468,7 +517,7 @@ export default function PlanReviewsScreen() {
                   customInput={review.customInput}
                   customVibes={review.customVibes}
                   onCustomInputChange={(value) => updateCustomInput(participant.name, value)}
-                  onCustomVibeAdd={(vibe) => addCustomVibe(participant.name, vibe)}
+                  onCustomTagsCommit={(next) => commitCustomTags(participant.name, next)}
                   onCustomVibeRemove={(vibe) => removeCustomVibe(participant.name, vibe)}
                 />
               );

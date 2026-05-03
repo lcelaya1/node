@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { GroupCard } from "../components/GroupCard";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
-import { loadRepeatGroupPlans } from "../lib/repeatGroupPlans";
+import { resolveRsvpViewerInCircle } from "../lib/resolveCircleViewer";
+import { loadRepeatGroupPlans, readRepeatGroupDemoProposalFlags } from "../lib/repeatGroupPlans";
 import { supabase } from "../lib/supabase";
 import imageLeft from "../../assets/V2 APP (25/Rectangle 13.png";
 import imageBottom from "../../assets/V2 APP (25/Rectangle 14.png";
@@ -70,6 +71,7 @@ export default function GroupsScreen() {
   const [groups, setGroups] = useState<SavedGroup[]>([]);
   const [hasNewPlanByGroupId, setHasNewPlanByGroupId] = useState<Record<string, boolean>>({});
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [profileFullName, setProfileFullName] = useState("");
   const [isAcceptedModalOpen, setIsAcceptedModalOpen] = useState(
     Boolean(locationState?.acceptedParticipantNames?.length),
   );
@@ -133,10 +135,12 @@ export default function GroupsScreen() {
         return;
       }
 
+      const demoFlags = readRepeatGroupDemoProposalFlags();
       const entries = await Promise.all(
         groups.map(async (group) => {
           const plans = await loadRepeatGroupPlans(group.id);
-          return [group.id, plans.length > 0] as const;
+          const hasPersisted = plans.length > 0;
+          return [group.id, hasPersisted || Boolean(demoFlags[group.id])] as const;
         }),
       );
 
@@ -167,7 +171,7 @@ export default function GroupsScreen() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("avatar_url")
+        .select("avatar_url, full_name")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -175,6 +179,9 @@ export default function GroupsScreen() {
 
       setAvatarUrl(
         typeof data?.avatar_url === "string" ? data.avatar_url.trim() : "",
+      );
+      setProfileFullName(
+        typeof data?.full_name === "string" ? data.full_name.trim() : "",
       );
     };
 
@@ -204,19 +211,31 @@ export default function GroupsScreen() {
                 currentUserAvatar={avatarUrl || undefined}
                 group={group}
                 hasNewPlanProposal={Boolean(hasNewPlanByGroupId[group.id])}
-                onClick={() =>
+                onClick={() => {
+                  const participantsList = group.participants;
+                  const viewer = resolveRsvpViewerInCircle(
+                    participantsList,
+                    participantsList[0] ?? null,
+                    avatarUrl.trim() ? avatarUrl : null,
+                    profileFullName.trim() ? profileFullName : null,
+                    null,
+                  );
                   navigate("/chat", {
                     state: {
                       groupId: group.id,
                       isRepeatGroup: true,
-                      participants: group.participants,
+                      participants: participantsList,
                       plan: {
                         id: group.id,
                         title: group.title,
+                        creator: participantsList[0],
                       },
+                      ...(typeof viewer?.seedUserId === "number"
+                        ? { viewerSeedUserId: viewer.seedUserId }
+                        : {}),
                     },
-                  })
-                }
+                  });
+                }}
               />
             ))
           ) : (

@@ -48,9 +48,17 @@ export function GroupCard({
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-[168px] shrink-0 flex-col rounded-[8px] border bg-surface-primary text-left ${
-        hasNewPlanProposal ? "border-[#FC312E]" : "border-card-token"
-      }`}
+      aria-label={
+        hasNewPlanProposal ? `${group.title}, new plan proposal` : `${group.title} circle`
+      }
+      className="box-border flex w-[168px] shrink-0 flex-col rounded-[8px] bg-surface-primary text-left"
+      style={{
+        borderWidth: 1,
+        borderStyle: "solid",
+        borderColor: hasNewPlanProposal
+          ? "var(--color-button-secondary)"
+          : "var(--color-border-card)",
+      }}
     >
       <div className="relative h-[144px] w-full rounded-[8px] bg-surface-secondary">
         {collageParticipants.map((participant, index) => {

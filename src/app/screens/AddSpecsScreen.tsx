@@ -8,6 +8,8 @@ import { ExplainModal } from "../components/ExplainModal";
 import { CoverImageModal } from "../components/CoverImageModal";
 import { deletePlan, loadSavedPlan, savePlan } from "../lib/plans";
 import { createRepeatGroupPlan } from "../lib/repeatGroupPlans";
+import { resolveRsvpViewerInCircle } from "../lib/resolveCircleViewer";
+import { supabase } from "../lib/supabase";
 import type { DemoUser } from "../lib/demoUsers";
 
 type PlanData = {
@@ -127,20 +129,50 @@ export default function AddSpecsScreen() {
           where: planData.location,
         });
 
+        const circle = groupPlanContext.participants ?? [];
+        let viewerSeedUserId: number | undefined;
+
+        if (supabase && circle.length > 0) {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("avatar_url, full_name")
+              .eq("id", user.id)
+              .maybeSingle();
+            const viewer = resolveRsvpViewerInCircle(
+              circle,
+              circle[0] ?? null,
+              typeof profile?.avatar_url === "string" ? profile.avatar_url.trim() || null : null,
+              typeof profile?.full_name === "string" ? profile.full_name.trim() || null : null,
+              null,
+            );
+            if (typeof viewer?.seedUserId === "number") {
+              viewerSeedUserId = viewer.seedUserId;
+            }
+          }
+        }
+
         navigate("/chat", {
           replace: true,
           state: {
             groupId: groupPlanContext.groupId,
             imageSrc: groupPlanContext.imageSrc,
             isRepeatGroup: true,
-            participants: groupPlanContext.participants ?? [],
-            plan: groupPlanContext.plan ?? {
-              id: groupPlanContext.groupId,
-              title: "My circle",
-              when: when || "Today",
-              where: planData.location,
+            participants: circle,
+            plan: {
+              ...(groupPlanContext.plan ?? {
+                id: groupPlanContext.groupId,
+                title: "My circle",
+                when: when || "Today",
+                where: planData.location,
+              }),
+              creator: circle[0],
             },
             selectedIndex: groupPlanContext.selectedIndex ?? 0,
+            ...(viewerSeedUserId !== undefined ? { viewerSeedUserId } : {}),
           },
         });
         return;
