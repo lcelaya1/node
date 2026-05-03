@@ -690,10 +690,12 @@ function ProfileBottomSheet({
 }: ProfileBottomSheetProps) {
   if (!isOpen || !user) return null;
 
-  const traitChips =
-    user.interests.slice(0, 3).length > 0
-      ? user.interests.slice(0, 3)
-      : ["Good listener", "Punctual", "Funny"];
+  const vibesByName: Record<string, string[]> = {
+    Sofia: ["Adventure seeker", "Always up for plans", "Chill vibes"],
+    Marcos: ["Super reliable", "Great energy", "Never cancels"],
+    Lucía: ["Good listener", "Spontaneous", "Makes everyone laugh"],
+  };
+  const traitChips = vibesByName[user.name] ?? ["Funny", "Easy-going", "Always suggests great places"];
   const friendsCount = Number.isFinite(user.friendsCount) ? user.friendsCount : 0;
 
   return (
@@ -703,7 +705,7 @@ function ProfileBottomSheet({
         <div className="relative flex size-full flex-col items-center gap-[40px] overflow-clip rounded-[inherit] px-[20px] pb-[32px] pt-[48px]">
           <div className="absolute left-1/2 top-[10px] h-[3px] w-[34px] -translate-x-1/2 rounded-[999px] bg-[#969696]" />
 
-          <div className="flex w-full flex-col items-center gap-[12px] px-[20px]">
+          <div className="flex w-full flex-col items-center gap-[12px]">
             <img
               alt={user.name}
               className="size-[102px] shrink-0 rounded-[51px] object-cover"
@@ -725,11 +727,11 @@ function ProfileBottomSheet({
                 <span>{user.plansDone} plans done</span>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-[6px]">
+            <div className="flex flex-nowrap items-center justify-center gap-[6px]">
               {traitChips.map((interest) => (
                 <span
                   key={interest}
-                  className="rounded-[50px] bg-[#f6f6f6] px-[16px] py-[8px] text-[12px] leading-[16px] text-black"
+                  className="whitespace-nowrap rounded-[50px] bg-[#f6f6f6] px-[12px] py-[8px] text-[12px] leading-[16px] text-black"
                 >
                 {interest}
                 </span>
@@ -823,10 +825,17 @@ export default function ChatScreen() {
     let active = true;
 
     const run = async () => {
-      if (state?.participants?.length) return;
       const users = await loadDemoUsers();
       if (!active) return;
-      setParticipants(getChatParticipants(users, plan.creator ?? users[0] ?? null));
+      if (state?.participants?.length) {
+        const enriched = state.participants.map((sp) => {
+          const fresh = users.find((u) => u.seedUserId === sp.seedUserId);
+          return fresh ?? sp;
+        });
+        setParticipants(enriched);
+      } else {
+        setParticipants(getChatParticipants(users, plan.creator ?? users[0] ?? null));
+      }
     };
 
     void run();

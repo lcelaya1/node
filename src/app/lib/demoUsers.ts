@@ -13,8 +13,17 @@ export type DemoUser = {
   seedUserId: number;
 };
 
+const DEMO_USER_VIBES: Record<number, string[]> = {
+  1: ["Adventure seeker", "Always up for plans", "Chill vibes"],    // Sofia
+  2: ["Super reliable", "Great energy", "Never cancels"],            // Marcos
+  3: ["Good listener", "Spontaneous", "Makes everyone laugh"],       // Lucía
+};
+
 function normalizeDemoUser(row: Record<string, unknown>): DemoUser | null {
   if (typeof row.name !== "string") return null;
+
+  const seedUserId =
+    typeof row.seed_user_id === "number" ? row.seed_user_id : Number(row.seed_user_id ?? 0);
 
   return {
     age: typeof row.age === "number" ? row.age : Number(row.age ?? 0),
@@ -25,26 +34,7 @@ function normalizeDemoUser(row: Record<string, unknown>): DemoUser | null {
       typeof row.friends_count === "number"
         ? row.friends_count
         : Number(row.friends_count ?? 0),
-    interests: Array.isArray(row.demo_user_interests)
-      ? row.demo_user_interests
-          .map((item) => {
-            if (
-              item &&
-              typeof item === "object" &&
-              "interest_catalog" in item &&
-              item.interest_catalog &&
-              typeof item.interest_catalog === "object" &&
-              "name" in item.interest_catalog
-            ) {
-              return typeof item.interest_catalog.name === "string"
-                ? item.interest_catalog.name
-                : null;
-            }
-
-            return null;
-          })
-          .filter((item): item is string => Boolean(item))
-      : [],
+    interests: DEMO_USER_VIBES[seedUserId] ?? [],
     name: row.name,
     plansCreated:
       typeof row.plans_created === "number"

@@ -8,8 +8,7 @@ import { useAuthUser } from "../context/AuthUserContext";
 import { loadInterestCatalogMap } from "../lib/interestCatalog";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
-import { isProfileAvatarDisplayUrl } from "../lib/profileAvatar";
-import { uploadProfileAvatarToStorage } from "../lib/profileAvatar";
+import { isProfileAvatarDisplayUrl, uploadProfileAvatarToStorage } from "../lib/profileAvatar";
 import { supabase } from "../lib/supabase";
 import { cn } from "../components/ui/utils";
 import type { DemoUser } from "../lib/demoUsers";
@@ -255,7 +254,22 @@ export default function ProfileScreen() {
           typeof data.full_name === "string" && data.full_name.trim()
             ? data.full_name
             : metadataName,
-        interests: Array.isArray(data.interests) ? data.interests : [],
+        interests: (() => {
+          const fullName =
+            typeof data.full_name === "string" && data.full_name.trim()
+              ? data.full_name
+              : metadataName;
+          const first = (fullName.split(" ")[0] ?? "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+          const vibes: Record<string, string[]> = {
+            sofia: ["Adventure seeker", "Always up for plans", "Chill vibes"],
+            marcos: ["Super reliable", "Great energy", "Never cancels"],
+            lucia: ["Good listener", "Spontaneous", "Makes everyone laugh"],
+          };
+          return vibes[first] ?? ["Funny", "Easy-going", "Always suggests great places"];
+        })(),
         friendsCount: 0,
         plansCreated: 0,
         plansDone: 0,
@@ -370,6 +384,18 @@ export default function ProfileScreen() {
   const displayFriends = demoProfile?.friendsCount ?? myFriendsCount;
   const displayPlansCreated = demoProfile ? profile.plansCreated ?? 0 : createdPlans.length;
   const displayPlansDone = demoProfile ? profile.plansDone ?? 0 : pastJoinedPlans.length;
+
+  const VIBES_BY_FIRST_NAME: Record<string, string[]> = {
+    sofia: ["Adventure seeker", "Always up for plans", "Chill vibes"],
+    marcos: ["Super reliable", "Great energy", "Never cancels"],
+    lucia: ["Good listener", "Spontaneous", "Makes everyone laugh"],
+  };
+  const normalizedFirstName = (profile.fullName.split(" ")[0] ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const fallbackInterests =
+    VIBES_BY_FIRST_NAME[normalizedFirstName] ?? ["Funny", "Easy-going", "Always suggests great places"];
 
   const handleLogout = async () => {
     if (supabase) {
@@ -542,11 +568,11 @@ export default function ProfileScreen() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-[6px]">
-              {(displayInterests.length > 0 ? displayInterests : ["Good listener", "Punctual", "Funny"]).map((interest) => (
+            <div className="flex flex-nowrap items-center justify-center gap-[6px]">
+              {(displayInterests.length > 0 ? displayInterests : fallbackInterests).map((interest) => (
                 <span
                   key={interest}
-                  className="rounded-[50px] bg-[#f6f6f6] px-[16px] py-[8px] text-[12px] leading-[16px] text-black"
+                  className="whitespace-nowrap rounded-[50px] bg-[#f6f6f6] px-[12px] py-[8px] text-[12px] leading-[16px] text-black"
                 >
                   {interest}
                 </span>

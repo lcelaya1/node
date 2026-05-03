@@ -41,10 +41,12 @@ type ProfileBottomSheetProps = {
 function ProfileBottomSheet({ isOpen, onClose, user }: ProfileBottomSheetProps) {
   if (!isOpen || !user) return null;
 
-  const traitChips =
-    user.interests.slice(0, 3).length > 0
-      ? user.interests.slice(0, 3)
-      : ["Good listener", "Punctual", "Funny"];
+  const vibesByName: Record<string, string[]> = {
+    Sofia: ["Adventure seeker", "Always up for plans", "Chill vibes"],
+    Marcos: ["Super reliable", "Great energy", "Never cancels"],
+    Lucía: ["Good listener", "Spontaneous", "Makes everyone laugh"],
+  };
+  const traitChips = vibesByName[user.name] ?? ["Funny", "Easy-going", "Always suggests great places"];
   const friendsCount = Number.isFinite(user.friendsCount) ? user.friendsCount : 0;
 
   return (
