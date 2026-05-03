@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { GroupCard } from "../components/GroupCard";
+import { useAuthUser } from "../context/AuthUserContext";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
 import {
   REPEAT_GROUP_RSVP_EVENT,
@@ -83,6 +84,7 @@ function GroupPlansLegend() {
 export default function GroupsScreen() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuthUser();
   const locationState = (location.state as GroupsLocationState | null) ?? null;
   const [groups, setGroups] = useState<SavedGroup[]>([]);
   const [planRsvpByGroupId, setPlanRsvpByGroupId] = useState<
@@ -184,13 +186,7 @@ export default function GroupsScreen() {
     let active = true;
 
     const run = async () => {
-      if (!supabase) return;
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || !active) return;
+      if (!supabase || !user || !active) return;
 
       const { data, error } = await supabase
         .from("profiles")
@@ -213,7 +209,7 @@ export default function GroupsScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [user]);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden bg-surface-primary">

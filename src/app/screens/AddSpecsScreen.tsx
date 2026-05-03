@@ -7,6 +7,7 @@ import { SpeechBubbleChip } from "../components/SpeechBubbleChip";
 import { WhereModal } from "../components/WhereModal";
 import { ExplainModal } from "../components/ExplainModal";
 import { CoverImageModal } from "../components/CoverImageModal";
+import { useAuthUser } from "../context/AuthUserContext";
 import { markDailyPlanAction } from "../lib/dailyPlanLimit";
 import { formatIsoDateOnlyForDisplay } from "../lib/formatPlanWhen";
 import { deletePlan, loadSavedPlan, savePlan } from "../lib/plans";
@@ -120,6 +121,7 @@ function CreatePlanDisclaimerModal({
 export default function AddSpecsScreen() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuthUser();
   const locationState = (location.state as AddSpecsLocationState | null) ?? null;
   const planId = locationState?.planId ?? null;
   const groupPlanContext = locationState?.groupPlanContext ?? null;
@@ -208,11 +210,7 @@ export default function AddSpecsScreen() {
         const circle = groupPlanContext.participants ?? [];
         let viewerSeedUserId: number | undefined;
 
-        if (supabase && circle.length > 0) {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (user) {
+        if (supabase && circle.length > 0 && user) {
             const { data: profile } = await supabase
               .from("profiles")
               .select("avatar_url, full_name")
@@ -228,7 +226,6 @@ export default function AddSpecsScreen() {
             if (typeof viewer?.seedUserId === "number") {
               viewerSeedUserId = viewer.seedUserId;
             }
-          }
         }
 
         navigate("/chat", {

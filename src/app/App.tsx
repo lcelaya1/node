@@ -12,6 +12,7 @@ import OnboardingPlansScreen from "./screens/OnboardingPlansScreen";
 import SplashScreen, { SPLASH_DURATION_MS } from "./screens/SplashScreen";
 import { supabase } from "./lib/supabase";
 import { router } from "./routes";
+import { AuthUserProvider } from "./context/AuthUserContext";
 import type { Session } from "@supabase/supabase-js";
 
 export default function App() {
@@ -147,9 +148,10 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app-shell">
-      <div className="app-device">
-        <div className="app-content">
+    <AuthUserProvider>
+      <div className="app-shell">
+        <div className="app-device">
+          <div className="app-content">
           {phase === "splash" ? <SplashScreen /> : null}
           {phase === "onboarding-plans" ? <OnboardingPlansScreen onNext={() => setPhase("onboarding-people")} /> : null}
           {phase === "onboarding-people" ? <OnboardingPeopleScreen onNext={() => setPhase("onboarding-memories")} /> : null}
@@ -213,8 +215,9 @@ export default function App() {
             />
           ) : null}
           {phase === "app" ? <RouterProvider router={router} /> : null}
+          </div>
         </div>
       </div>
-    </div>
+    </AuthUserProvider>
   );
 }

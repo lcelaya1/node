@@ -9,6 +9,11 @@ export function avatarObjectPath(userId: string) {
   return `${userId}.jpg`;
 }
 
+/** Variante común para policies con `storage.foldername(name)[1] = auth.uid()`. */
+function avatarObjectPathInUserFolder(userId: string) {
+  return `${userId}/avatar.jpg`;
+}
+
 /** URL usable en `<img src>` (HTTPS Storage u origen relativo para demos). No admite `data:` para evitar payloads enormes en BD. */
 export function isProfileAvatarDisplayUrl(value: string): boolean {
   const trimmed = value.trim();
@@ -117,17 +122,26 @@ export async function uploadProfileAvatarToStorage(
     return { error: "Could not process that image. Try JPG or PNG." };
   }
 
-  const path = avatarObjectPath(userId);
+  const candidatePaths = [avatarObjectPathInUserFolder(userId), avatarObjectPath(userId)];
+  let lastError: string | null = null;
 
-  const { error: uploadError } = await supabase.storage.from(AVATARS_BUCKET).upload(path, jpegBlob, {
-    contentType: "image/jpeg",
-    upsert: true,
-  });
+  for (const path of candidatePaths) {
+    const { error: uploadError } = await supabase.storage
+      .from(AVATARS_BUCKET)
+      .upload(path, jpegBlob, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
 
-  if (uploadError) {
-    return { error: `${uploadError.message} (bucket "${AVATARS_BUCKET}")` };
+    if (!uploadError) {
+      const { data } = supabase.storage.from(AVATARS_BUCKET).getPublicUrl(path);
+      return { publicUrl: data.publicUrl };
+    }
+
+    lastError = uploadError.message;
+    const isRlsIssue = /row-level security policy/i.test(uploadError.message);
+    if (!isRlsIssue) break;
   }
 
-  const { data } = supabase.storage.from(AVATARS_BUCKET).getPublicUrl(path);
-  return { publicUrl: data.publicUrl };
+  return { error: `${lastError ?? "Upload failed"} (bucket "${AVATARS_BUCKET}")` };
 }

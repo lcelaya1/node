@@ -67,8 +67,11 @@ using (
 );
 
 drop policy if exists "Public can read plan memories" on storage.objects;
-create policy "Public can read plan memories"
+create policy "Users can read their own plan memories"
 on storage.objects
 for select
-to public
-using (bucket_id = 'plan-memories');
+to authenticated
+using (
+  bucket_id = 'plan-memories'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);

@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import logoutIcon from "../../assets/svg/Log In.svg";
+import { AppIcon } from "../components/AppIcon";
 import { IconButton } from "../components/IconButton";
 import { AppNavbar } from "../components/AppNavbar";
+import { useAuthUser } from "../context/AuthUserContext";
 import { loadInterestCatalogMap } from "../lib/interestCatalog";
 import { loadSavedPlans, type SavedPlan } from "../lib/plans";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
 import { isProfileAvatarDisplayUrl } from "../lib/profileAvatar";
+import { uploadProfileAvatarToStorage } from "../lib/profileAvatar";
 import { supabase } from "../lib/supabase";
 import { cn } from "../components/ui/utils";
 import type { DemoUser } from "../lib/demoUsers";
@@ -168,6 +171,7 @@ function getInterestImage(label: string) {
 export default function ProfileScreen() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuthUser();
   const demoProfile = ((location.state as { demoProfile?: DemoUser } | null) ?? null)
     ?.demoProfile;
   const [activeTab, setActiveTab] = useState<ProfileTab>("about");
@@ -184,6 +188,9 @@ export default function ProfileScreen() {
   const [savedPlans, setSavedPlans] = useState<SavedPlan[]>([]);
   const [savedGroups, setSavedGroups] = useState<SavedGroup[]>([]);
   const [interestImageMap, setInterestImageMap] = useState<Map<string, string>>(new Map());
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -203,11 +210,7 @@ export default function ProfileScreen() {
         return;
       }
 
-      if (!supabase) return;
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      if (!supabase || !user) return;
 
       if (!user) return;
 
@@ -255,7 +258,7 @@ export default function ProfileScreen() {
     return () => {
       isMounted = false;
     };
-  }, [demoProfile]);
+  }, [demoProfile, user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -368,6 +371,56 @@ export default function ProfileScreen() {
     navigate("/");
   };
 
+  const handlePickAvatar = () => {
+    if (demoProfile || isUpdatingAvatar) return;
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!supabase || !user) {
+      event.target.value = "";
+      return;
+    }
+
+    setIsUpdatingAvatar(true);
+    setAvatarError("");
+
+    try {
+      const uploaded = await uploadProfileAvatarToStorage(supabase, user.id, file);
+      if ("error" in uploaded) throw new Error(uploaded.error);
+
+      const publicUrl = uploaded.publicUrl;
+
+      const { error: profileError } = await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          email: user.email ?? null,
+          avatar_url: publicUrl,
+        },
+        { onConflict: "id" },
+      );
+      if (profileError) throw profileError;
+
+      await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+
+      setProfile((prev) => ({ ...prev, avatarUrl: publicUrl }));
+    } catch (err) {
+      setAvatarError(
+        err instanceof Error ? err.message : "Couldn't update picture. Try again.",
+      );
+    } finally {
+      setIsUpdatingAvatar(false);
+      event.target.value = "";
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -409,9 +462,46 @@ export default function ProfileScreen() {
 
           <div className="flex w-full flex-col items-center gap-[12px] px-[20px]">
             <div className="flex w-full flex-col items-center gap-[8px]">
-              <div className="size-[102px] overflow-hidden rounded-[51px] bg-surface-secondary">
-                <img alt={displayName} className="size-full object-cover" src={displayAvatar} />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={handlePickAvatar}
+                  disabled={Boolean(demoProfile) || isUpdatingAvatar}
+                  className={cn(
+                    "size-[102px] overflow-hidden rounded-[51px] bg-surface-secondary",
+                    demoProfile ? "cursor-default" : "cursor-pointer",
+                    isUpdatingAvatar ? "opacity-70" : "",
+                  )}
+                  aria-label={demoProfile ? "Profile picture" : "Edit profile picture"}
+                >
+                  <img alt={displayName} className="size-full object-cover" src={displayAvatar} />
+                </button>
+                {demoProfile ? null : (
+                  <button
+                    type="button"
+                    onClick={handlePickAvatar}
+                    disabled={isUpdatingAvatar}
+                    aria-label="Change profile picture"
+                    className="absolute bottom-0 right-0 flex size-[28px] items-center justify-center rounded-full border border-[#09090b] bg-[#09090b] text-[#fefefe]"
+                  >
+                    {isUpdatingAvatar ? (
+                      <span className="h-[12px] w-[12px] animate-spin rounded-full border border-card-token border-t-primary-token" />
+                    ) : (
+                      <AppIcon name="SquarePen" size={14} />
+                    )}
+                  </button>
+                )}
               </div>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileChange}
+              />
+              {!demoProfile && avatarError ? (
+                <p className="type-body-xs text-secondary-token">{avatarError}</p>
+              ) : null}
 
               <div className="flex w-full flex-col items-center gap-[4px] text-center">
                 <p className="type-heading-2xl text-primary-token">{displayTitle}</p>

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { normalizeImageBlobToJpeg } from "./profileAvatar";
 
 export type PlanMemoryImage = {
   createdAt: string;
@@ -147,13 +148,27 @@ export async function savePlanMemories({
       const parsed = parseDataUrl(image.url);
       if (!parsed) return null;
 
-      const extension = extensionFromContentType(parsed.contentType);
+      let uploadBlob = parsed.blob;
+      let uploadContentType = parsed.contentType;
+      let extension = extensionFromContentType(parsed.contentType);
+
+      // Reduce egress/cost: normalize photo uploads to compressed JPEG.
+      if (parsed.contentType.startsWith("image/")) {
+        try {
+          uploadBlob = await normalizeImageBlobToJpeg(parsed.blob, 0.8);
+          uploadContentType = "image/jpeg";
+          extension = "jpg";
+        } catch {
+          // Keep original blob if conversion fails.
+        }
+      }
+
       const storagePath = `${userId}/${planId}/${newStorageObjectName(extension)}`;
 
       const { error: uploadError } = await supabase.storage
         .from(PLAN_MEMORIES_BUCKET)
-        .upload(storagePath, parsed.blob, {
-          contentType: parsed.contentType,
+        .upload(storagePath, uploadBlob, {
+          contentType: uploadContentType,
           upsert: true,
         });
 
