@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppIcon } from "./AppIcon";
 import PlanOptionsModal from "./PlanOptionsModal";
+import {
+  DAILY_PLAN_LIMIT_EVENT,
+  getDailyPlanLimitState,
+} from "../lib/dailyPlanLimit";
+import { loadSavedPlans } from "../lib/plans";
 import { cn } from "./ui/utils";
 
 type AppNavbarTab = "home" | "groups" | "diary" | "profile";
@@ -72,13 +77,52 @@ export function AppNavbar({
 }: AppNavbarProps) {
   const activeClass = activeTone === "brand" ? "text-brand-token icon-brand-token" : "text-primary-token icon-primary-token";
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [createDisabled, setCreateDisabled] = useState(false);
+  const [joinDisabled, setJoinDisabled] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    const refresh = async () => {
+      const plans = await loadSavedPlans();
+      if (!alive) return;
+      const today = new Date();
+      const y = today.getFullYear();
+      const m = today.getMonth();
+      const d = today.getDate();
+      const createdFromPlans = plans.some((p) => {
+        if (p.source !== "created") return false;
+        const dt = new Date(p.createdAt);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
+      });
+      const joinedFromPlans = plans.some((p) => {
+        if (p.source !== "joined") return false;
+        const dt = new Date(p.createdAt);
+        return dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d;
+      });
+      const marks = getDailyPlanLimitState();
+      setCreateDisabled(createdFromPlans || marks.created);
+      setJoinDisabled(joinedFromPlans || marks.joined);
+    };
+
+    void refresh();
+    window.addEventListener(DAILY_PLAN_LIMIT_EVENT, refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      alive = false;
+      window.removeEventListener(DAILY_PLAN_LIMIT_EVENT, refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
 
   const handleCreatePlan = () => {
+    if (createDisabled) return;
     setActionsOpen(false);
     onCreatePlanClick?.();
   };
 
   const handleJoinPlan = () => {
+    if (joinDisabled) return;
     setActionsOpen(false);
     onJoinPlanClick?.();
   };
@@ -89,7 +133,9 @@ export function AppNavbar({
       className={cn("relative z-20 w-full", className)}
     >
       <PlanOptionsModal
+        createDisabled={createDisabled}
         isOpen={actionsOpen}
+        joinDisabled={joinDisabled}
         onClose={() => setActionsOpen(false)}
         onCreatePlan={handleCreatePlan}
         onJoinPlan={handleJoinPlan}

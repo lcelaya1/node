@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { PlanCard } from "../components/PlanCard";
+import { markDailyPlanAction } from "../lib/dailyPlanLimit";
 import { savePlan, toSavedPlan } from "../lib/plans";
 import {
   loadMatchedCatalogPlans,
@@ -245,6 +246,7 @@ export default function ChoosePlanScreen() {
     );
 
     await savePlan(savedPlan);
+    markDailyPlanAction("joined");
 
     navigate("/", {
       state: { planId: savedPlan.id, selectedIndex: index },

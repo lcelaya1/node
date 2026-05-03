@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Trash2 } from "lucide-react";
+import alertIcon from "../../assets/svg/Alert.svg";
 import { IconButton } from "../components/IconButton";
 import { SpeechBubbleChip } from "../components/SpeechBubbleChip";
 import { WhereModal } from "../components/WhereModal";
 import { ExplainModal } from "../components/ExplainModal";
 import { CoverImageModal } from "../components/CoverImageModal";
+import { markDailyPlanAction } from "../lib/dailyPlanLimit";
 import { formatIsoDateOnlyForDisplay } from "../lib/formatPlanWhen";
 import { deletePlan, loadSavedPlan, savePlan } from "../lib/plans";
 import { createRepeatGroupPlan } from "../lib/repeatGroupPlans";
@@ -62,6 +64,59 @@ function openNativeDatePicker(input: HTMLInputElement | null) {
   input.click();
 }
 
+function CreatePlanDisclaimerModal({
+  isOpen,
+  onClose,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40"
+        style={{ backgroundColor: "var(--color-overlay-scrim)" }}
+        onClick={onClose}
+      />
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[393px] flex-col gap-[28px] rounded-tl-[16px] rounded-tr-[16px] bg-[#fefefe] px-[20px] pb-[32px] pt-[20px]">
+        <div className="flex items-center justify-center">
+          <div className="h-[4.875px] w-[43.875px] rounded-[2.438px] bg-[#A1A1AA]" />
+        </div>
+
+        <div className="flex flex-col items-center justify-center gap-[12px]">
+          <img src={alertIcon} alt="" aria-hidden className="size-[36px]" />
+          <div className="flex flex-col items-center gap-[8px] text-center">
+            <p className="type-body-m-medium text-primary-token">
+              Can't edit after creating
+            </p>
+            <p className="w-[343px] type-body-s text-secondary-token">
+              Once your plan is live, these details are locked and can't be changed.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex w-full flex-col gap-[12px]">
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="h-[46px] w-full rounded-[999px] border border-[#A1A1AA] font-primary text-[16px] leading-[21px]"
+            style={{
+              backgroundColor: "#000000",
+              color: "#E4E4E7",
+            }}
+          >
+            Create plan
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function AddSpecsScreen() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,6 +130,7 @@ export default function AddSpecsScreen() {
   const [coverModalOpen, setCoverModalOpen] = useState(false);
   const [whereModalOpen, setWhereModalOpen] = useState(false);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
+  const [createDisclaimerOpen, setCreateDisclaimerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
   const [isSaving, setIsSaving] = useState(false);
   const [planData, setPlanData] = useState<PlanData>({
@@ -116,7 +172,7 @@ export default function AddSpecsScreen() {
     Boolean(planData.location.trim()) &&
     Boolean(planData.description.trim());
 
-  const handleSave = async () => {
+  const persistPlan = async () => {
     if (isSaving || !isFormComplete) return;
     setIsSaving(true);
     try {
@@ -138,6 +194,7 @@ export default function AddSpecsScreen() {
         picturePreview: coverImage ?? "",
         source: "created",
       });
+      markDailyPlanAction("created");
 
       if (groupPlanContext?.groupId) {
         await createRepeatGroupPlan({
@@ -202,6 +259,15 @@ export default function AddSpecsScreen() {
       console.error("Failed to save plan:", err);
       setIsSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (isSaving || !isFormComplete) return;
+    if (!isEditing) {
+      setCreateDisclaimerOpen(true);
+      return;
+    }
+    void persistPlan();
   };
 
   const handleDelete = async () => {
@@ -271,14 +337,19 @@ export default function AddSpecsScreen() {
         <div className="flex-1 overflow-y-auto flex flex-col">
           <div className="flex flex-1 flex-col justify-between px-[20px] pt-[32px]" style={{ paddingBottom: "calc(32px + env(safe-area-inset-bottom))" }}>
             <div className="flex flex-col gap-[24px]">
-              {/* Title */}
-              <input
-                type="text"
-                placeholder="Add a Title..."
-                value={planData.title}
-                onChange={(e) => handleChange("title", e.target.value)}
-                className="font-primary text-[24px] leading-[28px] tracking-[-0.48px] text-primary-token placeholder:text-secondary-token bg-transparent border-none outline-none w-full"
-              />
+              {/* What? */}
+              <div className="flex flex-col gap-[12px] items-start w-full">
+                <SpeechBubbleChip direction="Left" text="What?" />
+                <div className="border border-card-token flex items-center rounded-[8px] w-full px-[12px] py-[10px]">
+                  <input
+                    type="text"
+                    placeholder="Add a Title..."
+                    value={planData.title}
+                    onChange={(e) => handleChange("title", e.target.value)}
+                    className="type-heading-l !text-[20px] !font-normal text-primary-token placeholder:text-secondary-token bg-transparent border-none outline-none w-full"
+                  />
+                </div>
+              </div>
 
               {/* When? */}
               <div className="flex flex-col gap-[12px] items-start w-full">
@@ -408,6 +479,14 @@ export default function AddSpecsScreen() {
         onClose={() => setExplainModalOpen(false)}
         value={planData.description}
         onSave={(text) => handleChange("description", text)}
+      />
+      <CreatePlanDisclaimerModal
+        isOpen={createDisclaimerOpen}
+        onClose={() => setCreateDisclaimerOpen(false)}
+        onConfirm={() => {
+          setCreateDisclaimerOpen(false);
+          void persistPlan();
+        }}
       />
     </>
   );

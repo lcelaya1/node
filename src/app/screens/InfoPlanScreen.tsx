@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { IconButton } from "../components/IconButton";
 import { AppIcon } from "../components/AppIcon";
+import { markDailyPlanAction } from "../lib/dailyPlanLimit";
 import { loadDemoUsers, type DemoUser } from "../lib/demoUsers";
 import { savePlan, toSavedPlan } from "../lib/plans";
 import type { JoinFilterState } from "../lib/planCatalog";
@@ -148,6 +149,7 @@ export default function InfoPlanScreen() {
     );
 
     await savePlan(savedPlan);
+    markDailyPlanAction("joined");
 
     navigate("/", {
       state: { planId: savedPlan.id, selectedIndex: state?.selectedIndex ?? 0 },

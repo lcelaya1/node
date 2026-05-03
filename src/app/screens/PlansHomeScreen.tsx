@@ -123,12 +123,12 @@ function HomePlanCard({
       className="relative flex w-[144px] shrink-0 flex-col gap-[8px] rounded-[8px] text-left"
     >
       {isCreatedByUser ? (
-        <div className="pointer-events-none absolute left-0 top-0 z-[1] h-[72px] w-[72px] overflow-hidden rounded-tl-[8px]">
+        <div className="pointer-events-none absolute left-0 top-0 z-[1] h-[52px] w-[52px] overflow-hidden rounded-tl-[8px]">
           <div
-            className="absolute left-[-42px] top-[10px] w-[128px] -rotate-45 py-[4px] text-center"
+            className="absolute left-[-34px] top-[6px] w-[100px] -rotate-45 py-[1px] text-center"
             style={{ backgroundColor: "var(--color-surface-bg-secondary)" }}
           >
-            <span className="text-[10px] leading-[14px] text-primary-token">You</span>
+            <span className="text-[9px] leading-[10px] text-primary-token">You</span>
           </div>
         </div>
       ) : null}
