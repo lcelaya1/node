@@ -2,12 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import sendIcon from "../../assets/svg/Send.svg";
 import { IconButton } from "../components/IconButton";
+import { formatWhenLineForDisplay } from "../lib/formatPlanWhen";
 import { deleteGroup } from "../lib/groups";
-import {
-  loadRepeatGroupPlans,
-  markRepeatGroupShowsDemoProposal,
-  type RepeatGroupPlan,
-} from "../lib/repeatGroupPlans";
+import { loadRepeatGroupPlans, type RepeatGroupPlan } from "../lib/repeatGroupPlans";
 import {
   getChatParticipants,
   loadDemoUsers,
@@ -19,6 +16,7 @@ import {
   type CatalogPlan,
 } from "../lib/planCatalog";
 import { resolveRsvpViewerInCircle, urlsLikelySameAvatar } from "../lib/resolveCircleViewer";
+import { getRepeatGroupRsvp, setRepeatGroupRsvp } from "../lib/repeatGroupRsvp";
 import { supabase } from "../lib/supabase";
 
 const punteroPath =
@@ -208,7 +206,7 @@ type ConversationBlock =
     }
   | {
       type: "plan_proposal";
-      /** Quien “envía” la propuesta en el chat (siempre otro miembro, no tú cuando hay creator en estado). */
+      /** Quién “envía” la propuesta en el chat. */
       fromParticipant: DemoUser;
       /** Creador del plan: siempre “I'm in”. */
       planCreator: DemoUser;
@@ -218,9 +216,14 @@ type ConversationBlock =
       when: string;
       where: string;
       joinedParticipants: DemoUser[];
+      /** Plan guardado desde AddSpecs como “You”: lo muestras tú y sin RSVP para el autor. */
+      hideRsvpActions?: boolean;
     };
 
-/** Quién aparece como autor del mensaje de propuesta: otro miembro del círculo, no tú. */
+/**
+ * Quién aparece como autor cuando la propuesta **no** es la tuya en persistencia (`createdByName !== "You"`
+ * para planes en grupo ya resueltos en `groupPlanBlocks`).
+ */
 function resolveProposalAuthor(
   participants: DemoUser[],
   options: { createdByName?: string; treatAsMe?: DemoUser | null },
@@ -231,7 +234,9 @@ function resolveProposalAuthor(
   if (trimmedName) {
     const byName = participants.find((p) => p.name === trimmedName);
     if (byName) return byName;
-    /** Los planes guardados desde AddSpecs usan `createdByName: "You"` — lo tratamos como “lo creé yo”: mostramos la propuesta en boca de otro. */
+    /**
+     * Fallback raro (p. ej. “You” sin `rsvpViewerUser`). El caso normal lo resuelve `groupPlanBlocks` con `iCreated`.
+     */
     if (trimmedName === "You" && treatAsMe?.seedUserId != null) {
       const notMe = participants.filter((p) => p.seedUserId !== treatAsMe.seedUserId);
       if (notMe[0]) return notMe[0];
@@ -274,6 +279,14 @@ type ParticipantPlanProposalBlockProps = {
   joinedProfileAvatarUrl?: string | null;
   /** Miembros del círculo (para saber si han confirmado todos). */
   circleMembers: DemoUser[];
+  /**
+   * Tamaño real del repeat (otr@s + tú); evita fallar cuando `circleMembers` se queda corto por resolución de viewer.
+   * Debe coincidir con «N people» en My circles (`participants.length + 1`).
+   */
+  repeatExpectedHeadcount?: number;
+  /** Si está definido, persiste I'm in / Can't make it en localStorage por círculo. */
+  persistRsvpGroupId?: string;
+  hideRsvpActions?: boolean;
   onAvatarClick?: () => void;
 };
 
@@ -374,9 +387,29 @@ function ParticipantPlanProposalBlock({
   viewer,
   joinedProfileAvatarUrl,
   circleMembers,
+  repeatExpectedHeadcount,
+  persistRsvpGroupId,
+  hideRsvpActions = false,
   onAvatarClick,
 }: ParticipantPlanProposalBlockProps) {
-  const [response, setResponse] = useState<"in" | "out" | null>(null);
+  const persistId =
+    hideRsvpActions || !persistRsvpGroupId?.trim() ? "" : persistRsvpGroupId.trim();
+
+  const [response, setResponse] = useState<"in" | "out" | null>(() =>
+    persistId ? getRepeatGroupRsvp(persistId) : null,
+  );
+
+  useEffect(() => {
+    setResponse(persistId ? getRepeatGroupRsvp(persistId) : null);
+  }, [persistId]);
+
+  const commitResponse = (next: "in" | "out") => {
+    setResponse(next);
+    if (persistId) setRepeatGroupRsvp(persistId, next);
+  };
+
+  const declined = !hideRsvpActions && response === "out";
+  const rsvpIn = hideRsvpActions || response === "in";
 
   /**
    * Fila de avatares: creador + autor + strip “joined”.
@@ -395,7 +428,7 @@ function ParticipantPlanProposalBlock({
     push(fromParticipant);
     joinedParticipants.forEach((p) => push(p));
 
-    if (response === "in") {
+    if (rsvpIn) {
       const missing = circleMembers.filter((m) => !list.some((x) => x.seedUserId === m.seedUserId));
       let self: DemoUser | null = viewer;
       if (self != null && list.some((x) => x.seedUserId === self.seedUserId)) {
@@ -408,82 +441,171 @@ function ParticipantPlanProposalBlock({
     }
 
     return list;
-  }, [circleMembers, fromParticipant, joinedParticipants, planCreator, response, viewer]);
+  }, [
+    circleMembers,
+    fromParticipant,
+    hideRsvpActions,
+    joinedParticipants,
+    planCreator,
+    response,
+    rsvpIn,
+    viewer,
+  ]);
+
+  /** Tu plan: un solo avatar (perfil real si hay; sin “append” duplicado). */
+  const peopleGoingDisplay = useMemo(() => {
+    if (!hideRsvpActions) return goingUsers;
+    const u = viewer ?? fromParticipant ?? planCreator;
+    if (!u) return [];
+    const profile = joinedProfileAvatarUrl?.trim() ?? "";
+    if (profile && !urlsLikelySameAvatar(u.avatarUrl ?? "", profile)) {
+      return [{ ...u, avatarUrl: profile }];
+    }
+    return [u];
+  }, [
+    fromParticipant,
+    hideRsvpActions,
+    goingUsers,
+    joinedProfileAvatarUrl,
+    planCreator,
+    viewer,
+  ]);
 
   /** Tu foto del perfil al final si es distinta de las URLs demo de la fila (si no, ya “estás” en un círculo). */
   const appendProfileAvatarUrl = useMemo(() => {
-    if (response !== "in") return null;
+    if (!rsvpIn) return null;
     const raw = joinedProfileAvatarUrl?.trim() ?? "";
     if (!raw) return null;
     if (goingUsers.some((u) => urlsLikelySameAvatar(u.avatarUrl ?? "", raw))) return null;
     return raw;
-  }, [goingUsers, joinedProfileAvatarUrl, response]);
+  }, [goingUsers, joinedProfileAvatarUrl, rsvpIn]);
 
-  const declined = response === "out";
-
-  /** Solo cuando tú confirmas “I'm in”: antes no debe decirse que todo el círculo ha entrado. */
+  /**
+   * Solo cuando confirmas “I'm in”. Con 2 personas, a veces tú solo salías como foto extra
+   * (`appendProfileAvatarUrl`) sin segundo `DemoUser` en la fila, y no se marcaba el círculo completo.
+   */
   const wholeCircleIn = useMemo(() => {
-    if (circleMembers.length === 0 || declined || response !== "in") return false;
+    if (circleMembers.length === 0 || declined || !rsvpIn) return false;
     const ids = new Set<number>();
     for (const u of goingUsers) ids.add(u.seedUserId);
+    if (viewer != null && Number.isFinite(viewer.seedUserId)) ids.add(viewer.seedUserId);
+    if (appendProfileAvatarUrl) {
+      const missing = circleMembers.filter((m) => !ids.has(m.seedUserId));
+      if (missing.length === 1) ids.add(missing[0]!.seedUserId);
+    }
     return circleMembers.every((m) => ids.has(m.seedUserId));
-  }, [circleMembers, declined, goingUsers, response]);
+  }, [appendProfileAvatarUrl, circleMembers, declined, goingUsers, rsvpIn, viewer]);
 
   const statusLabel = useMemo(() => {
+    if (hideRsvpActions && !declined) {
+      return "Only you have joined";
+    }
     if (goingUsers.length === 0 || declined) return "";
-    if (wholeCircleIn && circleMembers.length > 1) return "All the circle has joined";
+    const rowSlots =
+      goingUsers.length + (appendProfileAvatarUrl ? 1 : 0);
+    const expectTwoRepeat =
+      typeof repeatExpectedHeadcount === "number" &&
+      repeatExpectedHeadcount === 2;
+    if (rsvpIn && expectTwoRepeat && rowSlots >= 2) {
+      return "All the circle has joined";
+    }
+    if (wholeCircleIn && circleMembers.length >= 2) {
+      return "All the circle has joined";
+    }
     return `${goingUsers.map((p) => p.name.split(" ")[0]).join(", ")} joined`;
-  }, [circleMembers.length, declined, goingUsers, wholeCircleIn]);
+  }, [
+    appendProfileAvatarUrl,
+    circleMembers.length,
+    declined,
+    goingUsers,
+    hideRsvpActions,
+    repeatExpectedHeadcount,
+    rsvpIn,
+    wholeCircleIn,
+  ]);
+
+  const proposalAvatarFallback =
+    "https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb";
+
+  const headerAvatarSrc = useMemo(() => {
+    if (hideRsvpActions) {
+      const profile = joinedProfileAvatarUrl?.trim();
+      if (profile) return profile;
+      const v = viewer?.avatarUrl?.trim();
+      if (v) return v;
+    }
+    const u = fromParticipant.avatarUrl?.trim();
+    return u || proposalAvatarFallback;
+  }, [
+    fromParticipant.avatarUrl,
+    hideRsvpActions,
+    joinedProfileAvatarUrl,
+    viewer?.avatarUrl,
+  ]);
 
   return (
-    <div className="flex w-full items-end gap-[8px]">
+    <div
+      className={`flex w-full ${hideRsvpActions ? "justify-end" : "justify-start"}`}
+    >
+      <div
+        className={`flex min-w-0 w-full items-end gap-[8px] ${hideRsvpActions ? "flex-row-reverse" : ""}`}
+      >
       <button
         type="button"
         onClick={onAvatarClick}
         className="shrink-0"
-        aria-label={`Open ${fromParticipant.name} profile`}
+        aria-label={
+          hideRsvpActions
+            ? "Your profile"
+            : `Open ${fromParticipant.name} profile`
+        }
       >
         <img
-          alt={fromParticipant.name}
+          alt={hideRsvpActions ? "You" : fromParticipant.name}
           className="size-[28px] shrink-0 rounded-full object-cover"
-          src={
-            fromParticipant.avatarUrl ||
-            "https://www.figma.com/api/mcp/asset/920565ce-048b-463b-b67c-d2fb3054dbdb"
-          }
+          src={headerAvatarSrc}
         />
       </button>
-      <div className="flex min-w-0 flex-1 flex-col items-start gap-[4px]">
-        <p className="type-body-xs text-secondary-token">{fromParticipant.name}</p>
-        <p
-          className="font-primary text-[13px] leading-[18px] font-medium"
-          style={{ color: "var(--color-button-secondary)" }}
-        >
-          New plan proposal
+      <div
+        className={`flex min-w-0 flex-1 flex-col gap-[4px] ${hideRsvpActions ? "items-end" : "items-start"}`}
+      >
+        <p className="type-body-xs text-secondary-token">
+          {hideRsvpActions ? "You" : fromParticipant.name}
         </p>
+        {!hideRsvpActions && !declined ? (
+          <p
+            className="font-primary text-[13px] leading-[18px] font-medium"
+            style={{ color: "var(--color-button-secondary)" }}
+          >
+            New plan proposal
+          </p>
+        ) : null}
 
         <div
-          className={`relative w-full rounded-[12px] border-[1px] border-solid border-card-token bg-surface-primary p-[20px] transition-opacity ${
+          className={`relative w-[276px] max-w-[min(276px,100%)] shrink-0 rounded-[12px] border-[1px] border-solid border-card-token bg-surface-primary p-[16px] transition-opacity ${
             declined ? "pointer-events-none opacity-[0.42] saturate-0" : ""
           }`}
         >
           <div className="relative flex flex-col gap-[16px]">
           {/* Title + meta */}
-          <div className="flex flex-col gap-[6px]">
+          <div className="flex w-full flex-col gap-[6px] text-left">
             <p className="font-primary text-[20px] font-semibold leading-[26px] tracking-[-0.4px] text-primary-token">
               {title}
             </p>
 
             <div className="flex items-center gap-[6px]">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
                 <rect x="1" y="2" width="12" height="11" rx="2" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
                 <path d="M1 5H13" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
                 <path d="M4 1V3M10 1V3" stroke="var(--color-text-secondary)" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
-              <p className="font-primary text-[13px] leading-[18px] text-secondary-token">{when}</p>
+              <p className="font-primary text-[13px] leading-[18px] text-secondary-token">
+                {formatWhenLineForDisplay(when)}
+              </p>
             </div>
 
             <div className="flex items-center gap-[6px]">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
                 <path d="M7 1C4.79 1 3 2.79 3 5C3 8 7 13 7 13C7 13 11 8 11 5C11 2.79 9.21 1 7 1Z" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
                 <circle cx="7" cy="5" r="1.5" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
               </svg>
@@ -492,47 +614,53 @@ function ParticipantPlanProposalBlock({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-[12px]">
-            <button
-              type="button"
-              disabled={declined}
-              onClick={() => setResponse("in")}
-              className="type-body-s h-[34px] flex-1 rounded-[999px] border-0 transition-colors disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: "var(--color-button-secondary)",
-                color: "var(--color-text-invert)",
-                opacity: declined ? 0.35 : response === "out" ? 0.4 : 1,
-              }}
-            >
-              {response === "in" ? "You're in" : "I'm in"}
-            </button>
-            <button
-              type="button"
-              disabled={declined}
-              onClick={() => setResponse("out")}
-              className="type-body-s box-border h-[34px] flex-1 rounded-[999px] border border-solid border-[var(--color-text-primary)] transition-colors disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: response === "out" ? "var(--color-surface-secondary)" : "transparent",
-                color: "var(--color-text-primary)",
-                opacity: declined ? 0.35 : response === "in" ? 0.4 : 1,
-              }}
-            >
-              Can't make it
-            </button>
+          {!hideRsvpActions && !declined ? (
+            <div className="flex gap-[12px]">
+              <button
+                type="button"
+                disabled={declined}
+                onClick={() => commitResponse("in")}
+                className="type-body-s h-[34px] flex-1 rounded-[999px] border-0 transition-colors disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: "var(--color-button-secondary)",
+                  color: "var(--color-text-invert)",
+                  opacity: declined ? 0.35 : response === "out" ? 0.4 : 1,
+                }}
+              >
+                {response === "in" ? "You're in" : "I'm in"}
+              </button>
+              <button
+                type="button"
+                disabled={declined}
+                onClick={() => commitResponse("out")}
+                className="type-body-s box-border h-[34px] flex-1 rounded-[999px] border border-solid border-[var(--color-text-primary)] transition-colors disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: response === "out" ? "var(--color-surface-secondary)" : "transparent",
+                  color: "var(--color-text-primary)",
+                  opacity: declined ? 0.35 : response === "in" ? 0.4 : 1,
+                }}
+              >
+                Can't make it
+              </button>
+            </div>
+          ) : null}
+
+          {!declined ? (
+            <div className="relative mt-[12px] flex min-h-[24px] w-full items-center gap-[12px] text-left">
+              <PlanProposalPeopleGoing
+                participants={peopleGoingDisplay}
+                appendProfileAvatarUrl={
+                  hideRsvpActions ? null : appendProfileAvatarUrl
+                }
+              />
+              <p className="min-w-0 flex-1 font-primary text-[12px] leading-[16px] text-primary-token">
+                {statusLabel || "\u00a0"}
+              </p>
+            </div>
+          ) : null}
           </div>
         </div>
-
-        {/* Quién va — creador + RSVP */}
-        <div className="relative mt-[12px] flex min-h-[24px] items-center gap-[12px]">
-          <PlanProposalPeopleGoing
-            participants={goingUsers}
-            appendProfileAvatarUrl={appendProfileAvatarUrl}
-          />
-          <p className="min-w-0 flex-1 font-primary text-[12px] leading-[16px] text-primary-token">
-            {statusLabel || "\u00a0"}
-          </p>
-        </div>
-        </div>
+      </div>
       </div>
     </div>
   );
@@ -780,19 +908,6 @@ export default function ChatScreen() {
     };
   }, [isRepeatGroup, groupPlans.length]);
 
-  useEffect(() => {
-    const groupId = typeof state?.groupId === "string" ? state.groupId.trim() : "";
-    if (
-      !isRepeatGroup ||
-      !groupId ||
-      groupPlans.length > 0 ||
-      !randomCatalogProposal
-    ) {
-      return;
-    }
-    markRepeatGroupShowsDemoProposal(groupId);
-  }, [groupPlans.length, isRepeatGroup, randomCatalogProposal, state?.groupId]);
-
   const primaryParticipant = participants[0];
   const secondaryParticipant = participants[1];
   const tertiaryParticipant = participants[2];
@@ -870,19 +985,33 @@ export default function ChatScreen() {
 
       const treatAsMe = plan.creator ?? null;
 
-      // Planes reales del grupo → mensaje atribuido a otro miembro (no a ti)
+      /**
+       * Planes persistidos en el grupo.
+       * Solo si los guardaste **tú** desde Add Specs (`createdByName === "You"`): te mostramos a ti y sin RSVP.
+       * Si `created_by_name` es otro miembro (“Marcos”, etc.) o llega desde otro contexto → autor + RSVP como antes (`resolveProposalAuthor`).
+       */
       const groupPlanBlocks: ConversationBlock[] =
         participants.length === 0
           ? []
           : groupPlans.map((groupPlan) => {
-              const author = resolveProposalAuthor(participants, {
-                createdByName: groupPlan.createdByName,
-                treatAsMe: treatAsMe,
-              });
-              const planCreator =
-                resolvePlanCreator(participants, groupPlan.createdByName, treatAsMe) ??
-                treatAsMe ??
-                author;
+              const createdBy = groupPlan.createdByName?.trim();
+              /** Planteada por el usuario actual (solo este caso cambia UX; el resto = propuesta ajena). */
+              const iCreated =
+                createdBy === "You" &&
+                rsvpViewerUser != null &&
+                Number.isFinite(rsvpViewerUser.seedUserId);
+
+              const author = iCreated
+                ? rsvpViewerUser!
+                : resolveProposalAuthor(participants, {
+                    createdByName: groupPlan.createdByName,
+                    treatAsMe: treatAsMe,
+                  });
+              const planCreator = iCreated
+                ? rsvpViewerUser!
+                : (resolvePlanCreator(participants, groupPlan.createdByName, treatAsMe) ??
+                  treatAsMe ??
+                  author);
               return {
                 type: "plan_proposal" as const,
                 fromParticipant: author,
@@ -892,10 +1021,11 @@ export default function ChatScreen() {
                 when: groupPlan.when ?? "",
                 where: groupPlan.where ?? "",
                 joinedParticipants: joinedStripForProposal(participants, author),
+                hideRsvpActions: iCreated,
               };
             });
 
-      // Demo: propuesta simulada desde alguien que no eres tú (`plan.creator` al entrar desde Groups)
+      /** Demo/catálogo: siempre parece propuesta **de otro** en el hilo → RSVP como siempre (`hideRsvpActions` false). */
       const demoBlock: ConversationBlock[] =
         groupPlans.length === 0 && participants.length > 0
           ? [
@@ -915,6 +1045,7 @@ export default function ChatScreen() {
                       )
                     : "Location (1.2km)",
                   joinedParticipants: joinedStripForProposal(participants, author),
+                  hideRsvpActions: false,
                 };
               })(),
             ]
@@ -1134,6 +1265,18 @@ export default function ChatScreen() {
                   viewer={block.viewer}
                   joinedProfileAvatarUrl={viewerProfileAvatar}
                   circleMembers={chatCircleMembers}
+                  repeatExpectedHeadcount={
+                    isRepeatGroup ? participants.length + 1 : undefined
+                  }
+                  persistRsvpGroupId={
+                    isRepeatGroup &&
+                    !(block.hideRsvpActions ?? false) &&
+                    typeof state?.groupId === "string" &&
+                    state.groupId.trim()
+                      ? state.groupId.trim()
+                      : undefined
+                  }
+                  hideRsvpActions={block.hideRsvpActions ?? false}
                   title={block.title}
                   when={block.when}
                   where={block.where}

@@ -1,4 +1,5 @@
 import type { DemoUser } from "./demoUsers";
+import { clearRepeatGroupRsvp } from "./repeatGroupRsvp";
 import { supabase } from "./supabase";
 
 export type SavedGroup = {
@@ -133,6 +134,8 @@ export async function saveGroup(group: SavedGroup): Promise<SavedGroup[]> {
 }
 
 export async function deleteGroup(groupId: string): Promise<SavedGroup[]> {
+  clearRepeatGroupRsvp(groupId);
+
   const groups = await loadSavedGroups();
   const nextGroups = groups.filter((group) => group.id !== groupId);
 

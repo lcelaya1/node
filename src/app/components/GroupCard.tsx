@@ -1,4 +1,5 @@
 import type { SavedGroup } from "../lib/groups";
+import type { RepeatGroupRsvp } from "../lib/repeatGroupRsvp";
 
 const collageSlotsByCount: Record<number, Array<{ left: string; rotation: number; top: string }>> = {
   2: [
@@ -21,14 +22,15 @@ const collageSlotsByCount: Record<number, Array<{ left: string; rotation: number
 type GroupCardProps = {
   currentUserAvatar?: string;
   group: SavedGroup;
-  hasNewPlanProposal?: boolean;
+  /** Respuesta guardada a la propuesta en el chat repeat; sin valor = propuesta pendiente (borde rojo). */
+  savedPlanRsvp?: RepeatGroupRsvp | null;
   onClick: () => void;
 };
 
 export function GroupCard({
   currentUserAvatar,
   group,
-  hasNewPlanProposal = false,
+  savedPlanRsvp = null,
   onClick,
 }: GroupCardProps) {
   const peopleCount = group.participants.length + 1;
@@ -44,20 +46,32 @@ export function GroupCard({
   ].slice(0, 4);
   const collageSlots = collageSlotsByCount[peopleCount] ?? collageSlotsByCount[4];
 
+  const borderColor =
+    savedPlanRsvp === "in"
+      ? "var(--color-text-primary)"
+      : savedPlanRsvp === "out"
+        ? "var(--color-border-card)"
+        : "var(--color-button-secondary)";
+
+  const peopleLine = `${peopleCount} people`;
+
+  const ariaProposal =
+    savedPlanRsvp === "in"
+      ? "plan incoming"
+      : savedPlanRsvp === "out"
+        ? "can't make it"
+        : "new plan proposal";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={
-        hasNewPlanProposal ? `${group.title}, new plan proposal` : `${group.title} circle`
-      }
+      aria-label={`${group.title} circle, ${peopleLine}, ${ariaProposal}`}
       className="box-border flex w-[168px] shrink-0 flex-col rounded-[8px] bg-surface-primary text-left"
       style={{
         borderWidth: 1,
         borderStyle: "solid",
-        borderColor: hasNewPlanProposal
-          ? "var(--color-button-secondary)"
-          : "var(--color-border-card)",
+        borderColor,
       }}
     >
       <div className="relative h-[144px] w-full rounded-[8px] bg-surface-secondary">
@@ -99,7 +113,7 @@ export function GroupCard({
       <div className="w-full p-[12px]">
         <div className="flex flex-col gap-[4px]">
           <p className="type-body-m-medium truncate text-primary-token">{group.title}</p>
-          <p className="type-body-xs text-primary-token">{peopleCount} people</p>
+          <p className="type-body-xs text-primary-token">{peopleLine}</p>
         </div>
       </div>
     </button>

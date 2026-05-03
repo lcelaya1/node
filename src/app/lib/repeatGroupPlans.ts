@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { clearRepeatGroupRsvp, setRepeatGroupRsvp } from "./repeatGroupRsvp";
 
 export type RepeatGroupPlan = {
   createdAt: string;
@@ -108,58 +109,11 @@ export async function createRepeatGroupPlan(
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([nextPlan, ...existing]));
   }
 
+  clearRepeatGroupRsvp(nextPlan.groupId);
+  /** El proponente ya cuenta como dentro → mismo borde que “Plan incoming”. */
+  if (input.createdByName?.trim() === "You") {
+    setRepeatGroupRsvp(nextPlan.groupId, "in");
+  }
+
   return nextPlan;
-}
-
-/** sessionStorage: círculos con propuesta demo en chat (sin fila guardada still “new”). */
-const DEMO_PROPOSAL_SESSION_KEY = "node-repeat-demo-proposal";
-
-function canUseSessionStorage() {
-  return typeof window !== "undefined" && "sessionStorage" in window;
-}
-
-export function markRepeatGroupShowsDemoProposal(groupId: string) {
-  if (!canUseSessionStorage()) return;
-  const id = groupId.trim();
-  if (!id) return;
-  try {
-    const raw = window.sessionStorage.getItem(DEMO_PROPOSAL_SESSION_KEY);
-    const map =
-      raw && typeof raw === "string"
-        ? ((JSON.parse(raw) as Record<string, boolean>) ?? {})
-        : {};
-    map[id] = true;
-    window.sessionStorage.setItem(DEMO_PROPOSAL_SESSION_KEY, JSON.stringify(map));
-  } catch {
-    /* ignore */
-  }
-}
-
-export function clearRepeatGroupDemoProposalFlag(groupId: string) {
-  if (!canUseSessionStorage()) return;
-  const id = groupId.trim();
-  if (!id) return;
-  try {
-    const raw = window.sessionStorage.getItem(DEMO_PROPOSAL_SESSION_KEY);
-    if (!raw) return;
-    const map = JSON.parse(raw) as Record<string, boolean>;
-    if (map && typeof map === "object" && !Array.isArray(map)) {
-      delete map[id];
-      window.sessionStorage.setItem(DEMO_PROPOSAL_SESSION_KEY, JSON.stringify(map));
-    }
-  } catch {
-    /* ignore */
-  }
-}
-
-export function readRepeatGroupDemoProposalFlags(): Record<string, boolean> {
-  if (!canUseSessionStorage()) return {};
-  try {
-    const raw = window.sessionStorage.getItem(DEMO_PROPOSAL_SESSION_KEY);
-    if (!raw) return {};
-    const map = JSON.parse(raw) as Record<string, boolean>;
-    return map && typeof map === "object" && !Array.isArray(map) ? map : {};
-  } catch {
-    return {};
-  }
 }

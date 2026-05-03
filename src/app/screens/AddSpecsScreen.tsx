@@ -6,6 +6,7 @@ import { SpeechBubbleChip } from "../components/SpeechBubbleChip";
 import { WhereModal } from "../components/WhereModal";
 import { ExplainModal } from "../components/ExplainModal";
 import { CoverImageModal } from "../components/CoverImageModal";
+import { formatIsoDateOnlyForDisplay } from "../lib/formatPlanWhen";
 import { deletePlan, loadSavedPlan, savePlan } from "../lib/plans";
 import { createRepeatGroupPlan } from "../lib/repeatGroupPlans";
 import { resolveRsvpViewerInCircle } from "../lib/resolveCircleViewer";
@@ -44,6 +45,21 @@ function getTomorrow(): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/** Escritorio: un `input[type=date]` invisible a veces no abre el calendario; `showPicker()` exige gesto de usuario. */
+function openNativeDatePicker(input: HTMLInputElement | null) {
+  if (!input) return;
+  try {
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+  } catch {
+    /* Safari / contextos que exigen click() */
+  }
+  input.focus({ preventScroll: true });
+  input.click();
 }
 
 export default function AddSpecsScreen() {
@@ -105,7 +121,10 @@ export default function AddSpecsScreen() {
     setIsSaving(true);
     try {
       const id = planId ?? crypto.randomUUID();
-      const when = [planData.date, planData.hour].filter(Boolean).join(" · ");
+      const dateLabel = planData.date
+        ? formatIsoDateOnlyForDisplay(planData.date)
+        : "";
+      const when = [dateLabel, planData.hour].filter(Boolean).join(" · ");
 
       await savePlan({
         id,
@@ -265,11 +284,14 @@ export default function AddSpecsScreen() {
               <div className="flex flex-col gap-[12px] items-start w-full">
                 <SpeechBubbleChip direction="Left" text="When?" />
                 <div className="flex gap-[16px] h-[80px] items-center w-full">
-                  <label className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] relative overflow-hidden text-left cursor-pointer">
+                  <label
+                    className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px] relative overflow-hidden text-left cursor-pointer"
+                    onClick={() => openNativeDatePicker(dateInputRef.current)}
+                  >
                     <p className="font-primary text-[16px] leading-[21px] font-medium text-primary-token">
                       Date
                     </p>
-                    <span className={`font-primary text-[14px] leading-[16px] ${planData.date ? "text-primary-token" : "text-secondary-token"}`}>
+                    <span className={`font-primary text-[14px] leading-[16px] pointer-events-none ${planData.date ? "text-primary-token" : "text-secondary-token"}`}>
                       {planData.date
                         ? new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" }).format(
                             new Date(planData.date + "T00:00:00")
@@ -286,7 +308,8 @@ export default function AddSpecsScreen() {
                           handleChange("date", e.target.value);
                         }
                       }}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0 pointer-events-none"
+                      aria-label="Choose plan date"
                     />
                   </label>
                   <div className="border border-card-token flex flex-1 flex-col h-full items-start justify-between p-[12px] rounded-[8px]">

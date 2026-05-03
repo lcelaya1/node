@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { AppNavbar } from "../components/AppNavbar";
 import { GroupCard } from "../components/GroupCard";
 import { loadSavedGroups, type SavedGroup } from "../lib/groups";
+import {
+  REPEAT_GROUP_RSVP_EVENT,
+  getRepeatGroupRsvp,
+  loadRepeatGroupRsvpMap,
+  setRepeatGroupRsvp,
+  type RepeatGroupRsvp,
+} from "../lib/repeatGroupRsvp";
+import { loadRepeatGroupPlans } from "../lib/repeatGroupPlans";
 import { resolveRsvpViewerInCircle } from "../lib/resolveCircleViewer";
-import { loadRepeatGroupPlans, readRepeatGroupDemoProposalFlags } from "../lib/repeatGroupPlans";
 import { supabase } from "../lib/supabase";
 import imageLeft from "../../assets/V2 APP (25/Rectangle 13.png";
 import imageBottom from "../../assets/V2 APP (25/Rectangle 14.png";
@@ -42,8 +49,8 @@ function CircleAcceptedModal({
 
 function GroupPlansLegend() {
   return (
-    <div className="flex items-center gap-[24px]">
-      <div className="flex items-center gap-[8px]">
+    <div className="flex flex-wrap items-center gap-x-[16px] gap-y-[10px]">
+      <div className="flex items-center gap-[4px]">
         <div className="relative size-[12px] shrink-0">
           <svg className="absolute inset-0 block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 12 12">
             <circle cx="6" cy="6" r="6" fill="#FC312E" />
@@ -52,7 +59,16 @@ function GroupPlansLegend() {
         <p className="text-[12px] leading-[16px] text-secondary-token">New plan proposal</p>
       </div>
 
-      <div className="flex items-center gap-[8px]">
+      <div className="flex items-center gap-[4px]">
+        <div className="relative size-[12px] shrink-0">
+          <svg className="absolute inset-0 block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 12 12">
+            <circle cx="6" cy="6" r="6" fill="var(--color-text-primary)" />
+          </svg>
+        </div>
+        <p className="text-[12px] leading-[16px] text-secondary-token">Plan incoming</p>
+      </div>
+
+      <div className="flex items-center gap-[4px]">
         <div className="relative size-[12px] shrink-0">
           <svg className="absolute inset-0 block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 12 12">
             <circle cx="6" cy="6" r="6" fill="#E4E4E7" />
@@ -69,7 +85,9 @@ export default function GroupsScreen() {
   const location = useLocation();
   const locationState = (location.state as GroupsLocationState | null) ?? null;
   const [groups, setGroups] = useState<SavedGroup[]>([]);
-  const [hasNewPlanByGroupId, setHasNewPlanByGroupId] = useState<Record<string, boolean>>({});
+  const [planRsvpByGroupId, setPlanRsvpByGroupId] = useState<
+    Record<string, RepeatGroupRsvp>
+  >({});
   const [avatarUrl, setAvatarUrl] = useState("");
   const [profileFullName, setProfileFullName] = useState("");
   const [isAcceptedModalOpen, setIsAcceptedModalOpen] = useState(
@@ -125,37 +143,42 @@ export default function GroupsScreen() {
     };
   }, []);
 
+  /** Planes ya guardados antes de persistir RSVP al crear propia propuesta. */
   useEffect(() => {
-    let active = true;
+    let cancelled = false;
 
     const run = async () => {
-      if (groups.length === 0) {
-        if (!active) return;
-        setHasNewPlanByGroupId({});
-        return;
+      for (const g of groups) {
+        if (cancelled) break;
+        if (getRepeatGroupRsvp(g.id)) continue;
+        const plans = await loadRepeatGroupPlans(g.id);
+        if (cancelled) break;
+        const latest = plans[plans.length - 1];
+        if (latest?.createdByName?.trim() === "You") {
+          setRepeatGroupRsvp(g.id, "in");
+        }
       }
-
-      const demoFlags = readRepeatGroupDemoProposalFlags();
-      const entries = await Promise.all(
-        groups.map(async (group) => {
-          const plans = await loadRepeatGroupPlans(group.id);
-          const hasPersisted = plans.length > 0;
-          return [group.id, hasPersisted || Boolean(demoFlags[group.id])] as const;
-        }),
-      );
-
-      if (!active) return;
-      const nextMap = Object.fromEntries(entries);
-
-      setHasNewPlanByGroupId(nextMap);
     };
 
     void run();
 
     return () => {
-      active = false;
+      cancelled = true;
     };
   }, [groups]);
+
+  const refreshPlanRsvp = useCallback(() => {
+    setPlanRsvpByGroupId(loadRepeatGroupRsvpMap());
+  }, []);
+
+  useEffect(() => {
+    refreshPlanRsvp();
+  }, [location.pathname, location.key, refreshPlanRsvp]);
+
+  useEffect(() => {
+    window.addEventListener(REPEAT_GROUP_RSVP_EVENT, refreshPlanRsvp);
+    return () => window.removeEventListener(REPEAT_GROUP_RSVP_EVENT, refreshPlanRsvp);
+  }, [refreshPlanRsvp]);
 
   useEffect(() => {
     let active = true;
@@ -210,7 +233,7 @@ export default function GroupsScreen() {
                 key={group.id}
                 currentUserAvatar={avatarUrl || undefined}
                 group={group}
-                hasNewPlanProposal={Boolean(hasNewPlanByGroupId[group.id])}
+                savedPlanRsvp={planRsvpByGroupId[group.id] ?? null}
                 onClick={() => {
                   const participantsList = group.participants;
                   const viewer = resolveRsvpViewerInCircle(
