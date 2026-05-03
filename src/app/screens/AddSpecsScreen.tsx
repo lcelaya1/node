@@ -5,6 +5,7 @@ import { IconButton } from "../components/IconButton";
 import { SpeechBubbleChip } from "../components/SpeechBubbleChip";
 import { WhereModal } from "../components/WhereModal";
 import { ExplainModal } from "../components/ExplainModal";
+import { CoverImageModal } from "../components/CoverImageModal";
 import { deletePlan, loadSavedPlan, savePlan } from "../lib/plans";
 import { createRepeatGroupPlan } from "../lib/repeatGroupPlans";
 import type { DemoUser } from "../lib/demoUsers";
@@ -51,9 +52,9 @@ export default function AddSpecsScreen() {
   const groupPlanContext = locationState?.groupPlanContext ?? null;
   const isEditing = planId !== null;
 
-  const coverInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverModalOpen, setCoverModalOpen] = useState(false);
   const [whereModalOpen, setWhereModalOpen] = useState(false);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(isEditing);
@@ -183,19 +184,8 @@ export default function AddSpecsScreen() {
               ? { backgroundImage: `url(${coverImage})`, backgroundSize: "cover", backgroundPosition: "center" }
               : { backgroundColor: "var(--color-text-tertiary)" }
           }
-          onClick={() => coverInputRef.current?.click()}
+          onClick={() => setCoverModalOpen(true)}
         >
-          <input
-            ref={coverInputRef}
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setCoverImage(URL.createObjectURL(file));
-            }}
-          />
-
           <div className="absolute right-[20px] top-[32px] flex items-center gap-[8px]" onClick={(e) => e.stopPropagation()}>
             {isEditing && (
               <button
@@ -347,6 +337,11 @@ export default function AddSpecsScreen() {
         </div>
       </div>
 
+      <CoverImageModal
+        isOpen={coverModalOpen}
+        onClose={() => setCoverModalOpen(false)}
+        onSelect={(img) => setCoverImage(img)}
+      />
       <WhereModal
         isOpen={whereModalOpen}
         onClose={() => setWhereModalOpen(false)}

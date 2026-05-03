@@ -195,7 +195,117 @@ type ConversationBlock =
   | {
       type: "me";
       messages: Array<{ text: string; time: string; showTail?: boolean }>;
+    }
+  | {
+      type: "plan_proposal";
+      title: string;
+      when: string;
+      where: string;
+      joinedParticipants: DemoUser[];
     };
+
+type PlanProposalCardProps = {
+  title: string;
+  when: string;
+  where: string;
+  joinedParticipants: DemoUser[];
+};
+
+function PlanProposalCard({ title, when, where, joinedParticipants }: PlanProposalCardProps) {
+  const [response, setResponse] = useState<"in" | "out" | null>(null);
+
+  const joined = joinedParticipants.slice(0, 3);
+  const joinedLabel = joined.map((p) => p.name.split(" ")[0]).join(", ");
+
+  return (
+    <div className="flex flex-col items-center gap-[10px] w-full">
+      <p
+        className="font-primary text-[13px] leading-[18px] font-medium"
+        style={{ color: "var(--color-button-secondary)" }}
+      >
+        New plan proposal
+      </p>
+
+      <div
+        className="w-full rounded-[16px] p-[16px] flex flex-col gap-[16px]"
+        style={{ border: "1px solid var(--color-card-token)", backgroundColor: "var(--color-surface-primary)" }}
+      >
+        {/* Plan info */}
+        <div className="flex flex-col gap-[6px]">
+          <p className="font-primary text-[20px] leading-[26px] font-semibold tracking-[-0.4px] text-primary-token">
+            {title}
+          </p>
+
+          <div className="flex items-center gap-[6px]">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="2" width="12" height="11" rx="2" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
+              <path d="M1 5H13" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
+              <path d="M4 1V3M10 1V3" stroke="var(--color-text-secondary)" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            <p className="font-primary text-[13px] leading-[18px] text-secondary-token">{when}</p>
+          </div>
+
+          <div className="flex items-center gap-[6px]">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1C4.79 1 3 2.79 3 5C3 8 7 13 7 13C7 13 11 8 11 5C11 2.79 9.21 1 7 1Z" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
+              <circle cx="7" cy="5" r="1.5" stroke="var(--color-text-secondary)" strokeWidth="1.2" />
+            </svg>
+            <p className="font-primary text-[13px] leading-[18px] text-secondary-token">{where}</p>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-[8px]">
+          <button
+            type="button"
+            onClick={() => setResponse("in")}
+            className="flex-1 h-[40px] rounded-[999px] font-primary text-[14px] leading-[20px] font-medium transition-colors"
+            style={{
+              backgroundColor: response === "in" ? "var(--color-button-secondary)" : "var(--color-button-secondary)",
+              color: "var(--color-text-invert)",
+              opacity: response === "out" ? 0.4 : 1,
+            }}
+          >
+            I'm in
+          </button>
+          <button
+            type="button"
+            onClick={() => setResponse("out")}
+            className="flex-1 h-[40px] rounded-[999px] font-primary text-[14px] leading-[20px] font-medium transition-colors"
+            style={{
+              border: "1.5px solid var(--color-text-primary)",
+              backgroundColor: response === "out" ? "var(--color-surface-secondary)" : "transparent",
+              color: "var(--color-text-primary)",
+              opacity: response === "in" ? 0.4 : 1,
+            }}
+          >
+            Can't make it
+          </button>
+        </div>
+
+        {/* Joined participants */}
+        {joined.length > 0 && (
+          <div className="flex items-center gap-[8px]">
+            <div className="flex">
+              {joined.map((p, i) => (
+                <img
+                  key={p.seedUserId}
+                  src={p.avatarUrl || ""}
+                  alt={p.name}
+                  className="size-[24px] rounded-full object-cover ring-2 ring-surface-primary"
+                  style={{ marginLeft: i === 0 ? 0 : -8 }}
+                />
+              ))}
+            </div>
+            <p className="font-primary text-[12px] leading-[16px] text-secondary-token">
+              {joinedLabel} joined
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 type ConfirmCircleActionModalProps = {
   cancelLabel: string;
@@ -421,22 +531,30 @@ export default function ChatScreen() {
         ]),
       ];
 
-      const groupPlanMessages: ConversationBlock[] = groupPlans.map((groupPlan) => ({
-        type: "me",
-        messages: [
-          {
-            text: `Created group plan: ${groupPlan.title}${groupPlan.when ? ` · ${groupPlan.when}` : ""}${groupPlan.where ? ` · ${groupPlan.where}` : ""}`,
-            time: new Date(groupPlan.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            }),
-            showTail: true,
-          },
-        ],
+      // Real group plans → proposal cards
+      const groupPlanBlocks: ConversationBlock[] = groupPlans.map((groupPlan) => ({
+        type: "plan_proposal",
+        title: groupPlan.title,
+        when: groupPlan.when ?? "",
+        where: groupPlan.where ?? "",
+        joinedParticipants: participants.slice(0, 2),
       }));
 
-      return [...baseConversation, ...groupPlanMessages];
+      // No real plans yet → inject a demo proposal so the first group shows an example
+      const demoBlock: ConversationBlock[] =
+        groupPlans.length === 0
+          ? [
+              {
+                type: "plan_proposal",
+                title: "Title of the plan",
+                when: "May 12 · 6pm",
+                where: "Location (1.2km)",
+                joinedParticipants: participants.slice(0, 2),
+              },
+            ]
+          : [];
+
+      return [...demoBlock, ...baseConversation, ...groupPlanBlocks];
     }
 
     return [
@@ -623,7 +741,15 @@ export default function ChatScreen() {
 
         <div className="mt-[24px] flex flex-col gap-[24px]">
           {conversation.map((block, blockIndex) =>
-            block.type === "other" ? (
+            block.type === "plan_proposal" ? (
+              <PlanProposalCard
+                key={`proposal-${blockIndex}`}
+                title={block.title}
+                when={block.when}
+                where={block.where}
+                joinedParticipants={block.joinedParticipants}
+              />
+            ) : block.type === "other" ? (
               <ParticipantBlock
                 key={`${block.name}-${blockIndex}`}
                 avatarUrl={
