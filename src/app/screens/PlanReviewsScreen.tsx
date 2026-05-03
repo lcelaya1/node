@@ -254,7 +254,7 @@ function UserReview({
             >
               What people thought about {name}
             </span>
-            <div className="flex flex-nowrap gap-[8px] overflow-x-auto">
+            <div className="flex flex-wrap gap-[8px]">
               {profileTags.map((tag) => (
                 <ReviewChip
                   key={tag}
