@@ -22,6 +22,27 @@ export default function CreateProfilePictureScreen({
 
   const canContinue = Boolean(value) && !isSaving;
 
+  const fileToDataUrl = (file: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error("Invalid file preview result."));
+      };
+      reader.onerror = () => reject(new Error("We couldn’t read that image. Try another one."));
+      reader.readAsDataURL(file);
+    });
+
+  const isHeicFile = (file: File) => {
+    const type = file.type.toLowerCase();
+    if (type === "image/heic" || type === "image/heif") return true;
+    const name = file.name.toLowerCase();
+    return name.endsWith(".heic") || name.endsWith(".heif");
+  };
+
   const handlePickImage = () => {
     fileInputRef.current?.click();
   };
@@ -32,17 +53,41 @@ export default function CreateProfilePictureScreen({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        onChange?.(reader.result);
+    try {
+      if (isHeicFile(file)) {
+        let jpegBlob: Blob | null = null;
+
+        try {
+          const heic2any = (await import("heic2any")).default;
+          const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92, multiple: false });
+          const candidate = Array.isArray(converted) ? converted[0] : converted;
+          if (candidate instanceof Blob) jpegBlob = candidate;
+        } catch {
+          // fall through to fallback
+        }
+
+        if (!jpegBlob) {
+          const { heicTo } = await import("heic-to");
+          const fallback = await heicTo({ blob: file, type: "image/jpeg", quality: 0.92 });
+          if (!(fallback instanceof Blob)) throw new Error("HEIC conversion failed.");
+          jpegBlob = fallback;
+        }
+
+        const dataUrl = await fileToDataUrl(jpegBlob);
+        onChange?.(dataUrl);
         setErrorMessage("");
+        event.target.value = "";
+        return;
       }
-    };
-    reader.onerror = () => {
-      setErrorMessage("We couldn’t read that image. Try another one.");
-    };
-    reader.readAsDataURL(file);
+
+      const dataUrl = await fileToDataUrl(file);
+      onChange?.(dataUrl);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "We couldn’t read that image. Try another one.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const handleContinue = async () => {
