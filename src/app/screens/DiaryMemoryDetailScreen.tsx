@@ -91,6 +91,8 @@ export default function DiaryMemoryDetailScreen() {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
   const [pendingAdds, setPendingAdds] = useState<PlanMemoryImage[]>([]);
   const [draftDescription, setDraftDescription] = useState("");
@@ -186,6 +188,24 @@ export default function DiaryMemoryDetailScreen() {
       return;
     }
     setRemovedIds((prev) => new Set(prev).add(image.id));
+  };
+
+  const handleRemoveMemory = async () => {
+    if (!group || !routePlanId || isRemoving) return;
+    setIsRemoving(true);
+    try {
+      for (const image of group.images) {
+        await deletePlanMemory(image.id);
+      }
+      const dayKey = (location.state as LocationState | null)?.diaryReopenCalendarDay;
+      navigate("/diary", {
+        replace: true,
+        state: dayKey ? { diaryReopenCalendarDay: dayKey } : {},
+      });
+    } finally {
+      setIsRemoving(false);
+      setIsRemoveModalOpen(false);
+    }
   };
 
   const finalizeEditing = async () => {
@@ -327,7 +347,7 @@ export default function DiaryMemoryDetailScreen() {
         style={{
           paddingBottom: isEditing
             ? "calc(96px + env(safe-area-inset-bottom))"
-            : "calc(24px + env(safe-area-inset-bottom))",
+            : "calc(8px + env(safe-area-inset-bottom))",
           WebkitOverflowScrolling: "touch",
         }}
       >
@@ -400,9 +420,25 @@ export default function DiaryMemoryDetailScreen() {
               aria-hidden={!isEditing}
               onChange={handleFilesSelected}
             />
+
           </>
         )}
       </div>
+
+      {group && !isEditing ? (
+        <div
+          className="shrink-0 flex items-center justify-center pb-[16px]"
+          style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsRemoveModalOpen(true)}
+            className="type-body-s text-secondary-token underline underline-offset-[6px]"
+          >
+            Remove memory
+          </button>
+        </div>
+      ) : null}
 
       {isEditing ? (
         <div
@@ -426,6 +462,44 @@ export default function DiaryMemoryDetailScreen() {
             </span>
           </button>
         </div>
+      ) : null}
+
+      {isRemoveModalOpen ? (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            style={{ backgroundColor: "var(--color-overlay-scrim)" }}
+            onClick={() => setIsRemoveModalOpen(false)}
+          />
+          <div className="fixed inset-x-[20px] bottom-[32px] z-50 mx-auto flex max-w-[353px] flex-col gap-[20px] rounded-[16px] bg-surface-primary p-[20px] shadow-[0px_12px_32px_rgba(9,9,11,0.16)]">
+            <div className="flex flex-col gap-[8px]">
+              <p className="type-heading-l text-primary-token">Remove this memory?</p>
+              <p className="type-body-m text-secondary-token">
+                All photos and notes for this plan will be permanently deleted.
+              </p>
+            </div>
+            <div className="flex flex-col gap-[12px]">
+              <button
+                type="button"
+                aria-busy={isRemoving}
+                disabled={isRemoving}
+                onClick={() => void handleRemoveMemory()}
+                className="flex h-[45px] w-full items-center justify-center rounded-[999px] bg-[#fc312e] disabled:pointer-events-none disabled:opacity-40"
+              >
+                <span className="type-body-m text-white">
+                  {isRemoving ? "Removing..." : "Remove memory"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsRemoveModalOpen(false)}
+                className="flex h-[45px] w-full items-center justify-center rounded-[999px] border border-card-token bg-surface-primary"
+              >
+                <span className="type-body-m text-primary-token">Keep memory</span>
+              </button>
+            </div>
+          </div>
+        </>
       ) : null}
     </div>
   );

@@ -88,7 +88,7 @@ function Header({
 }) {
   return (
     <div className="flex w-full shrink-0 flex-col gap-[24px] pt-[32px]">
-      <h1 className="type-heading-2xl text-primary-token">Diary</h1>
+      <h1 className="type-heading-2xl text-primary-token">Memories</h1>
 
       <div className="flex w-full shrink-0 items-center justify-between">
         <button

@@ -214,7 +214,7 @@ export default function HomeEmptyState() {
               </div>
             </div>
           </div>
-          <p className="font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] leading-[16px] not-italic relative shrink-0 text-[#09090b] text-[12px] whitespace-nowrap">Diary</p>
+          <p className="font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] leading-[16px] not-italic relative shrink-0 text-[#09090b] text-[12px] whitespace-nowrap">Memories</p>
         </div>
         <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-center min-w-px py-[8px] relative" data-name="Tab">
           <div className="relative shrink-0 size-[24px]" data-name="User">

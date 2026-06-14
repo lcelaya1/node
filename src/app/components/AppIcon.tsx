@@ -18,6 +18,7 @@ export type IconName =
   | "Password"
   | "Search"
   | "SquarePen"
+  | "Trash"
   | "User"
   | "Users";
 
@@ -127,6 +128,15 @@ const icons: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="11" cy="11" r="6" stroke="currentColor" />
       <path d="M20 20L15.5 15.5" stroke="currentColor" strokeLinecap="round" />
+    </>
+  ),
+  Trash: (
+    <>
+      <path d="M3 6H21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 6V4H16V6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 6L18.2 19.2C18.0857 20.2267 17.2041 21 16.172 21H7.828C6.7959 21 5.91428 20.2267 5.8 19.2L5 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 11V17" stroke="currentColor" strokeLinecap="round" />
+      <path d="M14 11V17" stroke="currentColor" strokeLinecap="round" />
     </>
   ),
   SquarePen: (

@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { CreateAccountBackButton } from "../components/CreateAccountBackButton";
-import {
-  InterestStackPlanCard,
-  INTEREST_STACK_CARD_H,
-  INTEREST_STACK_CARD_W,
-} from "../components/InterestStackPlanCard";
+import { InterestStackPlanCard } from "../components/InterestStackPlanCard";
 import { supabase } from "../lib/supabase";
 import {
   type CatalogPlan,
@@ -21,130 +17,14 @@ type Props = {
   onContinue?: () => void;
 };
 
-/** Stable fallback so `useEffect(..., [tags])` does not rerun every render when `value` is omitted */
 const EMPTY_INTEREST_TAGS: readonly string[] = [];
-
-const SCALE_BACK = 206 / INTEREST_STACK_CARD_W;
-
-type StackFrame = { left: number; top: number; scale: number; opacity: number; z: number };
-
-const POS_FRONT:  StackFrame = { left: 41,   top: 0,  scale: 1,         opacity: 1, z: 3 };
-/** Card frame wrapper stays at opacity 1; card surface (incl. liked red) fades via `InterestStackPlanCard` `contentOpacity` */
-const POS_BACK_R: StackFrame = { left: 140,  top: 39, scale: SCALE_BACK, opacity: 1, z: 2 };
-const POS_BACK_L: StackFrame = { left: 0,    top: 39, scale: SCALE_BACK, opacity: 1, z: 1 };
-
-const SIDE_CARD_CONTENT_OPACITY = 0.2;
-const POS_ENTER:  StackFrame = { left: -220, top: 39, scale: SCALE_BACK, opacity: 0, z: 0 };
-/** Fifth plan: fixed slot off-canvas (order in `plans[]` never permutes — only roles change). */
-const POS_HIDDEN: StackFrame = { left: -420, top: 39, scale: SCALE_BACK, opacity: 0, z: -1 };
-
-function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
-
-function lerpFrame(from: StackFrame, to: StackFrame, t: number): StackFrame {
-  return {
-    left:    lerp(from.left,    to.left,    t),
-    top:     lerp(from.top,     to.top,     t),
-    scale:   lerp(from.scale,   to.scale,   t),
-    opacity: lerp(from.opacity, to.opacity, t),
-    z:       Math.round(lerp(from.z, to.z, t)),
-  };
-}
-
-function stackedUnderPeekFrame(peekPose: StackFrame, p: number): StackFrame {
-  return {
-    left: peekPose.left,
-    top: peekPose.top,
-    scale: peekPose.scale,
-    opacity: 1,
-    z: Math.round(lerp(0, peekPose.z, p)),
-  };
-}
-
-/** Left/right peeks ~20 % (opaque shell + dimmed content avoids “solid white slab” when opacity was 0). */
-function peekInnerOpacity(
-  idx: number,
-  role: StackRole,
-  gestureMode: "forward" | "backward",
-  p: number,
-  centerIndex: number,
-  deckSize: number,
-): number {
-  const t = Math.max(0, Math.min(1, p));
-  const ixLeft = mod(centerIndex - 1, deckSize);
-  const ixRight = mod(centerIndex + 1, deckSize);
-  const ixNextRightPeek = mod(centerIndex + 2, deckSize);
-  const ixNextLeftPeek = mod(centerIndex - 2, deckSize);
-
-  if (role === "front") {
-    return lerp(1, SIDE_CARD_CONTENT_OPACITY, t);
-  }
-
-  const fadingLeft = gestureMode === "forward" && idx === ixLeft && role === "left";
-  if (fadingLeft) return lerp(SIDE_CARD_CONTENT_OPACITY, 0, t);
-
-  const fadingRight = gestureMode === "backward" && idx === ixRight && role === "right";
-  if (fadingRight) return lerp(SIDE_CARD_CONTENT_OPACITY, 0, t);
-
-  if (gestureMode === "forward" && role === "right") return lerp(SIDE_CARD_CONTENT_OPACITY, 1, t);
-  if (gestureMode === "backward" && role === "left") return lerp(SIDE_CARD_CONTENT_OPACITY, 1, t);
-
-  if (role === "left" || role === "right") return SIDE_CARD_CONTENT_OPACITY;
-
-  /** Stacked successor for right peek: same faint read as peek (not invisible → white matte) */
-  if (gestureMode === "forward" && idx === ixNextRightPeek && role === "hidden") {
-    return SIDE_CARD_CONTENT_OPACITY;
-  }
-
-  /** Stacked successor for left peek (backward reveal) */
-  if (
-    gestureMode === "backward" &&
-    idx === ixNextLeftPeek &&
-    (role === "hidden" || role === "enter")
-  ) {
-    return SIDE_CARD_CONTENT_OPACITY;
-  }
-
-  return 1;
-}
-
-/** Peek card leaves in place — wrapper opacity irrelevant; fade is via `peekInnerOpacity` */
-function fadeOutAtPeekFrame(peekPose: StackFrame, p: number): StackFrame {
-  return {
-    left: peekPose.left,
-    top: peekPose.top,
-    scale: peekPose.scale,
-    opacity: 1,
-    z: peekPose.z,
-  };
-}
-
-/**
- * Left drag (+1 index): centre → left peek; old right → centre; left peek fades out in place;
- * the next **right** peek sits under the current right peek, then settles as top of that peek.
- */
-function stackFramesForward(p: number) {
-  return {
-    pos0: lerpFrame(POS_FRONT,  POS_BACK_L, p),
-    pos1: lerpFrame(POS_BACK_R, POS_FRONT, p),
-    /** Unused — left/right cross-fade handled in frameForPlanAtIndex */
-    pos2: lerpFrame(POS_BACK_L, POS_BACK_L, p),
-    pos3: lerpFrame(POS_ENTER, POS_ENTER, p),
-  };
-}
-
-/**
- * Right drag (−1 index): symmetric — centre → right peek; old left → centre; right peek fades out in place;
- * the next **left** peek sits **under** the current left peek, then settles as top of that peek.
- */
-function stackFramesBackward(p: number) {
-  return {
-    pos0: lerpFrame(POS_FRONT,  POS_BACK_R, p),
-    /** Unused — incoming left handled per index */
-    pos1: lerpFrame(POS_BACK_R, POS_BACK_R, p),
-    pos2: lerpFrame(POS_BACK_L, POS_FRONT, p),
-    pos3: lerpFrame(POS_ENTER, POS_ENTER, p),
-  };
-}
+const SWIPE_THRESHOLD = 80;
+const FLY_DISTANCE = 500;
+const MAX_PLANS = 5;
+/** Pixels each successive back card shifts down from the one in front of it */
+const STACK_OFFSET_Y = 8;
+/** Scale reduction per step back in the stack */
+const STACK_SCALE_STEP = 0.04;
 
 function interestsForPlanIds(planIds: Iterable<string>): string[] {
   const merged = new Set<string>();
@@ -156,111 +36,27 @@ function interestsForPlanIds(planIds: Iterable<string>): string[] {
   return [...merged];
 }
 
-function mod(i: number, n: number) {
-  return ((i % n) + n) % n;
-}
-
-/** `currentIndex` is front; Done unlocks once every deck position has been centred at least once. */
-function allPlansVisited(deckSize: number, visited: ReadonlySet<number>): boolean {
-  if (deckSize <= 0) return false;
-  for (let k = 0; k < deckSize; k++) {
-    if (!visited.has(k)) return false;
-  }
-  return true;
-}
-
-type StackRole = "front" | "left" | "right" | "enter" | "hidden";
-
-/** Which visual slot holds `plans[idx]` for this gesture state (carousel order preserved in array). */
-function stackRoleForIndex(
-  idx: number,
-  ixFront: number,
-  ixLeft: number,
-  ixRight: number,
-  ixEnter: number,
-): StackRole {
-  if (idx === ixFront) return "front";
-  if (idx === ixLeft) return "left";
-  if (idx === ixRight) return "right";
-  if (idx === ixEnter) return "enter";
-  return "hidden";
-}
-
-function frameForPlanAtIndex(
-  idx: number,
-  role: StackRole,
-  p: number,
-  gestureMode: "forward" | "backward",
-  centerIndex: number,
-  deckSize: number,
-): StackFrame {
-  const ixEnter = mod(centerIndex + 3, deckSize);
-  const ixLeft = mod(centerIndex - 1, deckSize);
-  const ixRight = mod(centerIndex + 1, deckSize);
-  /** After +1 centre, next right peek (`currentIndex + 2`); that plan starts in the lone `hidden` role for a 5-slot ring */
-  const ixNextRightPeek = mod(centerIndex + 2, deckSize);
-  const ixNextLeftPeek = mod(centerIndex - 2, deckSize);
-
-  if (gestureMode === "forward") {
-    if (idx === ixLeft && role === "left") {
-      return fadeOutAtPeekFrame(POS_BACK_L, p);
-    }
-    if (idx === ixNextRightPeek && role === "hidden") {
-      return stackedUnderPeekFrame(POS_BACK_R, p);
-    }
-  } else {
-    if (idx === ixRight && role === "right") {
-      return fadeOutAtPeekFrame(POS_BACK_R, p);
-    }
-    /** Next left peek emerges from beneath the current left peek (hidden or enter lane) */
-    if (idx === ixNextLeftPeek && (role === "hidden" || role === "enter")) {
-      return stackedUnderPeekFrame(POS_BACK_L, p);
-    }
-  }
-
-  if (role === "hidden") {
-    return POS_HIDDEN;
-  }
-
-  const f = gestureMode === "forward" ? stackFramesForward(p) : stackFramesBackward(p);
-  switch (role) {
-    case "front":
-      return f.pos0;
-    case "right":
-      return f.pos1;
-    case "left":
-      return f.pos2;
-    case "enter":
-      return f.pos3;
-    default:
-      return POS_HIDDEN;
-  }
-}
-
 export default function CreateProfileInterestsScreen({
   onBack,
   onContinue,
   onChange,
   value,
 }: Props) {
-  const interestDraftTags = value ?? EMPTY_INTEREST_TAGS;
-  const [plans, setPlans] = useState<CatalogPlan[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [likedPlanIds, setLikedPlanIds] = useState<Set<string>>(new Set());
+  const interestDraftTags = value ?? EMPTY_INTEREST_TAGS; // used only for initial liked state
+const [plans, setPlans] = useState<CatalogPlan[]>([]);
+  const [swipeCount, setSwipeCount] = useState(0);
+  const [likedPlanIds, setLikedPlanIds] = useState<Set<string>>(
+    () => new Set(likedOnboardingPlanIdsFromInterests(interestDraftTags)),
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [catalogRetryNonce, setCatalogRetryNonce] = useState(0);
-  const [visitedFrontIndices, setVisitedFrontIndices] = useState<Set<number>>(() => new Set());
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [snapProgress, setSnapProgress] = useState<number | null>(null);
-  /** Active gesture archetype once committed to snap (`null` uses drag sign live) */
-  const [snapMode, setSnapMode] = useState<"forward" | "backward" | null>(null);
+  const [flyDirection, setFlyDirection] = useState<"left" | "right" | null>(null);
+  const [justSwiped, setJustSwiped] = useState(false);
   const dragStartRef = useRef(0);
   const dragXRef = useRef(0);
-  /** Avoid stale `plans.length` inside snap timeouts */
-  const plansLengthRef = useRef(0);
-  plansLengthRef.current = plans.length;
 
   useEffect(() => {
     let cancelled = false;
@@ -268,131 +64,57 @@ export default function CreateProfileInterestsScreen({
     loadOnboardingPlans()
       .then((list) => {
         if (cancelled) return;
-        setPlans(list.length > 0 ? list : getFallbackOnboardingPlans());
+        const src = list.length > 0 ? list : getFallbackOnboardingPlans();
+        setPlans(src.slice(0, MAX_PLANS));
       })
       .catch(() => {
-        if (!cancelled) setPlans(getFallbackOnboardingPlans());
+        if (!cancelled) setPlans(getFallbackOnboardingPlans().slice(0, MAX_PLANS));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [catalogRetryNonce]);
 
   useEffect(() => {
+    setSwipeCount(0);
     setLikedPlanIds(likedOnboardingPlanIdsFromInterests(interestDraftTags));
-  }, [interestDraftTags]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catalogRetryNonce]);
 
-  useEffect(() => {
-    if (plans.length === 0) return;
-    setCurrentIndex((prev) => mod(prev, plans.length));
-  }, [plans.length]);
+const isAnimating = flyDirection !== null;
+  const hasCompletedAllCards = plans.length > 0 && swipeCount >= plans.length;
+  const currentPlan = plans[swipeCount] ?? null;
 
-  /** New deck or catalog retry: only the current front counts until the user swipes again. */
-  useEffect(() => {
-    if (plans.length === 0) {
-      setVisitedFrontIndices(new Set());
-      return;
-    }
-    setVisitedFrontIndices(new Set([mod(currentIndex, plans.length)]));
-  }, [plans.length, catalogRetryNonce]);
-
-  /** Record each plan once it has been the centred card. */
-  useEffect(() => {
-    if (plans.length === 0) return;
-    const front = mod(currentIndex, plans.length);
-    setVisitedFrontIndices((prev) => {
-      if (prev.has(front)) return prev;
-      const next = new Set(prev);
-      next.add(front);
-      return next;
-    });
-  }, [currentIndex, plans.length]);
-
-  const total = Math.max(plans.length, 1);
-
-  /**
-   * Carousel from fixed `plans` order [0 … n−1]: center = currentIndex, left = −1, right = +1 (mod n),
-   * enter = incoming from +3, one index hidden — same five cards every time; only slot assignment changes.
-   */
-  const ixEnter = mod(currentIndex + 3, total);
-  const ixLeft = mod(currentIndex - 1, total);
-  const ixRight = mod(currentIndex + 1, total);
-  const ixFront = mod(currentIndex, total);
-
-  const currentPlan = plans[ixFront];
-
-  const hasCompletedCarouselRound =
-    plans.length > 0 && allPlansVisited(plans.length, visitedFrontIndices);
-
-  const pRaw = snapProgress !== null ? snapProgress : Math.max(0, Math.min(1, Math.abs(dragX) / 150));
-  const gestureMode: "forward" | "backward" =
-    snapMode ?? (dragX > 0 ? "backward" : "forward");
-
-  const isAnimating = snapProgress !== null;
-  const layoutTransition = "left 0.35s ease, top 0.35s ease, transform 0.35s ease, opacity 0.35s ease";
-  const cardPositionTransition = snapProgress !== null ? layoutTransition : "none";
-
-  const stackCardStyle = (pos: StackFrame) =>
-    ({
-      left: pos.left,
-      top: pos.top,
-      width: INTEREST_STACK_CARD_W,
-      height: INTEREST_STACK_CARD_H,
-      opacity: pos.opacity,
-      zIndex: pos.z,
-      transform: `scale(${pos.scale})`,
-      transformOrigin: "top left",
-      transition: cardPositionTransition,
-    }) as const;
-
-  const commitSnapForward = () => {
-    setSnapMode("forward");
-    setSnapProgress(1);
-    setTimeout(() => {
-      setSnapProgress(null);
-      setSnapMode(null);
-      dragXRef.current = 0;
-      setDragX(0);
-      setCurrentIndex((prev) =>
-        mod(prev + 1, Math.max(plansLengthRef.current, 1)),
-      );
-    }, 350);
-  };
-
-  const commitSnapBackward = () => {
-    setSnapMode("backward");
-    setSnapProgress(1);
-    setTimeout(() => {
-      setSnapProgress(null);
-      setSnapMode(null);
-      dragXRef.current = 0;
-      setDragX(0);
-      setCurrentIndex((prev) =>
-        mod(prev - 1, Math.max(plansLengthRef.current, 1)),
-      );
-    }, 350);
-  };
-
-  const toggleLikeForCurrentPlan = () => {
-    if (!currentPlan || isSaving || snapProgress !== null) return;
+  const likeFront = () => {
+    if (!currentPlan || isSaving || isAnimating) return;
     setLikedPlanIds((prev) => {
       const next = new Set(prev);
-      if (next.has(currentPlan.id)) {
-        next.delete(currentPlan.id);
-      } else {
-        next.add(currentPlan.id);
-      }
+      next.add(currentPlan.id);
       const payload = interestsForPlanIds(next);
       queueMicrotask(() => onChange?.(payload));
       return next;
     });
   };
 
+  const flyOff = (direction: "left" | "right") => {
+    if (isAnimating || isSaving || !currentPlan) return;
+    setFlyDirection(direction);
+    setTimeout(() => {
+      setFlyDirection(null);
+      setJustSwiped(true);
+      setSwipeCount((c) => c + 1);
+      dragXRef.current = 0;
+      setDragX(0);
+      requestAnimationFrame(() => requestAnimationFrame(() => setJustSwiped(false)));
+    }, 300);
+  };
+
+  const swipeRight = () => { likeFront(); flyOff("right"); };
+  const swipeLeft = () => { flyOff("left"); };
+
   const onDragStart = (clientX: number) => {
-    if (snapProgress !== null || isSaving) return;
+    if (isAnimating || isSaving || !currentPlan) return;
     dragStartRef.current = clientX;
     dragXRef.current = 0;
     setDragX(0);
@@ -400,25 +122,19 @@ export default function CreateProfileInterestsScreen({
   };
 
   const onDragMove = (clientX: number) => {
-    if (!isDragging || snapProgress !== null) return;
+    if (!isDragging || isAnimating) return;
     const delta = clientX - dragStartRef.current;
-    const clamped = Math.max(-280, Math.min(280, delta));
-    dragXRef.current = clamped;
-    setDragX(clamped);
+    dragXRef.current = Math.max(-300, Math.min(300, delta));
+    setDragX(dragXRef.current);
   };
 
   const onDragEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
     const x = dragXRef.current;
-    if (x > 80) {
-      commitSnapBackward();
-    } else if (x < -80) {
-      commitSnapForward();
-    } else {
-      dragXRef.current = 0;
-      setDragX(0);
-    }
+    if (x > SWIPE_THRESHOLD) swipeRight();
+    else if (x < -SWIPE_THRESHOLD) swipeLeft();
+    else { dragXRef.current = 0; setDragX(0); }
   };
 
   const handleDone = async () => {
@@ -428,9 +144,7 @@ export default function CreateProfileInterestsScreen({
     setIsSaving(true);
     try {
       if (supabase) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase
             .from("profiles")
@@ -443,7 +157,30 @@ export default function CreateProfileInterestsScreen({
     }
   };
 
-  const retryCatalog = () => setCatalogRetryNonce((n) => n + 1);
+  useEffect(() => {
+    if (hasCompletedAllCards && !isSaving) {
+      void handleDone();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCompletedAllCards]);
+
+  const retryCatalog = () => {
+    setSwipeCount(0);
+    setCatalogRetryNonce((n) => n + 1);
+  };
+
+  const liveX = isAnimating
+    ? flyDirection === "right" ? FLY_DISTANCE : -FLY_DISTANCE
+    : dragX;
+  const rotation = liveX * 0.08;
+  const likeOpacity = Math.max(0, Math.min(1, liveX / 80));
+  const nopeOpacity = Math.max(0, Math.min(1, -liveX / 80));
+
+  /** Cards behind the front, from back-most to front-most (drawn back-first so front is on top) */
+  const stackBehind = plans.slice(swipeCount + 1).reverse();
+  /** Total extra height the stack adds at the bottom */
+  const stackExtraH = stackBehind.length * STACK_OFFSET_Y;
+  const CARD_H = 403;
 
   if (isLoading) {
     return (
@@ -465,24 +202,20 @@ export default function CreateProfileInterestsScreen({
         <div className="flex flex-col gap-[8px]">
           <p className="type-heading-l text-primary-token">Select your interests.</p>
           <p className="type-body-m text-secondary-token">
-            Heart the plans that interest you the most, we&apos;ll use these to tailor your feed.
+            Swipe right on plans that interest you, we&apos;ll use these to tailor your feed.
           </p>
         </div>
       </div>
 
       <div
         role="presentation"
-        className="flex flex-1 items-center justify-center px-[24px] select-none touch-none"
-        onMouseDown={(e) => plans.length > 0 && onDragStart(e.clientX)}
+        className="flex flex-1 items-center justify-center px-[24px] select-none touch-none overflow-hidden"
+        onMouseDown={(e) => onDragStart(e.clientX)}
         onMouseMove={(e) => onDragMove(e.clientX)}
         onMouseUp={onDragEnd}
         onMouseLeave={onDragEnd}
-        onTouchStart={(e) => plans.length > 0 && onDragStart(e.touches[0].clientX)}
-        onTouchMove={(e) => {
-          if (plans.length === 0) return;
-          e.preventDefault();
-          onDragMove(e.touches[0].clientX);
-        }}
+        onTouchStart={(e) => onDragStart(e.touches[0].clientX)}
+        onTouchMove={(e) => { e.preventDefault(); onDragMove(e.touches[0].clientX); }}
         onTouchEnd={onDragEnd}
       >
         {plans.length === 0 ? (
@@ -499,56 +232,108 @@ export default function CreateProfileInterestsScreen({
             </button>
           </div>
         ) : (
-          <div
-            aria-label={`Plan carousel, card ${currentIndex + 1} of ${plans.length}`}
-            className="relative shrink-0 w-[346px] h-[403px]"
-            style={{ cursor: isDragging ? "grabbing" : "grab" }}
-          >
-            {/* key=plan.id: each deck position keeps the same card content while roles (front/left/right/enter/hidden) change */}
-            {plans.map((plan, idx) => {
-              const role = stackRoleForIndex(idx, ixFront, ixLeft, ixRight, ixEnter);
-              const pos = frameForPlanAtIndex(idx, role, pRaw, gestureMode, currentIndex, total);
-              const isFrontCard = role === "front";
+          <div className="relative mx-auto" style={{ width: 280, height: CARD_H + stackExtraH }}>
+            {/* Stack of cards behind the front — rendered back-to-front */}
+            {stackBehind.map((plan, revIdx) => {
+              // revIdx=0 is the back-most card; the one just behind front is at index stackBehind.length-1
+              const depthFromFront = stackBehind.length - revIdx;
+              const offsetY = depthFromFront * STACK_OFFSET_Y;
+              const scale = 1 - depthFromFront * STACK_SCALE_STEP;
               return (
                 <div
                   key={plan.id}
-                  aria-hidden={role === "hidden"}
-                  className="absolute"
+                  className="absolute inset-x-0"
                   style={{
-                    ...stackCardStyle(pos),
-                    pointerEvents: role === "hidden" ? "none" : "auto",
+                    top: offsetY,
+                    height: CARD_H,
+                    transform: `scale(${scale})`,
+                    transformOrigin: "top center",
+                    zIndex: revIdx,
                   }}
                 >
                   <InterestStackPlanCard
                     plan={plan}
-                    liked={likedPlanIds.has(plan.id)}
-                    showHeart={isFrontCard}
-                    onHeartClick={isFrontCard ? toggleLikeForCurrentPlan : undefined}
-                    heartDisabled={isAnimating || isSaving}
-                    contentOpacity={peekInnerOpacity(idx, role, gestureMode, pRaw, currentIndex, total)}
+                    liked={false}
+                    showHeart={false}
                   />
                 </div>
               );
             })}
+
+            {/* Front card — draggable */}
+            {currentPlan && (
+              <div
+                className="absolute inset-x-0"
+                style={{
+                  top: 0,
+                  height: CARD_H,
+                  zIndex: stackBehind.length,
+                  transform: `translateX(${liveX}px) rotate(${rotation}deg)`,
+                  transformOrigin: "bottom center",
+                  transition: isAnimating
+                    ? "transform 0.3s ease"
+                    : isDragging || justSwiped
+                    ? "none"
+                    : "transform 0.25s ease",
+                  cursor: isDragging ? "grabbing" : "grab",
+                }}
+              >
+                {/* LIKE stamp */}
+                <div
+                  className="absolute left-[16px] top-[24px] z-10 rounded-[8px] border-[3px] border-[#22c55e] px-[12px] py-[4px] pointer-events-none"
+                  style={{ opacity: likeOpacity, transform: "rotate(-15deg)" }}
+                >
+                  <span className="type-heading-m text-[#22c55e] uppercase tracking-wider">Like</span>
+                </div>
+
+<InterestStackPlanCard
+                  plan={currentPlan}
+                  liked={false}
+                  showHeart={false}
+                  heartDisabled={isAnimating || isSaving}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
 
       <div className="flex flex-col gap-[20px] px-[24px] pt-0">
-        <p
-          aria-live="polite"
-          className="text-center font-['ABC_Monument_Grotesk_Unlicensed_Trial:Regular',sans-serif] text-[14px] leading-[18px] text-[#09090b]"
-        >
-          {plans.length > 0 ? `${currentIndex + 1}/${plans.length}` : "—"}
+        {plans.length > 0 && (
+          <div className="flex items-center justify-center gap-[40px]">
+            <button
+              type="button"
+              disabled={isAnimating || isSaving || !currentPlan}
+              onClick={swipeLeft}
+              className="flex h-[56px] w-[56px] items-center justify-center rounded-full border-[2px] border-card-token bg-surface-primary shadow-sm disabled:opacity-40"
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18" stroke="#fc312e" strokeWidth="2.5" strokeLinecap="round" />
+                <path d="M6 6L18 18" stroke="#fc312e" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              disabled={isAnimating || isSaving || !currentPlan}
+              onClick={swipeRight}
+              className="flex h-[56px] w-[56px] items-center justify-center rounded-full border-[2px] border-card-token bg-surface-primary shadow-sm disabled:opacity-40"
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M19 14C20.49 12.54 22 10.79 22 8.5C22 7.04 21.42 5.64 20.39 4.61C19.36 3.58 17.96 3 16.5 3C14.74 3 13.5 3.5 12 5C10.5 3.5 9.26 3 7.5 3C6.04 3 4.64 3.58 3.61 4.61C2.58 5.64 2 7.04 2 8.5C2 10.8 3.5 12.55 5 14L12 21L19 14Z"
+                  fill="#fc312e"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        <p aria-live="polite" className="text-center type-body-s text-secondary-token">
+          {plans.length > 0
+            ? `${Math.min(swipeCount + 1, plans.length)} / ${plans.length}`
+            : "—"}
         </p>
-        <button
-          type="button"
-          disabled={isSaving || !hasCompletedCarouselRound || plans.length === 0}
-          onClick={handleDone}
-          className="flex w-full items-center justify-center rounded-[999px] bg-button-primary px-[32px] py-[12px] type-label-m text-invert-token disabled:bg-surface-fill disabled:opacity-40"
-        >
-          Done
-        </button>
       </div>
     </div>
   );

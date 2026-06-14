@@ -1,7 +1,7 @@
 import svgPaths from "./svg-5vdh4m8d9d";
 import imgRectangle1 from "./d71adbbd75a6058eb54bbe101e0aa79bcdcdb1ac.png";
 import imgRectangle2 from "./b8f37e23b800ebfea321ded39d699db9bb424ab8.png";
-import imgRectangle3 from "./658312597027029fbdfa0cb56d27fd3a6b129582.png";
+import imgRectangle3 from "./mark-scott-dupe (1).jpeg";
 
 function Time() {
   return (
@@ -257,7 +257,7 @@ function Frame3() {
     <div className="relative shrink-0 w-full">
       <div className="content-stretch flex flex-col gap-[10.268px] items-start pb-[13.69px] pt-[18.824px] px-[18.824px] relative size-full">
         <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
-          <p className="type-heading-m text-primary-token">Picnic and cards on the beach</p>
+          <p className="type-heading-m text-primary-token">Picnic and pizza on the beach</p>
         </div>
         <Info2 />
       </div>
@@ -268,9 +268,9 @@ function Frame3() {
 function InfoContent() {
   return (
     <div className="content-stretch flex flex-col gap-[12px] items-start not-italic relative shrink-0 w-[345px]" data-name="Info Content">
-      <p className="type-heading-l relative shrink-0 text-primary-token w-full">It’s all here for you.</p>
+      <p className="type-heading-l relative shrink-0 text-primary-token w-full">It’s all here for you</p>
       <div className="flex flex-col justify-center leading-[0] relative shrink-0 w-full">
-        <p className="type-body-m text-secondary-token">Answer a few questions and Node builds your perfect plan. Every plan is made for you, not anyone else and is filtered to your mood, budget and distance.</p>
+        <p className="type-body-m text-secondary-token">Answer a few questions and Node builds your perfect plan. Every plan is made for you and is filtered to your mood, budget and distance.</p>
       </div>
     </div>
   );

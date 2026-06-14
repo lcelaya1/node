@@ -188,7 +188,7 @@ export function AppNavbar({
           active={activeTab === "diary"}
           activeClassName={activeClass}
           icon="Camera"
-          label="Diary"
+          label="Memories"
           onClick={() => onTabClick?.("diary")}
         />
 

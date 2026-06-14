@@ -32,8 +32,8 @@ export default function OnboardingScreen({ onNext }: OnboardingScreenProps) {
           </div>
 
           <div className="flex w-full flex-col gap-[24px]">
-            <InfoBlock title="It’s all here for you.">
-              Answer a few questions and Node builds your perfect plan. Every suggestion is made for you, not anyone else.
+            <InfoBlock title="It’s all here for you">
+              Answer a few questions and Node builds your perfect plan. Every plan is made for you and is filtered to your mood, budget and distance.
             </InfoBlock>
             <InfoBlock title="Find your people">
               Meet people who match your vibe and energy. No random connections, just people who are up for the same things as you.
@@ -41,7 +41,7 @@ export default function OnboardingScreen({ onNext }: OnboardingScreenProps) {
             <InfoBlock title="Curate plans">
               Every plan is filtered to your mood, budget and distance. The more you use it, the better it knows you.
             </InfoBlock>
-            <InfoBlock title="Save and share your experiences.">
+            <InfoBlock title="Save and share your plans">
               Every time you say &quot;yes&quot; to a plan, it becomes part of your story. Keep a beautiful archive of your life offline.
             </InfoBlock>
           </div>
