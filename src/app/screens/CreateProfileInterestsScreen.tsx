@@ -209,7 +209,7 @@ const isAnimating = flyDirection !== null;
 
       <div
         role="presentation"
-        className="flex flex-1 items-center justify-center px-[24px] select-none touch-none overflow-hidden"
+        className="flex flex-1 min-h-0 flex-col items-center justify-center px-[24px] py-[16px] select-none touch-none overflow-hidden"
         onMouseDown={(e) => onDragStart(e.clientX)}
         onMouseMove={(e) => onDragMove(e.clientX)}
         onMouseUp={onDragEnd}
@@ -232,20 +232,18 @@ const isAnimating = flyDirection !== null;
             </button>
           </div>
         ) : (
-          <div className="relative mx-auto" style={{ width: 280, height: CARD_H + stackExtraH }}>
+          <div className="relative mx-auto w-[280px] flex-1 min-h-0" style={{ maxHeight: CARD_H + stackExtraH }}>
             {/* Stack of cards behind the front — rendered back-to-front */}
             {stackBehind.map((plan, revIdx) => {
-              // revIdx=0 is the back-most card; the one just behind front is at index stackBehind.length-1
               const depthFromFront = stackBehind.length - revIdx;
               const offsetY = depthFromFront * STACK_OFFSET_Y;
               const scale = 1 - depthFromFront * STACK_SCALE_STEP;
               return (
                 <div
                   key={plan.id}
-                  className="absolute inset-x-0"
+                  className="absolute inset-x-0 bottom-0"
                   style={{
                     top: offsetY,
-                    height: CARD_H,
                     transform: `scale(${scale})`,
                     transformOrigin: "top center",
                     zIndex: revIdx,
@@ -263,10 +261,8 @@ const isAnimating = flyDirection !== null;
             {/* Front card — draggable */}
             {currentPlan && (
               <div
-                className="absolute inset-x-0"
+                className="absolute inset-0"
                 style={{
-                  top: 0,
-                  height: CARD_H,
                   zIndex: stackBehind.length,
                   transform: `translateX(${liveX}px) rotate(${rotation}deg)`,
                   transformOrigin: "bottom center",
