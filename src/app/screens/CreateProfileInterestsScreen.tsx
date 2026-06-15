@@ -274,14 +274,6 @@ const isAnimating = flyDirection !== null;
                   cursor: isDragging ? "grabbing" : "grab",
                 }}
               >
-                {/* LIKE stamp */}
-                <div
-                  className="absolute left-[16px] top-[24px] z-10 rounded-[8px] border-[3px] border-[#22c55e] px-[12px] py-[4px] pointer-events-none"
-                  style={{ opacity: likeOpacity, transform: "rotate(-15deg)" }}
-                >
-                  <span className="type-heading-m text-[#22c55e] uppercase tracking-wider">Like</span>
-                </div>
-
 <InterestStackPlanCard
                   plan={currentPlan}
                   liked={false}
