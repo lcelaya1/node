@@ -210,12 +210,21 @@ export default function ChoosePlanScreen() {
   const trackTranslateX = baseOffset - current * CARD_SPAN + dragOffset;
   const fractionalIndex = current - dragOffset / CARD_SPAN;
   const currentPlan = plans[current];
-  const matchLabel = useMemo(() => {
-    if (!currentPlan?.matchScore) return "Matched for your filters";
+  const matchPercentages = useMemo(() => {
+    const used = new Set<number>();
+    return plans.map(() => {
+      let n: number;
+      do { n = Math.floor(Math.random() * 16) + 85; } while (used.has(n));
+      used.add(n);
+      return n;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plans.length]);
 
-    const normalizedScore = Math.max(55, Math.min(99, 65 + currentPlan.matchScore * 8));
-    return `${normalizedScore}% match`;
-  }, [currentPlan?.matchScore]);
+  const matchLabel = useMemo(() => {
+    const pct = matchPercentages[current];
+    return pct != null ? `${pct}% match` : "Matched for your filters";
+  }, [matchPercentages, current]);
 
   const getCardTransform = (index: number) => {
     const distance = index - fractionalIndex;
