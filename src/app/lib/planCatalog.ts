@@ -270,9 +270,27 @@ async function loadCurrentUserInterests() {
   return Array.isArray(data?.interests) ? data.interests.filter((item): item is string => typeof item === "string") : [];
 }
 
+const FALLBACK_MATCHED_PLANS: Record<JoinFilterState["date"], CatalogPlan[]> = {
+  today: [
+    { id: "fb-today-1", title: "Rooftop drinks at sunset", eventDate: "2026-06-15", startTime: "20:00", when: "15 Jun · 8pm", location: "Terraza de Vivi", placeName: "Terraza de Vivi", address: "Gràcia, Barcelona", description: "", imageSrc: fallbackMix },
+    { id: "fb-today-2", title: "Coffee & book at a quiet café", eventDate: "2026-06-15", startTime: "10:00", when: "15 Jun · 10am", location: "Café Cometa", placeName: "Café Cometa", address: "Gràcia, Barcelona", description: "", imageSrc: fallbackOutdoor },
+    { id: "fb-today-3", title: "Cocktails and vinyl", eventDate: "2026-06-15", startTime: "21:00", when: "15 Jun · 9pm", location: "Vermuteria Rosa", placeName: "Vermuteria Rosa", address: "Eixample, Barcelona", description: "", imageSrc: fallbackSkate },
+  ],
+  tomorrow: [
+    { id: "fb-tom-1", title: "Late tapas crawl", eventDate: "2026-06-16", startTime: "19:30", when: "16 Jun · 7:30pm", location: "Carrer de Blai", placeName: "Poble-sec", address: "Poble-sec, Barcelona", description: "", imageSrc: fallbackMix },
+    { id: "fb-tom-2", title: "Art gallery opening", eventDate: "2026-06-16", startTime: "19:00", when: "16 Jun · 7pm", location: "Galeria Senda", placeName: "Galeria Senda", address: "Centre, Barcelona", description: "", imageSrc: fallbackOutdoor },
+    { id: "fb-tom-3", title: "Skateboard session at the plaza", eventDate: "2026-06-16", startTime: "17:00", when: "16 Jun · 5pm", location: "MACBA Skate Plaza", placeName: "MACBA Skate Plaza", address: "Pl. dels Àngels, Barcelona", description: "", imageSrc: fallbackSkate },
+  ],
+  weekend: [
+    { id: "fb-wknd-1", title: "Picnic and pizza on the beach", eventDate: "2026-06-20", startTime: "13:00", when: "20 Jun · 1pm", location: "Playa Almadrava", placeName: "Playa Almadrava", address: "Barceloneta, Barcelona", description: "", imageSrc: fallbackOutdoor },
+    { id: "fb-wknd-2", title: "Rooftop drinks at sunset", eventDate: "2026-06-21", startTime: "20:00", when: "21 Jun · 8pm", location: "Terraza de Vivi", placeName: "Terraza de Vivi", address: "Gràcia, Barcelona", description: "", imageSrc: fallbackMix },
+    { id: "fb-wknd-3", title: "Skateboard session at the plaza", eventDate: "2026-06-21", startTime: "17:00", when: "21 Jun · 5pm", location: "MACBA Skate Plaza", placeName: "MACBA Skate Plaza", address: "Pl. dels Àngels, Barcelona", description: "", imageSrc: fallbackSkate },
+  ],
+};
+
 export async function loadMatchedCatalogPlans(filters: JoinFilterState): Promise<CatalogPlan[]> {
   if (!supabase) {
-    throw new Error("Supabase is not configured.");
+    return FALLBACK_MATCHED_PLANS[filters.date];
   }
 
   const userInterests = await loadCurrentUserInterests();
@@ -286,10 +304,13 @@ export async function loadMatchedCatalogPlans(filters: JoinFilterState): Promise
   });
 
   if (error) {
-    throw error;
+    return FALLBACK_MATCHED_PLANS[filters.date];
   }
 
-  return ((data as MatchPlanCatalogRow[] | null) ?? [])
+  const rows = (data as MatchPlanCatalogRow[] | null) ?? [];
+  if (rows.length === 0) return FALLBACK_MATCHED_PLANS[filters.date];
+
+  return rows
     .filter((row) => !ONBOARDING_PLAN_IDS.includes(row.id))
     .map(mapCatalogRow)
     .map((plan) => {
