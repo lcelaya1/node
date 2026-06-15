@@ -165,18 +165,6 @@ export function InterestStackPlanCard({
               {plan.title}
             </p>
 
-            <div className={cn("flex flex-col gap-[3.423px]", metaColor)}>
-              <div className="flex items-center gap-[3.423px]">
-                <OnboardingCalendarIcon />
-                <p className={cn("type-body-xs shrink transition-colors duration-200", liked ? "text-white" : "text-primary-token")}>{plan.when || "—"}</p>
-              </div>
-              <div className="flex items-start gap-[3.423px]">
-                <OnboardingLocationIcon className="mt-[1px]" />
-                <p className={cn("type-body-xs min-w-0 flex-1 break-words transition-colors duration-200", liked ? "text-white" : "text-primary-token")}>
-                  {plan.placeName || plan.location || "—"}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 

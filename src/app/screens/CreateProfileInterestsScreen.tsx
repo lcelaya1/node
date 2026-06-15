@@ -196,12 +196,12 @@ const isAnimating = flyDirection !== null;
   }
 
   return (
-    <div className="flex size-full flex-col bg-surface-primary pb-[40px]">
+    <div className="flex size-full flex-col bg-surface-primary pb-[32px]">
       <div className="flex flex-col gap-[20px] px-[24px] pt-[16px]">
         <CreateAccountBackButton onClick={onBack} />
         <div className="flex flex-col gap-[8px]">
-          <p className="type-heading-l text-primary-token">Select your interests.</p>
-          <p className="type-body-m text-secondary-token">
+          <p className="type-heading-xl text-primary-token">Select your interests</p>
+          <p className="type-body-s text-secondary-token">
             Swipe right on plans that interest you, we&apos;ll use these to tailor your feed.
           </p>
         </div>
